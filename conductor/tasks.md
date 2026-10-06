@@ -10,27 +10,25 @@
   - Dedicated diagnostics console with status bar glow/badge indicators.
   - Architecture-level scalability-by-design for future adaptive scaling.
 - [x] **Technology Stack:** [`conductor/tech-stack.md`](./tech-stack.md)
-  - TypeScript, React 19, Vite, Tailwind CSS, Lucide React, `@xyflow/react`.
-  - Three.js + WebGL 2.0 with custom GLSL shaders.
-  - Native Web Audio API (FFT / waveform / beat detection) & Web MIDI API.
-  - `expr-eval` for mathematical formula components.
-  - Client-side SPA with IndexedDB / LocalStorage; future backend for community preset sharing.
+  - Hardened with Two-Plane architecture (State Plane vs. Render Data Plane).
+  - Dual-FBO Ping-Pong feedback loop for AVS/MilkDrop visuals.
+  - Logarithmic FFT binning, raw mic capture flags, and zero-allocation render loop policy.
+  - Pre-compiled, sandboxed `expr-eval` uniform modulation.
 - [x] **Code Style Guides:** [`conductor/code_styleguides/typescript.md`](./code_styleguides/typescript.md)
 - [x] **Workflow Configuration:** [`conductor/workflow.md`](./workflow.md)
 - [x] **Index Handshake:** [`conductor/index.md`](./index.md)
+- [x] **Stateless Subagent Architectural Review:** Completed and findings integrated into `tech-stack.md`.
 
 ---
 
-## Next Steps Before Implementation
+## Active Milestone: Track 1 Planning & Scaffolding
 
-1. **Stateless Subagent Review:**
-   - [ ] Before commencing implementation, invoke stateless subagent(s) (acting as outside observers) to thoroughly review all generated Conductor artifacts (`product.md`, `product-guidelines.md`, `tech-stack.md`, `workflow.md`, `index.md`).
-   - [ ] Incorporate review findings and resolve any architecture ambiguities.
+1. **Track Planning (`conductor-new-track`):**
+   - [ ] Plan Track 1: "Core Engine & Audio-Reactive Foundation MVP".
+   - [ ] Generate `conductor/tracks/core_engine_foundation/spec.md` and `plan.md`.
+   - [ ] Register track in `conductor/tracks.md`.
 
-2. **Track Planning:**
-   - [ ] Use `conductor-new-track` to plan the initial Track 1 (e.g., Core Engine & Audio-Reactive Foundation MVP).
-   - [ ] Create `plan.md` and define phases and tasks.
-
-3. **Development Kickoff:**
-   - [ ] Scaffold Vite project (`npm create vite@latest . -- --template react-ts`) and install core dependencies.
-   - [ ] Implement tasks sequentially according to TDD workflow.
+2. **Scaffolding & Initial Phase Implementation:**
+   - [ ] Scaffold Vite TypeScript React project (`npm create vite@latest`).
+   - [ ] Install core dependencies (Three.js, `@xyflow/react`, Zustand, Tailwind CSS, Lucide, `expr-eval`, Vitest).
+   - [ ] Implement Phase 1 according to TDD workflow.
