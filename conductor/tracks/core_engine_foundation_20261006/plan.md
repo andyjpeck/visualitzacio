@@ -48,7 +48,7 @@
 
 ---
 
-## Phase 4: Modular Visual Components & Dynamic Expression Binding
+## Phase 4: Modular Visual Components & Declarative Preset Schema
 
 - [ ] Task: Static Image Component (TDD)
   - [ ] Write tests for texture loading, drag-and-drop validation, and fallback sample image
@@ -58,6 +58,9 @@
   - [ ] Write tests for container child registration and hierarchical render dispatching
   - [ ] Implement `FrameBufferContainer` rendering child component textures into its render target
   - [ ] Wire per-frame dynamic expression evaluation into Frame Buffer transformation uniforms (evaluating expressions like `Blend: %FFT(0, 0.3, 1) * 0.5` or `Scale: 1.0 + %BEAT(0.25) * 0.3` each frame)
+- [ ] Task: Declarative Nested JSON Preset Serializer (TDD)
+  - [ ] Write unit tests for nested tree serialization (`children` arrays) and deserialization
+  - [ ] Implement `PresetSerializer` importing/exporting full component trees and parameter expression states
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ---
@@ -70,9 +73,10 @@
 - [ ] Task: Universal `f(x)` Parameter Component (TDD)
   - [ ] Write unit tests for parameter mode toggle (Fixed widget vs. Dynamic formula input)
   - [ ] Implement `ParameterControl` component featuring the `f(x)` toggle button, formula autocomplete for `$SPECIAL_VALUE` and `%FUNCTION` tokens, and real-time evaluation preview chip
-- [ ] Task: Split Layout & Node Inspector (TDD)
+- [ ] Task: Split Layout, Node Inspector & Preset Import/Export UI (TDD)
   - [ ] Write tests for node selection and inspector parameter synchronization
   - [ ] Implement Split-View UI: Left preview viewport, Right vertically split panel
   - [ ] Integrate `@xyflow/react` in top-right panel displaying Frame Buffer container and Image node
   - [ ] Integrate `ParameterControl` into bottom-right Node Inspector for seamless parameter editing
+  - [ ] Add header buttons for Preset Export (.json download) and Import (file upload/drop)
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)

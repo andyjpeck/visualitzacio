@@ -1,7 +1,7 @@
 # Specification: Core Engine Foundation & Modular Frame Buffer MVP
 
 ## 1. Overview
-This bootstrap track establishes Visualització's foundational architecture: a high-performance, two-plane execution model decoupling React UI from a 60+ FPS Three.js/WebGL render loop, basic Web Audio frequency analysis, a **Dynamic Expression Engine** allowing any component parameter to be bound to mathematical formulas once per frame (including special variables like `$BASS` and `$BEAT`, and system functions like `%FFT` and `%BEAT`), and the initial hierarchical compositing pipeline featuring a **Static Image Component** nested inside a composable **Frame Buffer Container Component**.
+This bootstrap track establishes Visualització's foundational architecture: a high-performance, two-plane execution model decoupling React UI from a 60+ FPS Three.js/WebGL render loop, basic Web Audio frequency analysis, a **Dynamic Expression Engine** allowing any component parameter to be bound to mathematical formulas once per frame (including special variables like `$BASS` and `$BEAT`, and system functions like `%FFT` and `%BEAT`), a **Declarative Nested JSON Preset Schema** for seamless import/export, and the initial hierarchical compositing pipeline featuring a **Static Image Component** nested inside a composable **Frame Buffer Container Component**.
 
 ## 2. Functional Requirements
 
@@ -69,6 +69,15 @@ This bootstrap track establishes Visualització's foundational architecture: a h
   - **Universal `f(x)` Parameter Toggle:** Each parameter row displays an `f(x)` button. In Fixed mode, it renders knobs/sliders/inputs. When toggled into Expression mode, it morphs into a formula input with `$SPECIAL_VALUE` and `%FUNCTION` auto-suggestions, syntax validation, and live preview evaluation chips.
 - **Collapsible Bottom Bar:** In-app Diagnostics / Error Console with glowing warning/error badge.
 
+### 2.6 Declarative Nested JSON Preset Schema (Import & Export)
+- The entire visualizer preset is represented as a single portable JSON document.
+- **Nested Component Hierarchy:**
+  - Containers (such as `frame_buffer`) serialize a `children` array containing nested child components.
+  - Parameters serialize with `{ "mode": "literal" | "expression", "value": ... }`.
+- **Import / Export Actions:**
+  - Export: Download active preset as a `.json` file or copy to clipboard.
+  - Import: Load `.json` preset via file dialog, drag-and-drop, or paste, reconstructing both the React Flow graph and Three.js execution tree.
+
 ## 3. Non-Functional Requirements
 - **Performance:** Maintain 60+ FPS without garbage collection stutter during audio playback.
 - **Zero-Crash / Error Boundary:** Graceful handling of image loading failures, invalid formulas, or audio context suspension.
@@ -84,6 +93,7 @@ This bootstrap track establishes Visualització's foundational architecture: a h
 8. Clicking `f(x)` on any parameter toggles it between fixed widget and dynamic formula input.
 9. Binding dynamic expressions with special values or system functions (e.g. `Blend: %FFT(0, 0.3, 1) * 0.5` or `Scale: 1.0 + %BEAT(0.2) * 0.3`) dynamically modulates visual parameters to the audio at 60+ FPS.
 10. Tweaking Frame Buffer blend modes (Replace, Additive, Maximum, Minimum, Subtractive, Multiplicative) produces the expected visual compositing.
+11. Exporting the active setup downloads a valid nested JSON preset file; importing that file perfectly restores the component tree, parameter expressions, and visual state.
 
 ## 5. Out of Scope for Track 1
 - Full arbitrary GLSL shader editor / custom user shader authoring (Track 2).

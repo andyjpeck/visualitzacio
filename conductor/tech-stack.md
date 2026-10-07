@@ -84,9 +84,38 @@ To guarantee uncompromised 60+ FPS rendering while providing rich interactive UI
   - Wraps evaluations in safe guards against syntax errors, division by zero, `NaN`, and `Infinity`.
   - On error, smoothly retains the previous valid frame value, clamps within valid component boundaries, and emits an inline warning state to the UI without interrupting the 60 FPS render pipeline.
 
-## 7. Storage & Architecture
-- **Architecture:** Client-Side Single Page Application (SPA)
-- **Persistence (MVP):** IndexedDB (via `idb-keyval`) and LocalStorage for preset storage and theme preferences, paired with JSON preset import/export.
+## 7. Declarative JSON Preset Schema & Persistence
+- **Architecture:** The entire visualizer preset is serialized as a single, portable, human-readable JSON document for seamless import, export, and sharing.
+- **Hierarchical Nested Component Schema:**
+  Container components (like `FrameBufferContainer`) house a nested `children` array containing child component nodes, allowing arbitrary nesting:
+  ```json
+  {
+    "version": "1.0",
+    "name": "Neon Pulse Visualizer",
+    "author": "User",
+    "created_at": "2026-10-07T00:00:00Z",
+    "root": {
+      "id": "fb_main",
+      "type": "frame_buffer",
+      "parameters": {
+        "scale": { "mode": "expression", "value": "1.0 + %BEAT(0.25) * 0.4" },
+        "rotation": { "mode": "literal", "value": 0.0 },
+        "opacity": { "mode": "literal", "value": 1.0 },
+        "blend_mode": { "mode": "literal", "value": "add" }
+      },
+      "children": [
+        {
+          "id": "img_bg",
+          "type": "static_image",
+          "parameters": {
+            "source_url": { "mode": "literal", "value": "assets/default.jpg" }
+          }
+        }
+      ]
+    }
+  }
+  ```
+- **Local Persistence (MVP):** IndexedDB (via `idb-keyval`) and LocalStorage for preset storage and theme preferences, paired with `.json` file upload/download.
 - **Roadmap / Future:** Backend cloud sync (PostgreSQL/Supabase or Firebase) for user accounts and community preset sharing.
 
 ## 8. Testing & Quality Assurance
