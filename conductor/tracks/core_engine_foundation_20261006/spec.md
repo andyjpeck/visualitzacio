@@ -1,7 +1,7 @@
 # Specification: Core Engine Foundation & Modular Frame Buffer MVP
 
 ## 1. Overview
-This bootstrap track establishes Visualització's foundational architecture: a high-performance, two-plane execution model decoupling React UI from a 60+ FPS Three.js/WebGL render loop, basic Web Audio frequency analysis, a **Dynamic Expression Engine** allowing any component parameter to be bound to mathematical formulas once per frame (including special variables like `$BASS` and `$BEAT`, and system functions like `%FFT` and `%BEAT`), a **Declarative Nested JSON Preset Schema** for seamless import/export, and the initial hierarchical compositing pipeline featuring a **Static Image Component** nested inside a composable **Frame Buffer Container Component**.
+This bootstrap track establishes Visualització's foundational architecture: a high-performance, two-plane execution model decoupling React UI from a 60+ FPS Three.js/WebGL render loop, basic Web Audio frequency analysis, a **Dynamic Expression Engine** allowing any component parameter to be bound to mathematical formulas once per frame (including special variables like `$BASS` and `$BEAT`, and system functions like `#FFT` and `#BEAT`), a **Declarative Nested JSON Preset Schema** for seamless import/export, and the initial hierarchical compositing pipeline featuring a **Static Image Component** nested inside a composable **Frame Buffer Container Component**.
 
 ## 2. Functional Requirements
 
@@ -47,10 +47,12 @@ This bootstrap track establishes Visualització's foundational architecture: a h
   - Guarded against syntax errors, division by zero, `NaN`, and `Infinity`. Safe fallback to previous valid frame value, or initial literal value on frame 0.
 
 ### 2.4 Modular Visual Pipeline: Image & Frame Buffer Components
-- **Static Image Component:**
+*(See complete component proposals: [Static Image Proposal](../../../component_proposals/static_image.md) and [Frame Buffer Proposal](../../../component_proposals/frame_buffer.md))*
+
+- **Static Image Component (`static_image`):**
   - Loads an image (JPG/PNG) via drag-and-drop or file picker, with an included bundled default test graphic.
-  - Generates a WebGL texture source. Exposes no transformation knobs directly on the raw asset.
-- **Frame Buffer Component (Container, Compositor & Buffer Router):**
+  - Exposes `source_url`, `fit_mode` (`cover`, `contain`, `stretch`), and `filter` (`linear`, `nearest`). Exposes no spatial transformation knobs directly on the raw asset (delegating them to enclosing containers).
+- **Frame Buffer Component (`frame_buffer` - Container, Compositor & Buffer Router):**
   - Serves as a modular container for child visual components (such as the Static Image).
   - Renders child components into an offscreen `THREE.WebGLRenderTarget`.
   - Exposes container-level modulation parameters:
@@ -125,6 +127,7 @@ This bootstrap track establishes Visualització's foundational architecture: a h
 16. Exporting the active setup downloads a valid nested JSON preset file; importing that file perfectly restores the component tree, parameter expressions, and visual state with automatic graph layout.
 
 ## 5. Out of Scope for Track 1
+- **Duperscope Generative Synthesis Component** (Track 2: Generative Visual Synthesis & Duperscope MVP).
 - Full arbitrary GLSL shader editor / custom user shader authoring (Track 2).
 - Web MIDI controller mapping (Track 2).
 - IndexedDB preset library and community sharing (Track 3).

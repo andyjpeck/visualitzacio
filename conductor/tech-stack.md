@@ -83,12 +83,17 @@ To guarantee uncompromised 60+ FPS rendering while providing rich interactive UI
       - `band_width`: Frequency width in $[0.0, 1.0]$.
       - `channel`: `0` = Left + Right (default mono mix), `1` = Left channel, `2` = Right channel.
       - Example: `#FFT(0, 0.3, 1)` calculates the lowest 30% of frequencies (approx. 20Hz–158Hz) on the left audio channel.
+    - **`#WAVEFORM(position, [channel = 0])`:**
+      - Samples instantaneous time-domain audio waveform amplitude at a normalized position.
+      - `position`: Normalized sample index in $[0.0, 1.0]$.
+      - `channel`: `0` = Left + Right (default mono mix), `1` = Left channel, `2` = Right channel.
+      - Returns: Instantaneous audio amplitude in $[-1.0, 1.0]$.
     - **`#BEAT([decay_seconds = 0.2])` / `#BEAT_SECONDS([decay_seconds = 0.2])`:**
       - Transient attack pulse envelope: Jumps to `1.0` on beat and decays exponentially to `0.0` over `decay_seconds` (default: 0.2s).
     - **`#BEAT_FRAMES([decay_frames = 12])`:**
       - Transient attack pulse envelope: Jumps to `1.0` on beat and decays exponentially to `0.0` over `decay_frames` frames (default: 12 frames).
 - **Universal Parameter Binding:**
-  - Every component parameter (e.g., `scale`, `rotation`, `opacity`, `positionX`, `positionY`, `blend_mode`) supports dual modes:
+  - Animatable component parameters (e.g. Frame Buffer `scale`, `rotation`, `opacity`, `positionX`, `positionY`, `blend_mode`) support dual modes:
     - **Literal Mode (Schema `"mode": "literal"`, UI "Fixed Mode"):** Static scalar/boolean/enum value.
     - **Expression Mode (Schema `"mode": "expression"`, UI "Dynamic Expression Mode"):** Compiles an expression string (e.g. `Opacity: #FFT(0, 0.3, 1) * 0.5`, `Scale: 1.0 + #BEAT(0.3) * 0.4`).
 - **Token Preprocessing & Modulo Operator Preservation:**

@@ -103,18 +103,18 @@ Supports 6 distinct WebGL compositing blend modes:
 {
   "id": "frame-buffer-1",
   "name": "Master Frame Buffer",
-  "type": "FrameBuffer",
+  "type": "frame_buffer",
   "enabled": true,
-  "config": {
-    "is_master": true,
-    "blend_mode": "Replace",
-    "opacity": 1.0,
-    "scale": 1.0,
-    "rotation": 0.0,
-    "positionX": 0.0,
-    "positionY": 0.0,
-    "save_to": null,
-    "load_from": null
+  "is_master": true,
+  "parameters": {
+    "blend_mode": { "mode": "literal", "value": "replace" },
+    "opacity": { "mode": "literal", "value": 1.0 },
+    "scale": { "mode": "literal", "value": 1.0 },
+    "rotation": { "mode": "literal", "value": 0.0 },
+    "positionX": { "mode": "literal", "value": 0.0 },
+    "positionY": { "mode": "literal", "value": 0.0 },
+    "save_to": { "mode": "literal", "value": null },
+    "load_from": { "mode": "literal", "value": null }
   },
   "children": []
 }
@@ -131,54 +131,81 @@ A master scene renders a visual element into `@BUFFER_A`, and four child buffers
 {
   "id": "master-root",
   "name": "Master Frame Buffer",
-  "type": "FrameBuffer",
+  "type": "frame_buffer",
   "enabled": true,
-  "config": { "is_master": true, "blend_mode": "Replace", "opacity": 1.0 },
+  "is_master": true,
+  "parameters": {
+    "blend_mode": { "mode": "literal", "value": "replace" },
+    "opacity": { "mode": "literal", "value": 1.0 }
+  },
   "children": [
     {
       "id": "buf-source",
       "name": "Generator Buffer",
-      "type": "FrameBuffer",
+      "type": "frame_buffer",
       "enabled": true,
-      "config": { "save_to": "@BUFFER_A", "opacity": 0.0 },
-      "children": [ /* Visual generator e.g. Duperscope */ ]
+      "parameters": {
+        "save_to": { "mode": "literal", "value": "@BUFFER_A" },
+        "opacity": { "mode": "literal", "value": 0.0 }
+      },
+      "children": [ /* Visual generator child */ ]
     },
     {
       "id": "corner-tl",
-      "type": "FrameBuffer",
-      "config": { "load_from": "@BUFFER_A", "scale": 0.5, "positionX": -0.5, "positionY": 0.5 }
+      "type": "frame_buffer",
+      "parameters": {
+        "load_from": { "mode": "literal", "value": "@BUFFER_A" },
+        "scale": { "mode": "literal", "value": 0.5 },
+        "positionX": { "mode": "literal", "value": -0.5 },
+        "positionY": { "mode": "literal", "value": 0.5 }
+      }
     },
     {
       "id": "corner-tr",
-      "type": "FrameBuffer",
-      "config": { "load_from": "@BUFFER_A", "scale": 0.5, "positionX": 0.5, "positionY": 0.5 }
+      "type": "frame_buffer",
+      "parameters": {
+        "load_from": { "mode": "literal", "value": "@BUFFER_A" },
+        "scale": { "mode": "literal", "value": 0.5 },
+        "positionX": { "mode": "literal", "value": 0.5 },
+        "positionY": { "mode": "literal", "value": 0.5 }
+      }
     },
     {
       "id": "corner-bl",
-      "type": "FrameBuffer",
-      "config": { "load_from": "@BUFFER_A", "scale": 0.5, "positionX": -0.5, "positionY": -0.5 }
+      "type": "frame_buffer",
+      "parameters": {
+        "load_from": { "mode": "literal", "value": "@BUFFER_A" },
+        "scale": { "mode": "literal", "value": 0.5 },
+        "positionX": { "mode": "literal", "value": -0.5 },
+        "positionY": { "mode": "literal", "value": -0.5 }
+      }
     },
     {
       "id": "corner-br",
-      "type": "FrameBuffer",
-      "config": { "load_from": "@BUFFER_A", "scale": 0.5, "positionX": 0.5, "positionY": -0.5 }
+      "type": "frame_buffer",
+      "parameters": {
+        "load_from": { "mode": "literal", "value": "@BUFFER_A" },
+        "scale": { "mode": "literal", "value": 0.5 },
+        "positionX": { "mode": "literal", "value": 0.5 },
+        "positionY": { "mode": "literal", "value": -0.5 }
+      }
     }
   ]
 }
 ```
 
 ### Example B: Beat-Reactive Infinite Feedback Tunnel
-Master Frame Buffer uses `Additive` blend mode with slight decay and scale modulation to create a vortex trail:
+Master Frame Buffer uses `additive` blend mode with slight decay and scale modulation to create a vortex trail:
 
 ```json
 {
   "id": "master-root",
   "name": "Master Frame Buffer",
-  "type": "FrameBuffer",
+  "type": "frame_buffer",
   "enabled": true,
-  "config": {
-    "is_master": true,
-    "blend_mode": "Additive",
+  "is_master": true,
+  "parameters": {
+    "blend_mode": { "mode": "literal", "value": "additive" },
     "opacity": { "mode": "expression", "value": "0.92 - ($BASS * 0.05)" },
     "scale": { "mode": "expression", "value": "1.02 + ($BASS * 0.02)" },
     "rotation": { "mode": "expression", "value": "0.01" }

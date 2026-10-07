@@ -55,8 +55,8 @@
 ## Phase 4: Modular Visual Components & Declarative Preset Schema
 
 - [ ] Task: Static Image Component (TDD)
-  - [ ] Write tests for texture loading, drag-and-drop validation, and fallback sample image
-  - [ ] Implement `StaticImageComponent` generating a `THREE.Texture` and quad geometry
+  - [ ] Write tests for texture loading, drag-and-drop validation, fallback sample image, `fit_mode` aspect fitting (`cover`, `contain`, `stretch`), and texture sampling `filter` (`linear`, `nearest`)
+  - [ ] Implement `StaticImageComponent` generating a `THREE.Texture` and quad geometry according to [component_proposals/static_image.md](../../../component_proposals/static_image.md)
   - [ ] Bundle a default test graphic
 - [ ] Task: Frame Buffer Container & Named Buffer Routing (TDD)
   - [ ] Write tests for container child registration and hierarchical render dispatching

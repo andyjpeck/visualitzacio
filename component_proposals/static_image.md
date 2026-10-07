@@ -44,12 +44,12 @@ flowchart TD
 {
   "id": "image-1",
   "name": "Static Image",
-  "type": "StaticImage",
+  "type": "static_image",
   "enabled": true,
-  "config": {
-    "source_url": "/assets/default_graphic.png",
-    "fit_mode": "Cover",
-    "filter": "Linear"
+  "parameters": {
+    "source_url": { "mode": "literal", "value": "/assets/default_graphic.png" },
+    "fit_mode": { "mode": "literal", "value": "cover" },
+    "filter": { "mode": "literal", "value": "linear" }
   }
 }
 ```
@@ -65,10 +65,10 @@ Static Image nested inside a Frame Buffer that scales with the beat:
 {
   "id": "fb-image-container",
   "name": "Pulsing Image",
-  "type": "FrameBuffer",
+  "type": "frame_buffer",
   "enabled": true,
-  "config": {
-    "blend_mode": "Additive",
+  "parameters": {
+    "blend_mode": { "mode": "literal", "value": "additive" },
     "scale": { "mode": "expression", "value": "1.0 + #BEAT(0.2) * 0.3" },
     "opacity": { "mode": "expression", "value": "0.8 + ($BASS * 0.2)" }
   },
@@ -76,12 +76,12 @@ Static Image nested inside a Frame Buffer that scales with the beat:
     {
       "id": "img-smiley",
       "name": "Smiley Graphic",
-      "type": "StaticImage",
+      "type": "static_image",
       "enabled": true,
-      "config": {
-        "source_url": "/assets/smiley.png",
-        "fit_mode": "Contain",
-        "filter": "Linear"
+      "parameters": {
+        "source_url": { "mode": "literal", "value": "/assets/smiley.png" },
+        "fit_mode": { "mode": "literal", "value": "contain" },
+        "filter": { "mode": "literal", "value": "linear" }
       }
     }
   ]
