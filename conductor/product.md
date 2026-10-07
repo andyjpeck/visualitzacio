@@ -24,7 +24,7 @@ The platform is designed to serve two complementary environments:
     - `%FFT(lower_band, band_width, channel)` with normalized logarithmic frequency inputs $[0.0, 1.0]$.
     - `%BEAT([decay_seconds = 0.2])` / `%BEAT_SECONDS([decay_seconds = 0.2])`: Transient attack pulse (1.0 decaying exponentially to 0.0 over time in seconds).
     - `%BEAT_FRAMES([decay_frames = 12])`: Transient attack pulse (1.0 decaying exponentially to 0.0 over frame count).
-  - Example: Binding blend amount to `%FFT(0, 0.3, 1) * 0.5` or scale to `1.0 + %BEAT(0.3) * 0.5`.
+  - Example: Binding opacity to `%FFT(0, 0.3, 1) * 0.5` or scale to `1.0 + %BEAT(0.3) * 0.5`.
 - **Reactive Audio Engine:**
   - Multi-source audio input: Microphone / Line-in, Local audio files (MP3, WAV, FLAC), and System / Tab audio capture (via getDisplayMedia / audio stream capture).
   - Web Audio API real-time FFT frequency spectrum, waveform time-domain data, beat detection, and RMS energy tracking exposed as reactive variables to all components.

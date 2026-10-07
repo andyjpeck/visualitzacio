@@ -28,7 +28,7 @@
 - [ ] Task: Dynamic Expression Engine & Sandboxing (TDD)
   - [ ] Write unit tests for `ExpressionPreprocessor` token rewriting (`%FUNC(` $\to$ `__fn_FUNC(`, `$VAR` $\to$ `__var_VAR`), preserving modulo (`%`) operator
   - [ ] Write unit tests for `$SPECIAL_VALUE` token extraction (`$BASS`, `$MID`, `$TREBLE`, `$BPM`, `$RMS`, `$TIME`, binary `$BEAT`, `$FRAME`)
-  - [ ] Write unit tests for `%FFT(lower, width, channel)` system function evaluation with logarithmic frequency mapping ($20\text{Hz}-20000\text{Hz}$)
+  - [ ] Write unit tests for `%FFT(lower_band, band_width, channel)` system function evaluation with logarithmic frequency mapping ($20\text{Hz}-20000\text{Hz}$)
   - [ ] Write unit tests for `%BEAT()`, `%BEAT_SECONDS(decay_seconds)`, and `%BEAT_FRAMES(decay_frames)` exponential decay envelopes
   - [ ] Write unit tests for mathematical expression compilation, NaN/Infinity fallback, Frame 0 initial literal fallback, and zero-allocation per-frame evaluation
   - [ ] Implement `ExpressionEngine` wrapping `expr-eval` with preprocessor, pre-allocated evaluation scope, function bindings, and safe numeric clamping
@@ -61,8 +61,9 @@
   - [ ] Write tests for container child registration and hierarchical render dispatching
   - [ ] Write tests for Master Frame Buffer root lifecycle (verifying `blend_mode: "replace"` creates a clean slate while feedback blend modes feed previous frame texture into next frame)
   - [ ] Write tests for `save_to="#NAME"` publishing to `BufferPool` and `load_from="#NAME"` upstream texture sampling (e.g., 4-corner multi-quad replication)
+  - [ ] Write tests verifying that disabled/errored buffer nodes skip render traversal safely
   - [ ] Implement `FrameBufferContainer` rendering child component textures into its render target, saving to named targets, and sampling from loaded buffers
-  - [ ] Wire per-frame dynamic expression evaluation into Frame Buffer transformation uniforms (evaluating expressions like `blend_mode: %FFT(0, 0.3, 1) * 0.5` or `scale: 1.0 + %BEAT(0.25) * 0.3` each frame)
+  - [ ] Wire per-frame dynamic expression evaluation into Frame Buffer transformation uniforms (evaluating expressions like `opacity: %FFT(0, 0.3, 1) * 0.5` or `scale: 1.0 + %BEAT(0.25) * 0.3` each frame)
   - [ ] Write integration test verifying `RenderEngine` driving `FrameBufferContainer` with active audio telemetry and expression modulation
 - [ ] Task: Declarative Nested JSON Preset Serializer (TDD)
   - [ ] Write unit tests for nested tree serialization (`root` strictly as Master Frame Buffer with `children` arrays, `save_to`, `load_from`, expression parameters) and deserialization
@@ -80,10 +81,13 @@
   - [ ] Write unit tests for parameter mode toggle (Fixed widget vs. Dynamic formula input)
   - [ ] Write unit tests for inline autocomplete dropdown triggered by `$` and `%`, testing definition tooltips, usage documentation, keyboard navigation, and syntax status chip
   - [ ] Implement `ParameterControl` component featuring the `f(x)` toggle button, inline token autocomplete dropdown with parameter documentation, and syntax validation status chip
-- [ ] Task: Split Layout, Node Inspector & Preset Import/Export UI (TDD)
-  - [ ] Write tests for node selection, inspector parameter synchronization, FPS overlay toggle, and preset drag-drop/clipboard import with automatic tree layout
-  - [ ] Implement Split-View UI: Left preview viewport with toggleable FPS counter HUD overlay (on by default in Studio mode), Right vertically split panel
+- [ ] Task: Split-View Shell, Node Pipeline Graph (`@xyflow/react`) & Auto-Layout (TDD)
+  - [ ] Write tests for node selection, inspector parameter synchronization, and viewport mounting
+  - [ ] Implement Split-View UI: Left preview viewport, Right vertically split panel
+  - [ ] Implement lightweight pure TypeScript hierarchical tree auto-layout utility
   - [ ] Integrate `@xyflow/react` in top-right panel displaying the non-deletable Master Frame Buffer container anchor and nested Image node with auto-layout
   - [ ] Integrate `ParameterControl` into bottom-right Node Inspector for seamless parameter editing
-  - [ ] Add header buttons for Preset Export (.json download), Import (file upload/drop/paste), and FPS overlay toggle
+- [ ] Task: Top Navigation Header, Preset Import/Export & Studio HUD Controls (TDD)
+  - [ ] Write tests for preset drag-drop/clipboard import, file export download, and FPS overlay toggle
+  - [ ] Implement Header toolbar with Preset Export (.json download), Import (file upload/drop/paste), and FPS overlay toggle
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)

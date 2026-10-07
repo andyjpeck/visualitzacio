@@ -40,7 +40,7 @@ This bootstrap track establishes Visualització's foundational architecture: a h
     - **`%BEAT_FRAMES([decay_frames = 12])`:**
       - Transient attack pulse: Jumps to `1.0` on a detected beat, exponentially decaying to `0.0` over `decay_frames` frames (default: 12 frames).
 - **Universal Parameter Binding:**
-  - All component parameters (e.g., Frame Buffer `scale`, `rotation`, `opacity`, `positionX`, `positionY`, `blend_mode`) can be set to a static literal value or bound to a dynamic expression (e.g., `blend_mode: %FFT(0, 0.3, 1) * 0.5`, `scale: 1.0 + %BEAT(0.25) * 0.4`).
+  - All component parameters (e.g., Frame Buffer `scale`, `rotation`, `opacity`, `positionX`, `positionY`, `blend_mode`) can be set to a static literal value or bound to a dynamic expression (e.g., `opacity: %FFT(0, 0.3, 1) * 0.5`, `scale: 1.0 + %BEAT(0.25) * 0.4`).
 - **Fault-Tolerant Sandboxing & Modulo Preservation:**
   - Preprocessor selectively transforms system functions (`%NAME(` $\to$ `__fn_NAME(`) and special variables (`$NAME` $\to$ `__var_NAME`) prior to compiling with `expr-eval`.
   - The standard binary modulo operator `%` (e.g., `$FRAME % 60`) is preserved and fully functional.
@@ -111,7 +111,7 @@ This bootstrap track establishes Visualització's foundational architecture: a h
 8. Selecting the Frame Buffer node in the node graph opens its parameters in the bottom-right inspector.
 9. Clicking `f(x)` on any parameter toggles it between fixed widget and dynamic formula input.
 10. Typing `$` or `%` in the formula editor automatically opens the inline documentation dropdown showing variable and function definitions.
-11. Binding dynamic expressions with special values or system functions (e.g. `blend_mode: %FFT(0, 0.3, 1) * 0.5` or `scale: 1.0 + %BEAT(0.2) * 0.3`) dynamically modulates visual parameters to the audio at 60+ FPS.
+11. Binding dynamic expressions with special values or system functions (e.g. `opacity: %FFT(0, 0.3, 1) * 0.5` or `scale: 1.0 + %BEAT(0.2) * 0.3`) dynamically modulates visual parameters to the audio at 60+ FPS.
 12. Tweaking Frame Buffer blend modes (Replace, Additive, Maximum, Minimum, Subtractive, Multiplicative) produces the expected visual compositing.
 13. Every preset is structured with a single Master Frame Buffer root node; switching its blend mode to `Replace` starts each frame with a clean slate, while feedback blend modes (or partial opacity) feed previous frames into next frames via ping-pong FBOs to generate motion decay trails.
 14. Frame buffers can produce named buffers (`save_to="#NAME"`) and consume named buffers (`load_from="#NAME"`), allowing multiple child buffers to sample and composite an upstream buffer (e.g. four scaled instances in each corner). If a cycle or missing buffer occurs, the node disables and enters an error state.
