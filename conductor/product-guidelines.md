@@ -22,7 +22,9 @@ To maintain a unified, predictable visual language across all components when sw
 - **Dynamic Expression Mode (Active):**
   - Clicking `f(x)` smoothly morphs the fixed control into a monospace formula input field.
   - The `f(x)` button glows in the active theme accent color (e.g. electric cyan `#00f0ff`).
-  - **Autocomplete & Token Hints:** Typing `$` exposes an auto-suggest popover with descriptions for available special values (`$BASS`, `$MID`, `$TREBLE`, `$BPM`, `$RMS`, `$TIME`, `$BEAT`, `$FRAME`).
+  - **Autocomplete & Token Hints:**
+    - Typing `$` exposes an auto-suggest popover with descriptions for available special values (`$BASS`, `$MID`, `$TREBLE`, `$BPM`, `$RMS`, `$TIME`, `$BEAT`, `$FRAME`).
+    - Typing `%` exposes an auto-suggest popover for built-in system functions (e.g., `%FFT(lower_band, band_width, channel)` with parameter hints).
   - **Live Evaluation Preview:** A subtle chip displays the real-time calculated scalar value next to the field as audio plays.
   - **Error Indication:** If the user enters an invalid formula, the field border pulses amber/red with an inline tooltip, and the engine safely falls back to the previous valid frame value without breaking visual output.
 

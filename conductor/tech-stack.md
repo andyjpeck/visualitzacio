@@ -36,8 +36,10 @@ To guarantee uncompromised 60+ FPS rendering while providing rich interactive UI
 
 ## 5. Audio Engine & Hardware Integration
 - **Audio Processing:** Native Web Audio API (`AudioContext`, `AnalyserNode` with `fftSize = 2048`, `smoothingTimeConstant = 0.8`).
+- **Stereo & Multi-Channel Analysis:** Supports stereo channel splitting (`ChannelSplitterNode`) for distinct Left, Right, and Mono ($L+R$) spectral extraction.
 - **Logarithmic Frequency Binning:**
   - Converts linear FFT bins into logarithmic psychoacoustic energy bands: `bass` (20–250 Hz), `mid` (250–4000 Hz), and `treble` (4000–16000 Hz).
+  - Exponential mapping: $f(x) = 20 \times 10^{3x}$ for $x \in [0.0, 1.0]$ spanning 20Hz – 20,000Hz.
   - Includes asymmetric attack/decay smoothing and normalized RMS calculation.
   - Spectral flux transient detection for reactive beat pulses.
 - **Audio Inputs:**
@@ -49,7 +51,7 @@ To guarantee uncompromised 60+ FPS rendering while providing rich interactive UI
 ## 6. Dynamic Expression Engine & Universal Parameter Binding
 - **Parser & Evaluator:** `expr-eval` (lightweight, zero-`eval` safe mathematical expression evaluator).
 - **Scope & Frequency:** Strictly executed **once per frame** in the Render Data Plane for uniform and parameter modulation.
-- **Built-in Special Values Format:**
+- **Built-in Special Values ($VARIABLE):**
   - Formatted with a leading `$` in uppercase:
     - `$BASS`: Normalized low-frequency energy (0.0 – 1.0).
     - `$MID`: Normalized mid-frequency energy (0.0 – 1.0).
@@ -59,13 +61,21 @@ To guarantee uncompromised 60+ FPS rendering while providing rich interactive UI
     - `$BEAT`: Normalized pulse trigger (1.0 on transient beat, decaying to 0.0).
     - `$TIME`: Elapsed time in seconds since playback start.
     - `$FRAME`: Monotonically increasing frame counter integer.
+- **Built-in System Functions (%FUNCTION):**
+  - Formatted with a leading `%` in uppercase:
+    - **`%FFT(lower_band, band_width, channel)`:**
+      - Calculates energy of a custom frequency window.
+      - `lower_band`: Normalized start frequency in $[0.0, 1.0]$ mapped logarithmically to $[20\text{Hz}, 20000\text{Hz}]$.
+      - `band_width`: Frequency width in $[0.0, 1.0]$.
+      - `channel`: `0` = Left + Right (default mono mix), `1` = Left channel, `2` = Right channel.
+      - Example: `%FFT(0, 0.3, 1)` calculates the lowest 30% of frequencies (approx. 20Hz–158Hz) on the left audio channel.
 - **Universal Parameter Binding:**
   - Every component parameter (e.g., `scale`, `rotation`, `opacity`, `positionX`, `positionY`, `blend`) supports dual modes:
     - **Literal Mode:** Static scalar/boolean/enum value.
-    - **Expression Mode:** Compiles an expression string (e.g. `Blend: $BASS * 0.5`, `Scale: 1.0 + sin($TIME * 2) * $TREBLE`).
+    - **Expression Mode:** Compiles an expression string (e.g. `Blend: %FFT(0, 0.3, 1) * 0.5`, `Scale: 1.0 + sin($TIME * 2) * $TREBLE`).
 - **Compilation & Caching:**
   - Expression strings are compiled into AST execution functions on edit (`parser.compile(expr)`).
-  - Pre-allocated variable context object passed into `.evaluate(scope)` each frame to eliminate GC allocation.
+  - Pre-allocated variable context object and bound audio buffers passed into `.evaluate(scope)` each frame to eliminate GC allocation.
 - **Fault-Tolerant Sandboxing:**
   - Wraps evaluations in safe guards against syntax errors, division by zero, `NaN`, and `Infinity`.
   - On error, smoothly retains the previous valid frame value, clamps within valid component boundaries, and emits an inline warning state to the UI without interrupting the 60 FPS render pipeline.

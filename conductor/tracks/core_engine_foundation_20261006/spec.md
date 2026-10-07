@@ -1,7 +1,7 @@
 # Specification: Core Engine Foundation & Modular Frame Buffer MVP
 
 ## 1. Overview
-This bootstrap track establishes Visualització's foundational architecture: a high-performance, two-plane execution model decoupling React UI from a 60+ FPS Three.js/WebGL render loop, basic Web Audio frequency analysis, a **Dynamic Expression Engine** allowing any component parameter to be bound to mathematical formulas once per frame, and the initial hierarchical compositing pipeline featuring a **Static Image Component** nested inside a composable **Frame Buffer Container Component**.
+This bootstrap track establishes Visualització's foundational architecture: a high-performance, two-plane execution model decoupling React UI from a 60+ FPS Three.js/WebGL render loop, basic Web Audio frequency analysis, a **Dynamic Expression Engine** allowing any component parameter to be bound to mathematical formulas once per frame (including special variables like `$BASS` and system functions like `%FFT`), and the initial hierarchical compositing pipeline featuring a **Static Image Component** nested inside a composable **Frame Buffer Container Component**.
 
 ## 2. Functional Requirements
 
@@ -16,13 +16,22 @@ This bootstrap track establishes Visualització's foundational architecture: a h
 - Bundled audio test sample with play/pause/loop controls.
 - Microphone input toggle with clean musical capture flags (`echoCancellation: false`, `noiseSuppression: false`, `autoGainControl: false`).
 - Extraction of logarithmic normalized energy bands: `$BASS` (20–250 Hz), `$MID` (250–4000 Hz), `$TREBLE` (4000–16000 Hz), `$RMS` energy, `$BEAT` transient pulse, and elapsed `$TIME`.
+- Channel support: Stereo channel analysis for Left, Right, and Mono ($L+R$).
 
 ### 2.3 Dynamic Expression Engine & Universal Parameter Binding
 - **Per-Frame Evaluation:** Compiled mathematical expressions execute strictly once per frame within the Render Data Plane.
 - **Built-in Special Values ($VARIABLE):**
   - Formatted with leading `$` in uppercase: `$BASS`, `$MID`, `$TREBLE`, `$BPM`, `$RMS`, `$TIME`, `$BEAT`, `$FRAME`.
+- **Built-in System Functions (%FUNCTION):**
+  - Formatted with leading `%` in uppercase:
+    - **`%FFT(lower_band, band_width, channel)`:**
+      - Calculates energy of a custom frequency window.
+      - `lower_band`: Normalized start frequency in $[0.0, 1.0]$ mapped logarithmically ($f = 20 \times 10^{3x}$) to $[20\text{Hz}, 20000\text{Hz}]$.
+      - `band_width`: Frequency window width in $[0.0, 1.0]$.
+      - `channel`: `0` = Left + Right (default mono mix), `1` = Left channel, `2` = Right channel.
+      - Example: `%FFT(0, 0.3, 1)` calculates the lowest 30% of frequencies on the left channel.
 - **Universal Parameter Binding:**
-  - All component parameters (e.g., Frame Buffer `scale`, `rotation`, `opacity`, `positionX`, `positionY`, `blend`) can be set to a static literal value or bound to a dynamic expression (e.g., `Blend: $BASS * 0.5`, `Scale: 1.0 + $BASS * 0.4`).
+  - All component parameters (e.g., Frame Buffer `scale`, `rotation`, `opacity`, `positionX`, `positionY`, `blend`) can be set to a static literal value or bound to a dynamic expression (e.g., `Blend: %FFT(0, 0.3, 1) * 0.5`, `Scale: 1.0 + $BASS * 0.4`).
 - **Fault-Tolerant Sandboxing:**
   - Expressions compiled on edit via `expr-eval`.
   - Guarded against syntax errors, division by zero, `NaN`, and `Infinity`. Safe fallback to previous valid frame value.
@@ -48,7 +57,7 @@ This bootstrap track establishes Visualització's foundational architecture: a h
 - **Right Panel (Vertically Split):**
   - **Top Sub-Panel:** Interactive Node Pipeline Graph (`@xyflow/react`) displaying components and container connections.
   - **Bottom Sub-Panel (Node Inspector):** Dynamically displays the parameter controls for the selected node.
-  - **Universal `f(x)` Parameter Toggle:** Each parameter row displays an `f(x)` button. In Fixed mode, it renders knobs/sliders/inputs. When toggled into Expression mode, it morphs into a formula input with `$SPECIAL_VALUE` auto-suggestions, syntax validation, and live preview evaluation chips.
+  - **Universal `f(x)` Parameter Toggle:** Each parameter row displays an `f(x)` button. In Fixed mode, it renders knobs/sliders/inputs. When toggled into Expression mode, it morphs into a formula input with `$SPECIAL_VALUE` and `%FUNCTION` auto-suggestions, syntax validation, and live preview evaluation chips.
 - **Collapsible Bottom Bar:** In-app Diagnostics / Error Console with glowing warning/error badge.
 
 ## 3. Non-Functional Requirements
@@ -58,11 +67,12 @@ This bootstrap track establishes Visualització's foundational architecture: a h
 ## 4. Acceptance Criteria
 1. The web app builds and runs cleanly via `npm run dev` and passes `npm test`.
 2. Audio plays from bundled sample or mic, populating special values (`$BASS`, `$MID`, `$TREBLE`, `$RMS`).
-3. The Static Image component loads and displays an image inside a Frame Buffer container.
-4. Selecting the Frame Buffer node in the node graph opens its parameters in the bottom-right inspector.
-5. Clicking `f(x)` on any parameter toggles it between fixed widget and dynamic formula input.
-6. Binding dynamic expressions (e.g. `Blend: $BASS * 0.5` or `Scale: 1.0 + $BASS * 0.3`) dynamically modulates visual parameters to the audio at 60+ FPS.
-7. Tweaking Frame Buffer blend modes (Replace, Additive, Maximum, Minimum, Subtractive, Multiplicative) produces the expected visual compositing.
+3. System function `%FFT(lower, width, channel)` evaluates correctly with logarithmic frequency scaling and stereo channel selection.
+4. The Static Image component loads and displays an image inside a Frame Buffer container.
+5. Selecting the Frame Buffer node in the node graph opens its parameters in the bottom-right inspector.
+6. Clicking `f(x)` on any parameter toggles it between fixed widget and dynamic formula input.
+7. Binding dynamic expressions with special values or system functions (e.g. `Blend: %FFT(0, 0.3, 1) * 0.5` or `Scale: 1.0 + $BASS * 0.3`) dynamically modulates visual parameters to the audio at 60+ FPS.
+8. Tweaking Frame Buffer blend modes (Replace, Additive, Maximum, Minimum, Subtractive, Multiplicative) produces the expected visual compositing.
 
 ## 5. Out of Scope for Track 1
 - Full arbitrary GLSL shader editor / custom user shader authoring (Track 2).

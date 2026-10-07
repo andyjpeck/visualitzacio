@@ -17,8 +17,9 @@ The platform is designed to serve two complementary environments:
   - Universal parameter architecture: every component parameter can exist either as a fixed value (knob, slider, switch) or bind dynamically to a mathematical expression.
 - **Dynamic Expression Engine & Universal Parameter Binding:**
   - Mathematical formulas evaluated once per frame inside the Render Data Plane.
-  - Built-in special audio/system variables formatted with a `$` prefix (e.g., `$BASS`, `$MID`, `$TREBLE`, `$BPM`, `$RMS`, `$TIME`, `$BEAT`, `$FRAME`).
-  - Example: Binding blend amount to `$BASS * 0.5` or scale to `1.0 + sin($TIME * 2) * $TREBLE`.
+  - **Special Values ($VARIABLE):** Built-in audio/system variables formatted with `$` (e.g., `$BASS`, `$MID`, `$TREBLE`, `$BPM`, `$RMS`, `$TIME`, `$BEAT`, `$FRAME`).
+  - **System Functions (%FUNCTION):** Built-in DSP functions formatted with `%` prefix, such as `%FFT(lower_band, band_width, channel)` with normalized logarithmic frequency inputs $[0.0, 1.0]$ spanning 20Hz–20,000Hz.
+  - Example: Binding blend amount to `%FFT(0, 0.3, 1) * 0.5` or scale to `1.0 + sin($TIME * 2) * $TREBLE`.
 - **Reactive Audio Engine:**
   - Multi-source audio input: Microphone / Line-in, Local audio files (MP3, WAV, FLAC), and System / Tab audio capture (via getDisplayMedia / audio stream capture).
   - Web Audio API real-time FFT frequency spectrum, waveform time-domain data, beat detection, and RMS energy tracking exposed as reactive variables to all components.

@@ -17,7 +17,7 @@
 ## Phase 2: Reactive Audio Engine & Dynamic Expression Evaluator
 
 - [ ] Task: Audio Feature Extraction & DSP Utilities (TDD)
-  - [ ] Write unit tests for logarithmic frequency band aggregation (`$BASS`, `$MID`, `$TREBLE`)
+  - [ ] Write unit tests for logarithmic frequency band aggregation (`$BASS`, `$MID`, `$TREBLE`) and channel splitting
   - [ ] Write unit tests for RMS energy smoothing and attack/decay calculations
   - [ ] Implement `AudioAnalyzer` utility class computing normalized values from raw Web Audio `AnalyserNode`
 - [ ] Task: Web Audio Manager & Source Selector (TDD)
@@ -26,8 +26,9 @@
   - [ ] Bundle a lightweight default ambient/rhythm audio test sample
 - [ ] Task: Dynamic Expression Engine & Sandboxing (TDD)
   - [ ] Write unit tests for `$SPECIAL_VALUE` token extraction (`$BASS`, `$MID`, `$TREBLE`, `$BPM`, `$RMS`, `$TIME`, `$BEAT`, `$FRAME`)
+  - [ ] Write unit tests for `%FFT(lower, width, channel)` system function evaluation with logarithmic frequency mapping ($20\text{Hz}-20000\text{Hz}$)
   - [ ] Write unit tests for mathematical expression compilation, NaN/Infinity fallback, and zero-allocation per-frame evaluation
-  - [ ] Implement `ExpressionEngine` wrapping `expr-eval` with pre-allocated evaluation scope and safe numeric clamping
+  - [ ] Implement `ExpressionEngine` wrapping `expr-eval` with pre-allocated evaluation scope, `%FFT` function binding, and safe numeric clamping
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ---
@@ -54,7 +55,7 @@
 - [ ] Task: Frame Buffer Container Component Hierarchy (TDD)
   - [ ] Write tests for container child registration and hierarchical render dispatching
   - [ ] Implement `FrameBufferContainer` rendering child component textures into its render target
-  - [ ] Wire per-frame dynamic expression evaluation into Frame Buffer transformation uniforms (evaluating expressions like `Blend: $BASS * 0.5` or `Scale: 1.0 + $BASS * 0.3` each frame)
+  - [ ] Wire per-frame dynamic expression evaluation into Frame Buffer transformation uniforms (evaluating expressions like `Blend: %FFT(0, 0.3, 1) * 0.5` or `Scale: 1.0 + $BASS * 0.3` each frame)
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ---
@@ -66,7 +67,7 @@
   - [ ] Implement collapsible bottom Diagnostics Console with status bar alert badge
 - [ ] Task: Universal `f(x)` Parameter Component (TDD)
   - [ ] Write unit tests for parameter mode toggle (Fixed widget vs. Dynamic formula input)
-  - [ ] Implement `ParameterControl` component featuring the `f(x)` toggle button, formula autocomplete for `$SPECIAL_VALUE` tokens, and real-time evaluation preview chip
+  - [ ] Implement `ParameterControl` component featuring the `f(x)` toggle button, formula autocomplete for `$SPECIAL_VALUE` and `%FUNCTION` tokens, and real-time evaluation preview chip
 - [ ] Task: Split Layout & Node Inspector (TDD)
   - [ ] Write tests for node selection and inspector parameter synchronization
   - [ ] Implement Split-View UI: Left preview viewport, Right vertically split panel
