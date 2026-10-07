@@ -37,9 +37,10 @@
 
 ## Phase 3: Three.js Compositing Engine & 6 Custom Blend Modes
 
-- [ ] Task: Offscreen Frame Buffer Pipeline (TDD)
+- [ ] Task: Offscreen Frame Buffer Pipeline & Buffer Pool (TDD)
   - [ ] Write tests for render target allocation, resizing, and ping-pong texture management
-  - [ ] Implement `FrameBufferRenderer` managing `THREE.WebGLRenderTarget` textures
+  - [ ] Write tests for `BufferPool` managing named render targets (`save_to` and `load_from` lookup and fallback)
+  - [ ] Implement `BufferPool` and `FrameBufferRenderer` managing `THREE.WebGLRenderTarget` textures
 - [ ] Task: Custom GLSL Blend Mode Compositor (TDD)
   - [ ] Write tests verifying shader compilation and blend mode uniform switching
   - [ ] Implement GLSL fragment shader supporting all 6 blend modes: Replace, Additive, Maximum, Minimum, Subtractive, Multiplicative
@@ -54,12 +55,13 @@
   - [ ] Write tests for texture loading, drag-and-drop validation, and fallback sample image
   - [ ] Implement `StaticImageComponent` generating a `THREE.Texture` and quad geometry
   - [ ] Bundle a default test graphic
-- [ ] Task: Frame Buffer Container Component Hierarchy (TDD)
+- [ ] Task: Frame Buffer Container & Named Buffer Routing (TDD)
   - [ ] Write tests for container child registration and hierarchical render dispatching
-  - [ ] Implement `FrameBufferContainer` rendering child component textures into its render target
+  - [ ] Write tests for `save_to="#NAME"` publishing to `BufferPool` and `load_from="#NAME"` upstream texture sampling (e.g., 4-corner multi-quad replication)
+  - [ ] Implement `FrameBufferContainer` rendering child component textures into its render target, saving to named targets, and sampling from loaded buffers
   - [ ] Wire per-frame dynamic expression evaluation into Frame Buffer transformation uniforms (evaluating expressions like `Blend: %FFT(0, 0.3, 1) * 0.5` or `Scale: 1.0 + %BEAT(0.25) * 0.3` each frame)
 - [ ] Task: Declarative Nested JSON Preset Serializer (TDD)
-  - [ ] Write unit tests for nested tree serialization (`children` arrays) and deserialization
+  - [ ] Write unit tests for nested tree serialization (`children` arrays, `save_to`, `load_from`, expression parameters) and deserialization
   - [ ] Implement `PresetSerializer` importing/exporting full component trees and parameter expression states
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 

@@ -12,8 +12,9 @@ The platform is designed to serve two complementary environments:
 - **VJs, DJs & Live Performers:** Need a modular, highly responsive visual instrument that maps directly to hardware MIDI controllers for stage performances.
 
 ## Core Capabilities
-- **Modular Component Pipeline:** 
+- **Modular Component Pipeline & Named Buffer Routing:** 
   - Composable node graph where visual generators, geometric transforms, color mappers, feedback loops, and post-processing passes can be chained in real time.
+  - **Named Frame Buffers (`#BUFFER_NAME`):** Frame Buffer components can produce named textures (`save_to="#NAME"`) and consume named textures (`load_from="#NAME"`). This allows complex multi-quad compositing, tiling, feedback loops, and picture-in-picture arrangements (e.g. rendering a graphic into `#BUFFER_A` and compositing four scaled, transposed copies into the corners of a master buffer).
   - Universal parameter architecture: every component parameter can exist either as a fixed value (knob, slider, switch) or bind dynamically to a mathematical expression.
 - **Dynamic Expression Engine & Universal Parameter Binding:**
   - Mathematical formulas evaluated once per frame inside the Render Data Plane.

@@ -49,10 +49,15 @@ This bootstrap track establishes Visualització's foundational architecture: a h
 - **Static Image Component:**
   - Loads an image (JPG/PNG) via drag-and-drop or file picker, with an included bundled default test graphic.
   - Generates a WebGL texture source. Exposes no transformation knobs directly on the raw asset.
-- **Frame Buffer Component (Container / Compositor):**
+- **Frame Buffer Component (Container, Compositor & Buffer Router):**
   - Serves as a modular container for child visual components (such as the Static Image).
   - Renders child components into an offscreen `THREE.WebGLRenderTarget`.
   - Exposes container-level modulation parameters: Position (X, Y), Scale/Zoom, Rotation, Opacity, and Blend Mode.
+  - **Named Buffer Routing (`save_to` & `load_from`):**
+    - **Buffer Production (`save_to="#NAME"`):** Frame buffers can publish their rendered output into a global `BufferPool` keyed by a normalized identifier (e.g., `#BUFFER_A`).
+    - **Buffer Consumption (`load_from="#NAME"`):** Frame buffers can load and sample an upstream rendered texture from `BufferPool` as a textured quad before or alongside compositing child components.
+    - **Compositing & Multi-Quad Routing:** Enables complex multi-pass routing such as 4-corner scaled replication (e.g., loading `#BUFFER_A` into 4 child buffers scaled to 25% and translated to upper-left, upper-right, lower-left, lower-right), recursive feedback echoes, and PIP.
+    - **Cycle Prevention & Graceful Fallback:** Prevents recursive freeze by isolating frame passes or using ping-pong references. If a referenced buffer has not yet rendered or does not exist, it safely falls back to a transparent empty texture with a diagnostic warning.
   - Supports 6 distinct blend modes:
     1. **Replace:** Overwrites existing pixels completely with the new layer data.
     2. **Additive (Add):** Adds color values of top layer to background layer (bright spots glow/overexpose, black areas stay unchanged).
@@ -98,7 +103,8 @@ This bootstrap track establishes Visualització's foundational architecture: a h
 9. Typing `$` or `%` in the formula editor automatically opens the inline documentation dropdown showing variable definitions and live audio values.
 10. Binding dynamic expressions with special values or system functions (e.g. `Blend: %FFT(0, 0.3, 1) * 0.5` or `Scale: 1.0 + %BEAT(0.2) * 0.3`) dynamically modulates visual parameters to the audio at 60+ FPS.
 11. Tweaking Frame Buffer blend modes (Replace, Additive, Maximum, Minimum, Subtractive, Multiplicative) produces the expected visual compositing.
-12. Exporting the active setup downloads a valid nested JSON preset file; importing that file perfectly restores the component tree, parameter expressions, and visual state.
+12. Frame buffers can produce named buffers (`save_to="#NAME"`) and consume named buffers (`load_from="#NAME"`), allowing multiple child buffers to sample and composite an upstream buffer (e.g. four scaled instances in each corner).
+13. Exporting the active setup downloads a valid nested JSON preset file; importing that file perfectly restores the component tree, parameter expressions, and visual state.
 
 ## 5. Out of Scope for Track 1
 - Full arbitrary GLSL shader editor / custom user shader authoring (Track 2).

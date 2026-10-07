@@ -27,6 +27,12 @@ To guarantee uncompromised 60+ FPS rendering while providing rich interactive UI
 
 ## 4. Graphics, Shaders & Feedback Rendering Pipeline
 - **3D / 2D Engine:** Three.js (WebGL 2.0 rendering context)
+- **Named Buffer Architecture (`save_to` & `load_from`):**
+  - Managed via an offscreen `BufferPool` maintaining a registry of `THREE.WebGLRenderTarget` instances keyed by `#NAME`.
+  - Any Frame Buffer component can publish its rendered texture to the pool via `save_to="#NAME"`.
+  - Any Frame Buffer component can consume an existing buffer via `load_from="#NAME"`, rendering the sampled texture on a quad with independent scaling, position, rotation, opacity, and blend modes.
+  - Multiple components can simultaneously consume the same buffer (e.g. four scaled copies in four corners).
+  - Topological sort guarantees upstream producer buffers render prior to downstream consumers.
 - **Dual-FBO Ping-Pong Feedback Loop:**
   - Emulates classic Winamp AVS and MilkDrop frame feedback (warp meshes, decay trails, motion vectors).
   - Maintains dual `THREE.WebGLRenderTarget` instances; renders current scene + feedback pass into Target B reading Target A as a texture uniform, swapping targets each frame.
