@@ -12,20 +12,13 @@ The platform is designed to serve two complementary environments:
 - **VJs, DJs & Live Performers:** Need a modular, highly responsive visual instrument that maps directly to hardware MIDI controllers for stage performances.
 
 ## Core Capabilities
-- **Modular Component Pipeline & Named Buffer Routing:** 
-  - **Master Frame Buffer Root:** Every preset is structured with a single **Master Frame Buffer** at its root, inside of which all visual generators, child buffers, and transformations live.
-  - **Frame Feedback vs. Clean Slate:** The Master Frame Buffer fully supports blend modes (Replace, Additive, Maximum, Minimum, Subtractive, Multiplicative) and opacity. When set to `Replace`, every frame starts with a clean slate; when set to additive, maximum, or feedback blend modes, the previous frame is continuously fed into the next frame to generate motion trails, decay, and feedback textures.
-  - **Named Frame Buffers (`@BUFFER_NAME`):** Frame Buffer components can produce named textures (`save_to="@NAME"`) and consume named textures (`load_from="@NAME"`). This allows complex multi-quad compositing, tiling, and picture-in-picture arrangements (e.g. rendering a graphic into `@BUFFER_A` and compositing four scaled, transposed copies into the corners of a Master Frame Buffer). If a cyclic dependency or missing buffer is detected, the affected buffer is disabled and flagged with an error state rather than crashing or freezing.
+- **Modular Component Pipeline & Visual Hierarchy:**
+  - Dynamic visualizer trees built from composable visual components and containers (such as [Frame Buffer](../component_proposals/frame_buffer.md), [Static Image](../component_proposals/static_image.md), and [Duperscope](../component_proposals/duperscope.md)).
   - Universal parameter architecture: every component parameter can exist either as a fixed value (knob, slider, switch) or bind dynamically to a mathematical expression.
-  - **Screen Coordinate System (Winamp AVS Standard):** All visual positioning and screen coordinates follow the Winamp AVS / WebGL NDC standard ranging from `-1.0` to `1.0` with `(0.0, 0.0)` at center: `x` spans `-1.0` (left) to `1.0` (right), and `y` spans `-1.0` (bottom) to `1.0` (top).
 - **Dynamic Expression Engine & Universal Parameter Binding:**
   - Mathematical formulas evaluated once per frame inside the Render Data Plane, supporting standard mathematical operators and functions.
-  - **Special Values ($VARIABLE):** Built-in audio/system variables formatted with `$` (e.g., `$BASS`, `$MID`, `$TREBLE`, `$BPM`, `$RMS`, `$TIME`, `$BEAT` [binary 1/0], `$FRAME`).
-  - **System Functions (#FUNCTION):** Built-in DSP functions formatted with `#` prefix:
-    - `#FFT(lower_band, band_width, channel)` with normalized logarithmic frequency inputs $[0.0, 1.0]$.
-    - `#BEAT([decay_seconds = 0.2])` / `#BEAT_SECONDS([decay_seconds = 0.2])`: Transient attack pulse (1.0 decaying exponentially to 0.0 over time in seconds).
-    - `#BEAT_FRAMES([decay_frames = 12])`: Transient attack pulse (1.0 decaying exponentially to 0.0 over frame count).
-  - Example: Binding opacity to `#FFT(0, 0.3, 1) * 0.5` or scale to `1.0 + #BEAT(0.3) * 0.5`.
+  - **Special Values (`$VARIABLE`):** Real-time reactive variables representing audio energy, timing, and engine state (e.g. `$BASS`, `$MID`, `$TREBLE`, `$BPM`, `$RMS`, `$TIME`, `$BEAT`, `$FRAME`). See the complete [System Variables Reference](./system_variables.md).
+  - **System Functions (`#FUNCTION`):** Built-in DSP and envelope functions for frequency sampling, time-domain waveforms, and beat decay pulses (e.g. `#FFT(...)`, `#WAVEFORM(...)`, `#BEAT(...)`, `#BEAT_FRAMES(...)`). See the complete [System Functions Reference](./system_functions.md).
 - **Reactive Audio Engine:**
   - Multi-source audio input: Microphone / Line-in, Local audio files (MP3, WAV, FLAC), and System / Tab audio capture (via getDisplayMedia / audio stream capture).
   - Web Audio API real-time FFT frequency spectrum, waveform time-domain data, beat detection, and RMS energy tracking exposed as reactive variables to all components.

@@ -62,53 +62,17 @@ To guarantee uncompromised 60+ FPS rendering while providing rich interactive UI
   - `getDisplayMedia` (system/tab audio capture with fallback).
 - **Hardware Integration:** Web MIDI API (`navigator.requestMIDIAccess`) with dynamic MIDI Learn, state machine, and value smoothing (slew-rate limiting / lerp).
 
-## 6. Dynamic Expression Engine & Universal Parameter Binding
-- **Parser & Evaluator:** `expr-eval` (lightweight, zero-`eval` safe mathematical expression evaluator).
-- **Scope & Frequency:** Strictly executed **once per frame** in the Render Data Plane for uniform and parameter modulation.
-- **Built-in Special Values ($VARIABLE):**
-  - Formatted with a leading `$` in uppercase:
-    - `$BASS`: Normalized low-frequency energy (0.0 – 1.0).
-    - `$MID`: Normalized mid-frequency energy (0.0 – 1.0).
-    - `$TREBLE`: Normalized high-frequency energy (0.0 – 1.0).
-    - `$RMS`: Overall root-mean-square audio energy (0.0 – 1.0).
-    - `$BPM`: Detected or configured tempo in beats per minute.
-    - `$BEAT`: **Binary trigger: `1.0` if the current frame is a beat, `0.0` otherwise.**
-    - `$TIME`: Elapsed time in seconds since playback start.
-    - `$FRAME`: Monotonically increasing frame counter integer.
-- **Built-in System Functions (#FUNCTION):**
-  - Formatted with a leading `#` in uppercase (all `#` functions require parentheses):
-    - **`#FFT(lower_band, band_width, channel)`:**
-      - Calculates energy of a custom frequency window.
-      - `lower_band`: Normalized start frequency in $[0.0, 1.0]$ mapped logarithmically to $[20\text{Hz}, 20000\text{Hz}]$.
-      - `band_width`: Frequency width in $[0.0, 1.0]$.
-      - `channel`: `0` = Left + Right (default mono mix), `1` = Left channel, `2` = Right channel.
-      - Example: `#FFT(0, 0.3, 1)` calculates the lowest 30% of frequencies (approx. 20Hz–158Hz) on the left audio channel.
-    - **`#WAVEFORM(position, [channel = 0])`:**
-      - Samples instantaneous time-domain audio waveform amplitude at a normalized position.
-      - `position`: Normalized sample index in $[0.0, 1.0]$.
-      - `channel`: `0` = Left + Right (default mono mix), `1` = Left channel, `2` = Right channel.
-      - Returns: Instantaneous audio amplitude in $[-1.0, 1.0]$.
-    - **`#BEAT([decay_seconds = 0.2])` / `#BEAT_SECONDS([decay_seconds = 0.2])`:**
-      - Transient attack pulse envelope: Jumps to `1.0` on beat and decays exponentially to `0.0` over `decay_seconds` (default: 0.2s).
-    - **`#BEAT_FRAMES([decay_frames = 12])`:**
-      - Transient attack pulse envelope: Jumps to `1.0` on beat and decays exponentially to `0.0` over `decay_frames` frames (default: 12 frames).
-- **Universal Parameter Binding:**
-  - Animatable component parameters (e.g. Frame Buffer `scale`, `rotation`, `opacity`, `positionX`, `positionY`, `blend_mode`) support dual modes:
-    - **Literal Mode (Schema `"mode": "literal"`, UI "Fixed Mode"):** Static scalar/boolean/enum value.
-    - **Expression Mode (Schema `"mode": "expression"`, UI "Dynamic Expression Mode"):** Compiles an expression string (e.g. `Opacity: #FFT(0, 0.3, 1) * 0.5`, `Scale: 1.0 + #BEAT(0.3) * 0.4`).
-- **Token Preprocessing & Function Syntax:**
-  - Standard `expr-eval` does not natively parse `$` or `#` identifiers.
-  - All `#` system functions require parentheses (e.g., `#BEAT()`).
-  - An `ExpressionPreprocessor` transforms tokens prior to compilation:
-    - Rewrites function calls: `/#([A-Za-z_][A-Za-z0-9_]*)\s*\(/g` $\to$ `__fn_$1(`
-    - Rewrites variables: `/\$([A-Za-z_][A-Za-z0-9_]*)/g` $\to$ `__var_$1`
-    - Standard mathematical operations and functions remain untouched.
-- **Compilation & Caching:**
-  - Preprocessed expression strings compile into AST execution functions on edit (`parser.compile(expr)`).
-  - Pre-allocated variable context object (`scope`) is mutated in-place each frame to eliminate garbage collection.
+## 6. Dynamic Expression Engine
+- **Parser & Evaluator:** `expr-eval` (lightweight, zero-`eval` safe mathematical expression evaluator compiling expressions into AST execution functions).
+- **Execution & Scope Lifecycle:**
+  - Evaluated **once per frame** in the Render Data Plane for uniform and parameter modulation.
+  - Pre-allocated variable scope object (`scope`) is mutated in-place each frame to eliminate garbage collection.
+- **Language & Symbol Reference:**
+  - System reactive variables (`$VARIABLE`): See [System Variables Reference](./system_variables.md).
+  - Built-in audio/DSP functions (`#FUNCTION`): See [System Functions Reference](./system_functions.md).
 - **Fault-Tolerant Sandboxing:**
   - Wraps evaluations in safe guards against syntax errors, division by zero, `NaN`, and `Infinity`.
-  - On error, smoothly retains the previous valid frame value (or falls back to the default literal value on frame 0) without interrupting the 60 FPS render pipeline.
+  - On error, smoothly retains the previous valid frame value (or falls back to the default fixed value on frame 0) without interrupting the 60 FPS render pipeline.
 
 ## 7. Declarative JSON Preset Schema & Persistence
 - **Architecture:** The entire visualizer preset is serialized as a single, portable, human-readable JSON document for seamless import, export, and sharing.
@@ -126,16 +90,16 @@ To guarantee uncompromised 60+ FPS rendering while providing rich interactive UI
       "is_master": true,
       "parameters": {
         "scale": { "mode": "expression", "value": "1.0 + #BEAT(0.25) * 0.4" },
-        "rotation": { "mode": "literal", "value": 0.0 },
-        "opacity": { "mode": "literal", "value": 1.0 },
-        "blend_mode": { "mode": "literal", "value": "replace" }
+        "rotation": { "mode": "fixed", "value": 0.0 },
+        "opacity": { "mode": "fixed", "value": 1.0 },
+        "blend_mode": { "mode": "fixed", "value": "replace" }
       },
       "children": [
         {
           "id": "img_bg",
           "type": "static_image",
           "parameters": {
-            "source_url": { "mode": "literal", "value": "assets/default.jpg" }
+            "source_url": { "mode": "fixed", "value": "assets/default.jpg" }
           }
         }
       ]

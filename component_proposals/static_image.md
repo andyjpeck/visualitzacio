@@ -47,9 +47,9 @@ flowchart TD
   "type": "static_image",
   "enabled": true,
   "parameters": {
-    "source_url": { "mode": "literal", "value": "/assets/default_graphic.png" },
-    "fit_mode": { "mode": "literal", "value": "cover" },
-    "filter": { "mode": "literal", "value": "linear" }
+    "source_url": { "mode": "fixed", "value": "/assets/default_graphic.png" },
+    "fit_mode": { "mode": "fixed", "value": "cover" },
+    "filter": { "mode": "fixed", "value": "linear" }
   }
 }
 ```
@@ -68,7 +68,7 @@ Static Image nested inside a Frame Buffer that scales with the beat:
   "type": "frame_buffer",
   "enabled": true,
   "parameters": {
-    "blend_mode": { "mode": "literal", "value": "additive" },
+    "blend_mode": { "mode": "fixed", "value": "additive" },
     "scale": { "mode": "expression", "value": "1.0 + #BEAT(0.2) * 0.3" },
     "opacity": { "mode": "expression", "value": "0.8 + ($BASS * 0.2)" }
   },
@@ -79,9 +79,9 @@ Static Image nested inside a Frame Buffer that scales with the beat:
       "type": "static_image",
       "enabled": true,
       "parameters": {
-        "source_url": { "mode": "literal", "value": "/assets/smiley.png" },
-        "fit_mode": { "mode": "literal", "value": "contain" },
-        "filter": { "mode": "literal", "value": "linear" }
+        "source_url": { "mode": "fixed", "value": "/assets/smiley.png" },
+        "fit_mode": { "mode": "fixed", "value": "contain" },
+        "filter": { "mode": "fixed", "value": "linear" }
       }
     }
   ]

@@ -107,14 +107,14 @@ Supports 6 distinct WebGL compositing blend modes:
   "enabled": true,
   "is_master": true,
   "parameters": {
-    "blend_mode": { "mode": "literal", "value": "replace" },
-    "opacity": { "mode": "literal", "value": 1.0 },
-    "scale": { "mode": "literal", "value": 1.0 },
-    "rotation": { "mode": "literal", "value": 0.0 },
-    "positionX": { "mode": "literal", "value": 0.0 },
-    "positionY": { "mode": "literal", "value": 0.0 },
-    "save_to": { "mode": "literal", "value": null },
-    "load_from": { "mode": "literal", "value": null }
+    "blend_mode": { "mode": "fixed", "value": "replace" },
+    "opacity": { "mode": "fixed", "value": 1.0 },
+    "scale": { "mode": "fixed", "value": 1.0 },
+    "rotation": { "mode": "fixed", "value": 0.0 },
+    "positionX": { "mode": "fixed", "value": 0.0 },
+    "positionY": { "mode": "fixed", "value": 0.0 },
+    "save_to": { "mode": "fixed", "value": null },
+    "load_from": { "mode": "fixed", "value": null }
   },
   "children": []
 }
@@ -145,8 +145,8 @@ A master scene renders a visual element into `@BUFFER_A`, and four child buffers
       "type": "frame_buffer",
       "enabled": true,
       "parameters": {
-        "save_to": { "mode": "literal", "value": "@BUFFER_A" },
-        "opacity": { "mode": "literal", "value": 0.0 }
+        "save_to": { "mode": "fixed", "value": "@BUFFER_A" },
+        "opacity": { "mode": "fixed", "value": 0.0 }
       },
       "children": [ /* Visual generator child */ ]
     },
@@ -154,40 +154,40 @@ A master scene renders a visual element into `@BUFFER_A`, and four child buffers
       "id": "corner-tl",
       "type": "frame_buffer",
       "parameters": {
-        "load_from": { "mode": "literal", "value": "@BUFFER_A" },
-        "scale": { "mode": "literal", "value": 0.5 },
-        "positionX": { "mode": "literal", "value": -0.5 },
-        "positionY": { "mode": "literal", "value": 0.5 }
+        "load_from": { "mode": "fixed", "value": "@BUFFER_A" },
+        "scale": { "mode": "fixed", "value": 0.5 },
+        "positionX": { "mode": "fixed", "value": -0.5 },
+        "positionY": { "mode": "fixed", "value": 0.5 }
       }
     },
     {
       "id": "corner-tr",
       "type": "frame_buffer",
       "parameters": {
-        "load_from": { "mode": "literal", "value": "@BUFFER_A" },
-        "scale": { "mode": "literal", "value": 0.5 },
-        "positionX": { "mode": "literal", "value": 0.5 },
-        "positionY": { "mode": "literal", "value": 0.5 }
+        "load_from": { "mode": "fixed", "value": "@BUFFER_A" },
+        "scale": { "mode": "fixed", "value": 0.5 },
+        "positionX": { "mode": "fixed", "value": 0.5 },
+        "positionY": { "mode": "fixed", "value": 0.5 }
       }
     },
     {
       "id": "corner-bl",
       "type": "frame_buffer",
       "parameters": {
-        "load_from": { "mode": "literal", "value": "@BUFFER_A" },
-        "scale": { "mode": "literal", "value": 0.5 },
-        "positionX": { "mode": "literal", "value": -0.5 },
-        "positionY": { "mode": "literal", "value": -0.5 }
+        "load_from": { "mode": "fixed", "value": "@BUFFER_A" },
+        "scale": { "mode": "fixed", "value": 0.5 },
+        "positionX": { "mode": "fixed", "value": -0.5 },
+        "positionY": { "mode": "fixed", "value": -0.5 }
       }
     },
     {
       "id": "corner-br",
       "type": "frame_buffer",
       "parameters": {
-        "load_from": { "mode": "literal", "value": "@BUFFER_A" },
-        "scale": { "mode": "literal", "value": 0.5 },
-        "positionX": { "mode": "literal", "value": 0.5 },
-        "positionY": { "mode": "literal", "value": -0.5 }
+        "load_from": { "mode": "fixed", "value": "@BUFFER_A" },
+        "scale": { "mode": "fixed", "value": 0.5 },
+        "positionX": { "mode": "fixed", "value": 0.5 },
+        "positionY": { "mode": "fixed", "value": -0.5 }
       }
     }
   ]
@@ -205,7 +205,7 @@ Master Frame Buffer uses `additive` blend mode with slight decay and scale modul
   "enabled": true,
   "is_master": true,
   "parameters": {
-    "blend_mode": { "mode": "literal", "value": "additive" },
+    "blend_mode": { "mode": "fixed", "value": "additive" },
     "opacity": { "mode": "expression", "value": "0.92 - ($BASS * 0.05)" },
     "scale": { "mode": "expression", "value": "1.02 + ($BASS * 0.02)" },
     "rotation": { "mode": "expression", "value": "0.01" }

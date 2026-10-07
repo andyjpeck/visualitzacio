@@ -119,14 +119,14 @@ Duperscope translates evaluated points directly into a dynamic `THREE.BufferGeom
   "type": "duperscope",
   "enabled": true,
   "parameters": {
-    "points": { "mode": "literal", "value": 400 },
-    "audio_mode": { "mode": "literal", "value": "waveform" },
-    "channel": { "mode": "literal", "value": "center" },
-    "draw_mode": { "mode": "literal", "value": "lines" },
-    "code_init": { "mode": "literal", "value": "n = 400; rot = 0; zoom = 1.0;" },
-    "code_frame": { "mode": "literal", "value": "rot = rot + 0.01 + ($BASS * 0.03); r = 0.2 + ($BASS * 0.8); g = 0.5; b = 1.0;" },
-    "code_beat": { "mode": "literal", "value": "zoom = 1.3;" },
-    "code_point": { "mode": "literal", "value": "zoom = zoom + (1.0 - zoom) * 0.05;\nrad = i * PI * 2;\ndist = (0.5 + v * 0.3) * zoom;\nx = cos(rad + rot) * dist;\ny = sin(rad + rot) * dist;" }
+    "points": { "mode": "fixed", "value": 400 },
+    "audio_mode": { "mode": "fixed", "value": "waveform" },
+    "channel": { "mode": "fixed", "value": "center" },
+    "draw_mode": { "mode": "fixed", "value": "lines" },
+    "code_init": { "mode": "fixed", "value": "n = 400; rot = 0; zoom = 1.0;" },
+    "code_frame": { "mode": "fixed", "value": "rot = rot + 0.01 + ($BASS * 0.03); r = 0.2 + ($BASS * 0.8); g = 0.5; b = 1.0;" },
+    "code_beat": { "mode": "fixed", "value": "zoom = 1.3;" },
+    "code_point": { "mode": "fixed", "value": "zoom = zoom + (1.0 - zoom) * 0.05;\nrad = i * PI * 2;\ndist = (0.5 + v * 0.3) * zoom;\nx = cos(rad + rot) * dist;\ny = sin(rad + rot) * dist;" }
   }
 }
 ```

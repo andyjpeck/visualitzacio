@@ -98,7 +98,7 @@ This bootstrap track establishes Visualització's foundational architecture: a h
 - **Nested Component Hierarchy:**
   - The root element (`root`) is strictly the **Master Frame Buffer** (`is_master: true`), containing child components and nested buffers in its `children` array.
   - Containers serialize a `children` array containing nested child components.
-  - Parameters serialize with `{ "mode": "literal" | "expression", "value": ... }`.
+  - Parameters serialize with `{ "mode": "fixed" | "expression", "value": ... }`.
   - Manual canvas node coordinates are not serialized; upon preset import, the editor executes an automatic hierarchical tree layout.
 - **Import / Export Actions:**
   - Export: Download active preset as a `.json` file or copy to clipboard.

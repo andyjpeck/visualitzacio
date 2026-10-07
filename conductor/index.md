@@ -5,6 +5,8 @@
 - [Product Definition](./product.md)
 - [Product Guidelines](./product-guidelines.md)
 - [Tech Stack](./tech-stack.md)
+- [System Variables Reference](./system_variables.md)
+- [System Functions Reference](./system_functions.md)
 
 ## Workflow
 
