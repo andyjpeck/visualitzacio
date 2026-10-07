@@ -1,7 +1,7 @@
 # Specification: Core Engine Foundation & Modular Frame Buffer MVP
 
 ## 1. Overview
-This bootstrap track establishes Visualització's foundational architecture: a high-performance, two-plane execution model decoupling React UI from a 60+ FPS Three.js/WebGL render loop, basic Web Audio frequency analysis, and the initial hierarchical compositing pipeline featuring a **Static Image Component** nested inside a composable **Frame Buffer Container Component**.
+This bootstrap track establishes Visualització's foundational architecture: a high-performance, two-plane execution model decoupling React UI from a 60+ FPS Three.js/WebGL render loop, basic Web Audio frequency analysis, a **Dynamic Expression Engine** allowing any component parameter to be bound to mathematical formulas once per frame, and the initial hierarchical compositing pipeline featuring a **Static Image Component** nested inside a composable **Frame Buffer Container Component**.
 
 ## 2. Functional Requirements
 
@@ -15,9 +15,19 @@ This bootstrap track establishes Visualització's foundational architecture: a h
 - Web Audio `AudioContext` and `AnalyserNode` ($fftSize=2048$, smoothing $0.8$).
 - Bundled audio test sample with play/pause/loop controls.
 - Microphone input toggle with clean musical capture flags (`echoCancellation: false`, `noiseSuppression: false`, `autoGainControl: false`).
-- Extraction of logarithmic normalized energy bands: `bass` (20–250 Hz), `mid` (250–4000 Hz), `treble` (4000–16000 Hz), and overall `rms`.
+- Extraction of logarithmic normalized energy bands: `$BASS` (20–250 Hz), `$MID` (250–4000 Hz), `$TREBLE` (4000–16000 Hz), `$RMS` energy, `$BEAT` transient pulse, and elapsed `$TIME`.
 
-### 2.3 Modular Visual Pipeline: Image & Frame Buffer Components
+### 2.3 Dynamic Expression Engine & Universal Parameter Binding
+- **Per-Frame Evaluation:** Compiled mathematical expressions execute strictly once per frame within the Render Data Plane.
+- **Built-in Special Values ($VARIABLE):**
+  - Formatted with leading `$` in uppercase: `$BASS`, `$MID`, `$TREBLE`, `$BPM`, `$RMS`, `$TIME`, `$BEAT`, `$FRAME`.
+- **Universal Parameter Binding:**
+  - All component parameters (e.g., Frame Buffer `scale`, `rotation`, `opacity`, `positionX`, `positionY`, `blend`) can be set to a static literal value or bound to a dynamic expression (e.g., `Blend: $BASS * 0.5`, `Scale: 1.0 + $BASS * 0.4`).
+- **Fault-Tolerant Sandboxing:**
+  - Expressions compiled on edit via `expr-eval`.
+  - Guarded against syntax errors, division by zero, `NaN`, and `Infinity`. Safe fallback to previous valid frame value.
+
+### 2.4 Modular Visual Pipeline: Image & Frame Buffer Components
 - **Static Image Component:**
   - Loads an image (JPG/PNG) via drag-and-drop or file picker, with an included bundled default test graphic.
   - Generates a WebGL texture source. Exposes no transformation knobs directly on the raw asset.
@@ -32,26 +42,27 @@ This bootstrap track establishes Visualització's foundational architecture: a h
     4. **Minimum Blend:** Compares pixel values and keeps the lower (darker) value.
     5. **Subtractive:** Subtracts the top layer's color values from the underlying layer.
     6. **Multiplicative (Multiply):** Multiplies background and top layer color channels, resulting in darker/shaded effects.
-  - Parameters can be manipulated manually or bound to audio energy (e.g. Bass -> Scale).
 
-### 2.4 Split-View Interface & Parameter Inspector
+### 2.5 Split-View Interface, Node Inspector & `f(x)` Switcher
 - **Left Panel:** Live Three.js WebGL visualizer canvas rendering the output at 60+ FPS.
 - **Right Panel (Vertically Split):**
-  - **Top Sub-Panel:** Interactive Node Pipeline Graph (`@xyflow/react`) displaying components, container connections, and audio reactive cables.
-  - **Bottom Sub-Panel (Node Inspector):** Dynamically displays the detailed parameter controls (sliders, knobs, dropdowns, formula inputs) for whichever node is currently selected on the graph.
+  - **Top Sub-Panel:** Interactive Node Pipeline Graph (`@xyflow/react`) displaying components and container connections.
+  - **Bottom Sub-Panel (Node Inspector):** Dynamically displays the parameter controls for the selected node.
+  - **Universal `f(x)` Parameter Toggle:** Each parameter row displays an `f(x)` button. In Fixed mode, it renders knobs/sliders/inputs. When toggled into Expression mode, it morphs into a formula input with `$SPECIAL_VALUE` auto-suggestions, syntax validation, and live preview evaluation chips.
 - **Collapsible Bottom Bar:** In-app Diagnostics / Error Console with glowing warning/error badge.
 
 ## 3. Non-Functional Requirements
 - **Performance:** Maintain 60+ FPS without garbage collection stutter during audio playback.
-- **Zero-Crash / Error Boundary:** Graceful handling of image loading failures or audio context suspension.
+- **Zero-Crash / Error Boundary:** Graceful handling of image loading failures, invalid formulas, or audio context suspension.
 
 ## 4. Acceptance Criteria
 1. The web app builds and runs cleanly via `npm run dev` and passes `npm test`.
-2. Audio plays from bundled sample or mic, showing live FFT reactivity.
+2. Audio plays from bundled sample or mic, populating special values (`$BASS`, `$MID`, `$TREBLE`, `$RMS`).
 3. The Static Image component loads and displays an image inside a Frame Buffer container.
 4. Selecting the Frame Buffer node in the node graph opens its parameters in the bottom-right inspector.
-5. Tweaking Frame Buffer scale, rotation, opacity, and blend modes transforms the rendered image in real time at 60+ FPS.
-6. Binding audio energy (e.g., bass) to the Frame Buffer container visibly modulates its scale/rotation to the music.
+5. Clicking `f(x)` on any parameter toggles it between fixed widget and dynamic formula input.
+6. Binding dynamic expressions (e.g. `Blend: $BASS * 0.5` or `Scale: 1.0 + $BASS * 0.3`) dynamically modulates visual parameters to the audio at 60+ FPS.
+7. Tweaking Frame Buffer blend modes (Replace, Additive, Maximum, Minimum, Subtractive, Multiplicative) produces the expected visual compositing.
 
 ## 5. Out of Scope for Track 1
 - Full arbitrary GLSL shader editor / custom user shader authoring (Track 2).

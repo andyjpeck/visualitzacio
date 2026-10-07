@@ -14,16 +14,20 @@
 
 ---
 
-## Phase 2: Reactive Audio Engine & Logarithmic Frequency Analysis
+## Phase 2: Reactive Audio Engine & Dynamic Expression Evaluator
 
 - [ ] Task: Audio Feature Extraction & DSP Utilities (TDD)
-  - [ ] Write unit tests for logarithmic frequency band aggregation (`bass`, `mid`, `treble`)
+  - [ ] Write unit tests for logarithmic frequency band aggregation (`$BASS`, `$MID`, `$TREBLE`)
   - [ ] Write unit tests for RMS energy smoothing and attack/decay calculations
   - [ ] Implement `AudioAnalyzer` utility class computing normalized values from raw Web Audio `AnalyserNode`
 - [ ] Task: Web Audio Manager & Source Selector (TDD)
   - [ ] Write tests for audio source switching (bundled sample vs. microphone)
   - [ ] Implement `AudioManager` with autoplay policy unlock, sample player, and uncompressed `getUserMedia` stream capture
   - [ ] Bundle a lightweight default ambient/rhythm audio test sample
+- [ ] Task: Dynamic Expression Engine & Sandboxing (TDD)
+  - [ ] Write unit tests for `$SPECIAL_VALUE` token extraction (`$BASS`, `$MID`, `$TREBLE`, `$BPM`, `$RMS`, `$TIME`, `$BEAT`, `$FRAME`)
+  - [ ] Write unit tests for mathematical expression compilation, NaN/Infinity fallback, and zero-allocation per-frame evaluation
+  - [ ] Implement `ExpressionEngine` wrapping `expr-eval` with pre-allocated evaluation scope and safe numeric clamping
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ---
@@ -41,7 +45,7 @@
 
 ---
 
-## Phase 4: Modular Visual Components (Static Image & Frame Buffer Container)
+## Phase 4: Modular Visual Components & Dynamic Expression Binding
 
 - [ ] Task: Static Image Component (TDD)
   - [ ] Write tests for texture loading, drag-and-drop validation, and fallback sample image
@@ -50,22 +54,22 @@
 - [ ] Task: Frame Buffer Container Component Hierarchy (TDD)
   - [ ] Write tests for container child registration and hierarchical render dispatching
   - [ ] Implement `FrameBufferContainer` rendering child component textures into its render target
-  - [ ] Implement reactive parameter binding logic (mapping audio energy e.g. bass to container scale)
+  - [ ] Wire per-frame dynamic expression evaluation into Frame Buffer transformation uniforms (evaluating expressions like `Blend: $BASS * 0.5` or `Scale: 1.0 + $BASS * 0.3` each frame)
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ---
 
-## Phase 5: Split-View UI, Node Graph & Diagnostics Console
+## Phase 5: Split-View UI, Universal `f(x)` Inspector & Diagnostics Console
 
 - [ ] Task: Diagnostics Console & Status Indicator (TDD)
   - [ ] Write unit tests for diagnostic log capture and warning/error badge triggers
   - [ ] Implement collapsible bottom Diagnostics Console with status bar alert badge
+- [ ] Task: Universal `f(x)` Parameter Component (TDD)
+  - [ ] Write unit tests for parameter mode toggle (Fixed widget vs. Dynamic formula input)
+  - [ ] Implement `ParameterControl` component featuring the `f(x)` toggle button, formula autocomplete for `$SPECIAL_VALUE` tokens, and real-time evaluation preview chip
 - [ ] Task: Split Layout & Node Inspector (TDD)
-  - [ ] Write tests for node selection and inspector state synchronization
+  - [ ] Write tests for node selection and inspector parameter synchronization
   - [ ] Implement Split-View UI: Left preview viewport, Right vertically split panel
   - [ ] Integrate `@xyflow/react` in top-right panel displaying Frame Buffer container and Image node
-  - [ ] Implement bottom-right Node Inspector displaying sliders, inputs, and dropdowns for the selected node
-- [ ] Task: Audio Parameter Modulation Binding (TDD)
-  - [ ] Write tests connecting audio energy output to Frame Buffer parameter inputs
-  - [ ] Implement UI controls allowing users to wire audio reactivity to Frame Buffer transforms
+  - [ ] Integrate `ParameterControl` into bottom-right Node Inspector for seamless parameter editing
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)

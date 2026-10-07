@@ -13,7 +13,7 @@ To guarantee uncompromised 60+ FPS rendering while providing rich interactive UI
 - **Audio & Render Data Plane (Pure TypeScript + Three.js):**
   - Executes strictly inside `requestAnimationFrame`.
   - Directly samples pre-allocated `Float32Array` audio buffers from the Web Audio `AnalyserNode`.
-  - Evaluates compiled per-frame math expressions and writes uniforms directly into WebGL materials.
+  - Evaluates compiled per-frame dynamic expressions and writes uniforms directly into WebGL materials.
   - Zero React component reconciliation or state re-renders in this loop.
   - **Zero-Allocation Policy:** All `Float32Array` buffers, `THREE.Vector`, `THREE.Matrix`, and uniform objects are pre-allocated at initialization to eliminate Garbage Collection (GC) pauses.
 
@@ -23,6 +23,7 @@ To guarantee uncompromised 60+ FPS rendering while providing rich interactive UI
 - **Icons:** Lucide React
 - **Node Graph Pipeline UI:** `@xyflow/react` (React Flow) for visual component chaining, custom port handles, mini-map, and canvas navigation
 - **State Management:** Zustand (decoupled reactive state for UI and preset metadata)
+- **Universal Parameter UI Pattern:** `f(x)` button on each parameter row to switch between fixed controls (sliders, knobs, toggles) and dynamic expression input.
 
 ## 4. Graphics, Shaders & Feedback Rendering Pipeline
 - **3D / 2D Engine:** Three.js (WebGL 2.0 rendering context)
@@ -45,11 +46,29 @@ To guarantee uncompromised 60+ FPS rendering while providing rich interactive UI
   - `getDisplayMedia` (system/tab audio capture with fallback).
 - **Hardware Integration:** Web MIDI API (`navigator.requestMIDIAccess`) with dynamic MIDI Learn, state machine, and value smoothing (slew-rate limiting / lerp).
 
-## 6. Expression & Math Engine
-- **Formula Evaluator:** `expr-eval`
-- **Scope Limitation:** Strictly used for **Per-Frame Uniform Modulation** (not per-pixel/per-vertex, which runs on GPU).
-- **Compilation & Caching:** Mathematical expressions are parsed and compiled once on edit (`parser.compile()`) and executed each frame.
-- **Numeric Sandboxing:** Safe evaluation wrappers guard against division by zero, `NaN`, and `Infinity`, clamping values safely to prevent shader breakage.
+## 6. Dynamic Expression Engine & Universal Parameter Binding
+- **Parser & Evaluator:** `expr-eval` (lightweight, zero-`eval` safe mathematical expression evaluator).
+- **Scope & Frequency:** Strictly executed **once per frame** in the Render Data Plane for uniform and parameter modulation.
+- **Built-in Special Values Format:**
+  - Formatted with a leading `$` in uppercase:
+    - `$BASS`: Normalized low-frequency energy (0.0 – 1.0).
+    - `$MID`: Normalized mid-frequency energy (0.0 – 1.0).
+    - `$TREBLE`: Normalized high-frequency energy (0.0 – 1.0).
+    - `$RMS`: Overall root-mean-square audio energy (0.0 – 1.0).
+    - `$BPM`: Detected or configured tempo in beats per minute.
+    - `$BEAT`: Normalized pulse trigger (1.0 on transient beat, decaying to 0.0).
+    - `$TIME`: Elapsed time in seconds since playback start.
+    - `$FRAME`: Monotonically increasing frame counter integer.
+- **Universal Parameter Binding:**
+  - Every component parameter (e.g., `scale`, `rotation`, `opacity`, `positionX`, `positionY`, `blend`) supports dual modes:
+    - **Literal Mode:** Static scalar/boolean/enum value.
+    - **Expression Mode:** Compiles an expression string (e.g. `Blend: $BASS * 0.5`, `Scale: 1.0 + sin($TIME * 2) * $TREBLE`).
+- **Compilation & Caching:**
+  - Expression strings are compiled into AST execution functions on edit (`parser.compile(expr)`).
+  - Pre-allocated variable context object passed into `.evaluate(scope)` each frame to eliminate GC allocation.
+- **Fault-Tolerant Sandboxing:**
+  - Wraps evaluations in safe guards against syntax errors, division by zero, `NaN`, and `Infinity`.
+  - On error, smoothly retains the previous valid frame value, clamps within valid component boundaries, and emits an inline warning state to the UI without interrupting the 60 FPS render pipeline.
 
 ## 7. Storage & Architecture
 - **Architecture:** Client-Side Single Page Application (SPA)
