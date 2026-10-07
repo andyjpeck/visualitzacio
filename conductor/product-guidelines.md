@@ -17,32 +17,33 @@
   - Fully toggleable via a viewport toolbar switch or keyboard shortcut, with the preference persisted across sessions.
   - Automatically hidden in Live Performance Mode to ensure an uncluttered, distraction-free display.
   - Decoupled from React render cycles (updated via a throttled ref or RAF subscriber every 250–500ms) to avoid high-frequency component re-renders.
-- **Master Frame Buffer Anchor:**
+- **Master Frame Buffer Anchor & Auto-Layout:**
   - The node graph visually anchors the **Master Frame Buffer** as the permanent root container with a distinctive header/crown badge and subtle glowing boundary.
-  - The Master Frame Buffer cannot be deleted, but selecting it opens its inspector, allowing the user to configure its blend mode (clean slate vs. frame feedback trails), background clear color, and master transforms.
-- **Named Buffer Visual Indicators:**
+  - The Master Frame Buffer cannot be deleted, but selecting it opens its inspector, allowing the user to configure its `blend_mode` (clean slate vs. frame feedback trails), background clear color, and master transforms.
+  - Presets serialize the component tree hierarchy without manual canvas coordinates; upon import, the graph executes clean automatic hierarchical layout.
+- **Named Buffer Visual Indicators & Error State:**
   - Nodes publishing a buffer (`save_to="#NAME"`) display an emerald/cyan badge indicating the broadcast target name.
   - Nodes consuming a buffer (`load_from="#NAME"`) feature an intuitive dropdown menu populated with all currently active `#BUFFER` names in the project.
+  - If a cyclic dependency or nonexistent buffer name is selected, the buffer node transitions into a visible error state (amber/red glow) and the node is disabled until resolved.
 
 ## 3. Universal Parameter Pattern: The `f(x)` Expression Switcher
 To maintain a unified, predictable visual language across all components when switching between fixed controls and dynamic formulas:
 - **The `f(x)` Mode Toggle:** Every parameter row in every component inspector features an `f(x)` button adjacent to the parameter label.
-- **Fixed Mode (Default):**
+- **Fixed Mode (Default) — Maps to Schema `"mode": "literal"`:**
   - Displays standard tactile controls tailored to the data type: rotary knobs, linear faders, binary toggles, or dropdown selectors.
   - `f(x)` button appears in a subtle, neutral resting state.
-- **Dynamic Expression Mode (Active):**
+- **Dynamic Expression Mode (Active) — Maps to Schema `"mode": "expression"`:**
   - Clicking `f(x)` smoothly morphs the fixed control into a monospace formula input field.
   - The `f(x)` button glows in the active theme accent color (e.g. electric cyan `#00f0ff`).
   - **Inline Autocomplete & Documentation Dropdown:**
     - Appears automatically below the cursor upon typing `$` or `%`.
-    - **Variables (`$`):** Lists `$BASS`, `$MID`, `$TREBLE`, `$BPM`, `$RMS`, `$TIME`, `$BEAT`, `$FRAME`. Each entry displays the variable name, a human-readable definition, and a **real-time live calculated value preview** (e.g., `$BASS: 0.68`).
-    - **System Functions (`%`):** Lists `%FFT(...)`, `%BEAT()`, `%BEAT_SECONDS(...)`, `%BEAT_FRAMES(...)`. Each entry shows the full function signature, parameter definitions, and return range.
-    - Keyboard navigation (Up/Down arrow keys, Enter/Tab to select and insert with cursor inside parentheses for functions).
-  - **Live Evaluation Preview Chip:** A subtle badge next to the input displaying the real-time evaluated result as music plays.
-  - **Error Indication:** If the user enters an invalid formula, the field border pulses amber/red with an inline tooltip, and the engine safely falls back to the previous valid frame value without breaking visual output.
+    - **Variables (`$`):** Lists `$BASS`, `$MID`, `$TREBLE`, `$BPM`, `$RMS`, `$TIME`, `$BEAT`, `$FRAME` with human-readable definitions and documentation.
+    - **System Functions (`%`):** Lists `%FFT(...)`, `%BEAT()`, `%BEAT_SECONDS(...)`, `%BEAT_FRAMES(...)` with full function signatures, parameter descriptions, and return value ranges.
+    - Full keyboard navigation (Up/Down arrow keys, Enter/Tab to select and insert with cursor positioned inside function parentheses).
+  - **Expression Validation & Status Chip:** Validates syntax upon typing. Displays an evaluated checkmark or result summary chip. Invalid formulas pulse amber/red with an inline tooltip, safely retaining the previous valid frame value (or default literal on frame 0) without breaking rendering. *(Note: 60 FPS real-time deflecting telemetry values in chips/autocomplete are reserved for Track 2's advanced modulation HUD).*
 
 ## 4. Diagnostics & Error Handling
-- **Dedicated Diagnostics Console:** An integrated error and log console (capturing shader compilation issues, audio context states, and formula evaluation faults) that remains closed/collapsed by default.
+- **Dedicated Diagnostics Console:** An integrated error and log console (capturing shader compilation issues, audio context states, buffer routing errors, and formula evaluation faults) that remains closed/collapsed by default.
 - **Visual Alert Indicators:** Whenever warnings or errors are logged to the console, an unobtrusive badge or icon glows in the status bar/HUD to alert the user that diagnostics are available for inspection.
 - **Tone & Terminology:** Concise, professional, and audio-engineering oriented (e.g., "Attack / Decay", "FFT Bins", "RMS Gain", "GLSL Pass", "MIDI CC").
 

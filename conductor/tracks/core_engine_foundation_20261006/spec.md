@@ -40,10 +40,11 @@ This bootstrap track establishes Visualització's foundational architecture: a h
     - **`%BEAT_FRAMES([decay_frames = 12])`:**
       - Transient attack pulse: Jumps to `1.0` on a detected beat, exponentially decaying to `0.0` over `decay_frames` frames (default: 12 frames).
 - **Universal Parameter Binding:**
-  - All component parameters (e.g., Frame Buffer `scale`, `rotation`, `opacity`, `positionX`, `positionY`, `blend`) can be set to a static literal value or bound to a dynamic expression (e.g., `Blend: %FFT(0, 0.3, 1) * 0.5`, `Scale: 1.0 + %BEAT(0.25) * 0.4`).
-- **Fault-Tolerant Sandboxing:**
-  - Expressions compiled on edit via `expr-eval`.
-  - Guarded against syntax errors, division by zero, `NaN`, and `Infinity`. Safe fallback to previous valid frame value.
+  - All component parameters (e.g., Frame Buffer `scale`, `rotation`, `opacity`, `positionX`, `positionY`, `blend_mode`) can be set to a static literal value or bound to a dynamic expression (e.g., `blend_mode: %FFT(0, 0.3, 1) * 0.5`, `scale: 1.0 + %BEAT(0.25) * 0.4`).
+- **Fault-Tolerant Sandboxing & Modulo Preservation:**
+  - Preprocessor selectively transforms system functions (`%NAME(` $\to$ `__fn_NAME(`) and special variables (`$NAME` $\to$ `__var_NAME`) prior to compiling with `expr-eval`.
+  - The standard binary modulo operator `%` (e.g., `$FRAME % 60`) is preserved and fully functional.
+  - Guarded against syntax errors, division by zero, `NaN`, and `Infinity`. Safe fallback to previous valid frame value, or initial literal value on frame 0.
 
 ### 2.4 Modular Visual Pipeline: Image & Frame Buffer Components
 - **Static Image Component:**
@@ -52,7 +53,7 @@ This bootstrap track establishes Visualització's foundational architecture: a h
 - **Frame Buffer Component (Container, Compositor & Buffer Router):**
   - Serves as a modular container for child visual components (such as the Static Image).
   - Renders child components into an offscreen `THREE.WebGLRenderTarget`.
-  - Exposes container-level modulation parameters: Position (X, Y), Scale/Zoom, Rotation, Opacity, and Blend Mode.
+  - Exposes container-level modulation parameters: Position (X, Y), Scale/Zoom, Rotation, Opacity, and Blend Mode (`blend_mode`).
   - **Master Frame Buffer Root:**
     - Every preset pipeline is strictly rooted in a single **Master Frame Buffer** (`is_master: true`), enclosing all visual components and child buffers.
     - **Clean Slate vs. Frame Feedback:** The Master Frame Buffer's blend mode determines the canvas lifecycle:
@@ -62,7 +63,7 @@ This bootstrap track establishes Visualització's foundational architecture: a h
     - **Buffer Production (`save_to="#NAME"`):** Frame buffers can publish their rendered output into a global `BufferPool` keyed by a normalized identifier (e.g., `#BUFFER_A`).
     - **Buffer Consumption (`load_from="#NAME"`):** Frame buffers can load and sample an upstream rendered texture from `BufferPool` as a textured quad before or alongside compositing child components.
     - **Compositing & Multi-Quad Routing:** Enables complex multi-pass routing such as 4-corner scaled replication (e.g., loading `#BUFFER_A` into 4 child buffers scaled to 25% and translated to upper-left, upper-right, lower-left, lower-right), recursive feedback echoes, and PIP.
-    - **Cycle Prevention & Graceful Fallback:** Prevents recursive freeze by isolating frame passes or using ping-pong references. If a referenced buffer has not yet rendered or does not exist, it safely falls back to a transparent empty texture with a diagnostic warning.
+    - **Cycle Prevention & Error Handling:** If a circular dependency or nonexistent buffer name is configured, the affected buffer is disabled from rendering, flagged with a visual error state, and logged to the Diagnostics Console (preventing infinite loops or application freezing).
   - Supports 6 distinct blend modes:
     1. **Replace:** Overwrites existing pixels completely with the new layer data.
     2. **Additive (Add):** Adds color values of top layer to background layer (bright spots glow/overexpose, black areas stay unchanged).
@@ -77,10 +78,10 @@ This bootstrap track establishes Visualització's foundational architecture: a h
 - **Right Panel (Vertically Split):**
   - **Top Sub-Panel:** Interactive Node Pipeline Graph (`@xyflow/react`) displaying components and container connections.
   - **Bottom Sub-Panel (Node Inspector):** Dynamically displays the parameter controls for the selected node.
-  - **Universal `f(x)` Parameter Toggle:** Each parameter row displays an `f(x)` button. In Fixed mode, it renders knobs/sliders/inputs. When toggled into Expression mode, it morphs into a formula input with `$SPECIAL_VALUE` and `%FUNCTION` auto-suggestions, syntax validation, and live preview evaluation chips.
+  - **Universal `f(x)` Parameter Toggle:** Each parameter row displays an `f(x)` button. In Fixed mode, it renders knobs/sliders/inputs. When toggled into Expression mode, it morphs into a formula input with `$SPECIAL_VALUE` and `%FUNCTION` auto-suggestions, syntax validation, and formula status chips.
   - **Inline Autocomplete & Documentation Dropdown:**
     - Triggered automatically when typing `$` or `%` inside the formula input.
-    - Displays full variable and function definitions alongside live real-time values (e.g. `$BASS: 0.68`).
+    - Displays full variable and function definitions, parameter signatures, and usage documentation.
     - Full keyboard navigation (Arrow keys, Enter/Tab).
 - **Collapsible Bottom Bar:** In-app Diagnostics / Error Console with glowing warning/error badge.
 
@@ -90,6 +91,7 @@ This bootstrap track establishes Visualització's foundational architecture: a h
   - The root element (`root`) is strictly the **Master Frame Buffer** (`is_master: true`), containing child components and nested buffers in its `children` array.
   - Containers serialize a `children` array containing nested child components.
   - Parameters serialize with `{ "mode": "literal" | "expression", "value": ... }`.
+  - Manual canvas node coordinates are not serialized; upon preset import, the editor executes an automatic hierarchical tree layout.
 - **Import / Export Actions:**
   - Export: Download active preset as a `.json` file or copy to clipboard.
   - Import: Load `.json` preset via file dialog, drag-and-drop, or paste, reconstructing both the React Flow graph and Three.js execution tree.
@@ -104,16 +106,17 @@ This bootstrap track establishes Visualització's foundational architecture: a h
 3. Binary `$BEAT` evaluates to `1.0` on beat frames and `0.0` on non-beat frames.
 4. `%BEAT()`, `%BEAT_SECONDS(decay)`, and `%BEAT_FRAMES(decay)` decay smoothly from `1.0` to `0.0` following exponential curves.
 5. System function `%FFT(lower, width, channel)` evaluates correctly with logarithmic frequency scaling and stereo channel selection.
-6. The Static Image component loads and displays an image inside a Frame Buffer container.
-7. Selecting the Frame Buffer node in the node graph opens its parameters in the bottom-right inspector.
-8. Clicking `f(x)` on any parameter toggles it between fixed widget and dynamic formula input.
-9. Typing `$` or `%` in the formula editor automatically opens the inline documentation dropdown showing variable definitions and live audio values.
-10. Binding dynamic expressions with special values or system functions (e.g. `Blend: %FFT(0, 0.3, 1) * 0.5` or `Scale: 1.0 + %BEAT(0.2) * 0.3`) dynamically modulates visual parameters to the audio at 60+ FPS.
-11. Tweaking Frame Buffer blend modes (Replace, Additive, Maximum, Minimum, Subtractive, Multiplicative) produces the expected visual compositing.
-12. Every preset is structured with a single Master Frame Buffer root node; switching its blend mode to `Replace` starts each frame with a clean slate, while feedback blend modes (or partial opacity) feed previous frames into next frames via ping-pong FBOs to generate motion decay trails.
-13. Frame buffers can produce named buffers (`save_to="#NAME"`) and consume named buffers (`load_from="#NAME"`), allowing multiple child buffers to sample and composite an upstream buffer (e.g. four scaled instances in each corner).
-14. An FPS counter is displayed on the live preview canvas by default in Studio mode, accurately reflects rendering frame rate, is toggleable on/off by the user, and does not cause React re-render loops.
-15. Exporting the active setup downloads a valid nested JSON preset file; importing that file perfectly restores the component tree, parameter expressions, and visual state.
+6. The standard binary modulo operator `%` (e.g. `$FRAME % 60`) functions correctly alongside `%FUNCTION(...)` system calls.
+7. The Static Image component loads and displays an image inside a Frame Buffer container.
+8. Selecting the Frame Buffer node in the node graph opens its parameters in the bottom-right inspector.
+9. Clicking `f(x)` on any parameter toggles it between fixed widget and dynamic formula input.
+10. Typing `$` or `%` in the formula editor automatically opens the inline documentation dropdown showing variable and function definitions.
+11. Binding dynamic expressions with special values or system functions (e.g. `blend_mode: %FFT(0, 0.3, 1) * 0.5` or `scale: 1.0 + %BEAT(0.2) * 0.3`) dynamically modulates visual parameters to the audio at 60+ FPS.
+12. Tweaking Frame Buffer blend modes (Replace, Additive, Maximum, Minimum, Subtractive, Multiplicative) produces the expected visual compositing.
+13. Every preset is structured with a single Master Frame Buffer root node; switching its blend mode to `Replace` starts each frame with a clean slate, while feedback blend modes (or partial opacity) feed previous frames into next frames via ping-pong FBOs to generate motion decay trails.
+14. Frame buffers can produce named buffers (`save_to="#NAME"`) and consume named buffers (`load_from="#NAME"`), allowing multiple child buffers to sample and composite an upstream buffer (e.g. four scaled instances in each corner). If a cycle or missing buffer occurs, the node disables and enters an error state.
+15. An FPS counter is displayed on the live preview canvas by default in Studio mode, accurately reflects rendering frame rate, is toggleable on/off by the user, and does not cause React re-render loops.
+16. Exporting the active setup downloads a valid nested JSON preset file; importing that file perfectly restores the component tree, parameter expressions, and visual state with automatic graph layout.
 
 ## 5. Out of Scope for Track 1
 - Full arbitrary GLSL shader editor / custom user shader authoring (Track 2).

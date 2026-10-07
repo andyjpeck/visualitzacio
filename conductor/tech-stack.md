@@ -32,7 +32,7 @@ To guarantee uncompromised 60+ FPS rendering while providing rich interactive UI
   - Any Frame Buffer component can publish its rendered texture to the pool via `save_to="#NAME"`.
   - Any Frame Buffer component can consume an existing buffer via `load_from="#NAME"`, rendering the sampled texture on a quad with independent scaling, position, rotation, opacity, and blend modes.
   - Multiple components can simultaneously consume the same buffer (e.g. four scaled copies in four corners).
-  - Topological sort guarantees upstream producer buffers render prior to downstream consumers.
+  - Topological sort guarantees upstream producer buffers render prior to downstream consumers. If a cyclic dependency or nonexistent buffer is detected, the affected buffer is disabled from rendering, flagged with an error state, and logged to the Diagnostics Console.
 - **Master Frame Buffer & Dual-FBO Ping-Pong Feedback Loop:**
   - Every preset pipeline is rooted in a single **Master Frame Buffer** that encloses all other components and frame buffers.
   - The Master Frame Buffer manages dual `THREE.WebGLRenderTarget` instances (ping-pong FBOs):
@@ -40,7 +40,8 @@ To guarantee uncompromised 60+ FPS rendering while providing rich interactive UI
     - **Frame Feedback Mode (Additive, Maximum, Minimum, Subtractive, Multiplicative, or partial opacity):** The previous frame's rendered texture is retained and composited into the current frame via a feedback pass before or during child rendering, creating classic Winamp AVS/MilkDrop decay trails, motion blur, and psychedelic echoes.
 - **Shaders:** Custom GLSL fragment and vertex passes.
 - **Runtime Shader Error Boundary:** Intercepts shader compilation logs (`gl.getShaderInfoLog`) and surfaces diagnostics to the in-app Diagnostics Console without crashing WebGL context.
-- **Context Loss Handling:** Listens to `webglcontextlost` and `webglcontextrestored` to rebuild render targets and materials seamlessly.
+- **Context Loss & Asset Recovery:** Listens to `webglcontextlost` and `webglcontextrestored` to rebuild render targets and materials seamlessly. Raw asset references/URLs are retained in the State Plane memory so textures re-instantiate automatically.
+- **Viewport Resizing & DPR Clamping:** Window resize events debounce FBO reallocation by 150ms and clamp device pixel ratio (`Math.min(window.devicePixelRatio, 2)`) to eliminate GC memory thrashing and excessive VRAM usage.
 
 ## 5. Audio Engine & Hardware Integration
 - **Audio Processing:** Native Web Audio API (`AudioContext`, `AnalyserNode` with `fftSize = 2048`, `smoothingTimeConstant = 0.8`).
@@ -82,15 +83,21 @@ To guarantee uncompromised 60+ FPS rendering while providing rich interactive UI
     - **`%BEAT_FRAMES([decay_frames = 12])`:**
       - Transient attack pulse envelope: Jumps to `1.0` on beat and decays exponentially to `0.0` over `decay_frames` frames (default: 12 frames).
 - **Universal Parameter Binding:**
-  - Every component parameter (e.g., `scale`, `rotation`, `opacity`, `positionX`, `positionY`, `blend`) supports dual modes:
-    - **Literal Mode:** Static scalar/boolean/enum value.
-    - **Expression Mode:** Compiles an expression string (e.g. `Blend: %FFT(0, 0.3, 1) * 0.5`, `Scale: 1.0 + %BEAT(0.3) * 0.4`).
+  - Every component parameter (e.g., `scale`, `rotation`, `opacity`, `positionX`, `positionY`, `blend_mode`) supports dual modes:
+    - **Literal Mode (Schema `"mode": "literal"`, UI "Fixed Mode"):** Static scalar/boolean/enum value.
+    - **Expression Mode (Schema `"mode": "expression"`, UI "Dynamic Expression Mode"):** Compiles an expression string (e.g. `Blend: %FFT(0, 0.3, 1) * 0.5`, `Scale: 1.0 + %BEAT(0.3) * 0.4`).
+- **Token Preprocessing & Modulo Operator Preservation:**
+  - Standard `expr-eval` treats `%` as the binary modulo operator (`a % b`) and does not natively parse `$` identifiers.
+  - An `ExpressionPreprocessor` selectively transforms tokens prior to compilation without disturbing the modulo operator:
+    - Rewrites function calls: `/%([A-Za-z_][A-Za-z0-9_]*)\s*\(/g` $\to$ `__fn_$1(`
+    - Rewrites variables: `/\$([A-Za-z_][A-Za-z0-9_]*)/g` $\to$ `__var_$1`
+    - Preserves standard arithmetic and modulo: expressions like `$FRAME % 60` safely transform to `__var_FRAME % 60`.
 - **Compilation & Caching:**
-  - Expression strings are compiled into AST execution functions on edit (`parser.compile(expr)`).
-  - Pre-allocated variable context object and bound audio buffers passed into `.evaluate(scope)` each frame to eliminate GC allocation.
+  - Preprocessed expression strings compile into AST execution functions on edit (`parser.compile(expr)`).
+  - Pre-allocated variable context object (`scope`) is mutated in-place each frame to eliminate garbage collection.
 - **Fault-Tolerant Sandboxing:**
   - Wraps evaluations in safe guards against syntax errors, division by zero, `NaN`, and `Infinity`.
-  - On error, smoothly retains the previous valid frame value, clamps within valid component boundaries, and emits an inline warning state to the UI without interrupting the 60 FPS render pipeline.
+  - On error, smoothly retains the previous valid frame value (or falls back to the default literal value on frame 0) without interrupting the 60 FPS render pipeline.
 
 ## 7. Declarative JSON Preset Schema & Persistence
 - **Architecture:** The entire visualizer preset is serialized as a single, portable, human-readable JSON document for seamless import, export, and sharing.
@@ -123,7 +130,9 @@ To guarantee uncompromised 60+ FPS rendering while providing rich interactive UI
       ]
     }
   }
-  ```
+- **Graph Representation & Pure Tree Schema:**
+  - Presets serialize only the execution hierarchy (`root` and nested `children`).
+  - Upon preset import or file load, the editor's node graph uses automatic hierarchical tree layout to place nodes cleanly on canvas, keeping preset files compact, human-readable, and free from fragile coordinate metadata.
 - **Local Persistence (MVP):** IndexedDB (via `idb-keyval`) and LocalStorage for preset storage and theme preferences, paired with `.json` file upload/download.
 - **Roadmap / Future:** Backend cloud sync (PostgreSQL/Supabase or Firebase) for user accounts and community preset sharing.
 
