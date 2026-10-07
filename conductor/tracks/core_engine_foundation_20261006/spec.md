@@ -73,6 +73,7 @@ This bootstrap track establishes Visualització's foundational architecture: a h
 
 ### 2.5 Split-View Interface, Node Inspector & `f(x)` Switcher
 - **Left Panel:** Live Three.js WebGL visualizer canvas rendering the output at 60+ FPS.
+  - **Toggleable FPS Counter Overlay:** Displays current frame rate by default in Studio/Editor Mode; can be toggled on/off via viewport header button. Automatically hidden in Live Performance Mode. Updated via throttled telemetry without triggering React re-renders.
 - **Right Panel (Vertically Split):**
   - **Top Sub-Panel:** Interactive Node Pipeline Graph (`@xyflow/react`) displaying components and container connections.
   - **Bottom Sub-Panel (Node Inspector):** Dynamically displays the parameter controls for the selected node.
@@ -111,7 +112,8 @@ This bootstrap track establishes Visualització's foundational architecture: a h
 11. Tweaking Frame Buffer blend modes (Replace, Additive, Maximum, Minimum, Subtractive, Multiplicative) produces the expected visual compositing.
 12. Every preset is structured with a single Master Frame Buffer root node; switching its blend mode to `Replace` starts each frame with a clean slate, while feedback blend modes (or partial opacity) feed previous frames into next frames via ping-pong FBOs to generate motion decay trails.
 13. Frame buffers can produce named buffers (`save_to="#NAME"`) and consume named buffers (`load_from="#NAME"`), allowing multiple child buffers to sample and composite an upstream buffer (e.g. four scaled instances in each corner).
-14. Exporting the active setup downloads a valid nested JSON preset file; importing that file perfectly restores the component tree, parameter expressions, and visual state.
+14. An FPS counter is displayed on the live preview canvas by default in Studio mode, accurately reflects rendering frame rate, is toggleable on/off by the user, and does not cause React re-render loops.
+15. Exporting the active setup downloads a valid nested JSON preset file; importing that file perfectly restores the component tree, parameter expressions, and visual state.
 
 ## 5. Out of Scope for Track 1
 - Full arbitrary GLSL shader editor / custom user shader authoring (Track 2).

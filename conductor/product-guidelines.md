@@ -12,6 +12,11 @@
   - *Studio / Editor Mode:* Split-view with node graph, parameter inspectors, audio FFT visualizer, and MIDI mapping HUD.
   - *Live Performance Mode:* Fullscreen distraction-free canvas with auto-hiding HUD controls on mouse inactivity.
 - **Tactile Modulation:** Knobs, faders, and formula inputs display live visual pulsing/deflection reflecting real-time audio reactivity.
+- **FPS Counter HUD Overlay:**
+  - In Studio / Editor Mode, a monospaced FPS counter badge is displayed on the live preview viewport by default (e.g., top-left corner with subtle dark glassmorphic styling).
+  - Fully toggleable via a viewport toolbar switch or keyboard shortcut, with the preference persisted across sessions.
+  - Automatically hidden in Live Performance Mode to ensure an uncluttered, distraction-free display.
+  - Decoupled from React render cycles (updated via a throttled ref or RAF subscriber every 250–500ms) to avoid high-frequency component re-renders.
 - **Master Frame Buffer Anchor:**
   - The node graph visually anchors the **Master Frame Buffer** as the permanent root container with a distinctive header/crown badge and subtle glowing boundary.
   - The Master Frame Buffer cannot be deleted, but selecting it opens its inspector, allowing the user to configure its blend mode (clean slate vs. frame feedback trails), background clear color, and master transforms.

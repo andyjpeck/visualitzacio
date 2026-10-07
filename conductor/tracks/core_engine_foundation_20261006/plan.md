@@ -7,9 +7,9 @@
   - [ ] Configure Vitest and React Testing Library setup
   - [ ] Configure ESLint and Prettier per `code_styleguides/typescript.md`
 - [ ] Task: Two-Plane Architecture Skeleton (TDD)
-  - [ ] Write unit tests for decoupled Engine Loop controller (state subscriber vs. RAF ticker)
-  - [ ] Implement `RenderEngine` core class managing `requestAnimationFrame`, FPS monitoring, and Three.js canvas mount
-  - [ ] Create Zustand store for UI/playback state (`useAppStore`) ensuring zero audio tick re-renders
+  - [ ] Write unit tests for decoupled Engine Loop controller (state subscriber vs. RAF ticker) and throttled FPS counter
+  - [ ] Implement `RenderEngine` core class managing `requestAnimationFrame`, throttled FPS monitoring, and Three.js canvas mount
+  - [ ] Create Zustand store for UI/playback state (`useAppStore`) with `showFpsOverlay` toggle preference (default `true`) ensuring zero audio/RAF tick re-renders
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ---
@@ -79,9 +79,9 @@
   - [ ] Write unit tests for inline autocomplete dropdown triggered by `$` and `%`, testing definition tooltips, live value display, and keyboard navigation
   - [ ] Implement `ParameterControl` component featuring the `f(x)` toggle button, inline token autocomplete dropdown with real-time value previews and parameter documentation, and evaluation chip
 - [ ] Task: Split Layout, Node Inspector & Preset Import/Export UI (TDD)
-  - [ ] Write tests for node selection and inspector parameter synchronization
-  - [ ] Implement Split-View UI: Left preview viewport, Right vertically split panel
+  - [ ] Write tests for node selection, inspector parameter synchronization, and FPS overlay toggle
+  - [ ] Implement Split-View UI: Left preview viewport with toggleable FPS counter HUD overlay (on by default in Studio mode), Right vertically split panel
   - [ ] Integrate `@xyflow/react` in top-right panel displaying the non-deletable Master Frame Buffer container anchor and nested Image node
   - [ ] Integrate `ParameterControl` into bottom-right Node Inspector for seamless parameter editing
-  - [ ] Add header buttons for Preset Export (.json download) and Import (file upload/drop)
+  - [ ] Add header buttons for Preset Export (.json download), Import (file upload/drop), and FPS overlay toggle
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
