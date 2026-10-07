@@ -18,6 +18,7 @@
 
 - [ ] Task: Audio Feature Extraction & DSP Utilities (TDD)
   - [ ] Write unit tests for logarithmic frequency band aggregation (`$BASS`, `$MID`, `$TREBLE`) and channel splitting
+  - [ ] Write unit tests for binary `$BEAT` detection (evaluating to 1 on beat frame, 0 otherwise)
   - [ ] Write unit tests for RMS energy smoothing and attack/decay calculations
   - [ ] Implement `AudioAnalyzer` utility class computing normalized values from raw Web Audio `AnalyserNode`
 - [ ] Task: Web Audio Manager & Source Selector (TDD)
@@ -25,10 +26,11 @@
   - [ ] Implement `AudioManager` with autoplay policy unlock, sample player, and uncompressed `getUserMedia` stream capture
   - [ ] Bundle a lightweight default ambient/rhythm audio test sample
 - [ ] Task: Dynamic Expression Engine & Sandboxing (TDD)
-  - [ ] Write unit tests for `$SPECIAL_VALUE` token extraction (`$BASS`, `$MID`, `$TREBLE`, `$BPM`, `$RMS`, `$TIME`, `$BEAT`, `$FRAME`)
+  - [ ] Write unit tests for `$SPECIAL_VALUE` token extraction (`$BASS`, `$MID`, `$TREBLE`, `$BPM`, `$RMS`, `$TIME`, binary `$BEAT`, `$FRAME`)
   - [ ] Write unit tests for `%FFT(lower, width, channel)` system function evaluation with logarithmic frequency mapping ($20\text{Hz}-20000\text{Hz}$)
+  - [ ] Write unit tests for `%BEAT()`, `%BEAT_SECONDS(decay_seconds)`, and `%BEAT_FRAMES(decay_frames)` exponential decay envelopes
   - [ ] Write unit tests for mathematical expression compilation, NaN/Infinity fallback, and zero-allocation per-frame evaluation
-  - [ ] Implement `ExpressionEngine` wrapping `expr-eval` with pre-allocated evaluation scope, `%FFT` function binding, and safe numeric clamping
+  - [ ] Implement `ExpressionEngine` wrapping `expr-eval` with pre-allocated evaluation scope, `%FFT` and `%BEAT` function bindings, and safe numeric clamping
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ---
@@ -55,7 +57,7 @@
 - [ ] Task: Frame Buffer Container Component Hierarchy (TDD)
   - [ ] Write tests for container child registration and hierarchical render dispatching
   - [ ] Implement `FrameBufferContainer` rendering child component textures into its render target
-  - [ ] Wire per-frame dynamic expression evaluation into Frame Buffer transformation uniforms (evaluating expressions like `Blend: %FFT(0, 0.3, 1) * 0.5` or `Scale: 1.0 + $BASS * 0.3` each frame)
+  - [ ] Wire per-frame dynamic expression evaluation into Frame Buffer transformation uniforms (evaluating expressions like `Blend: %FFT(0, 0.3, 1) * 0.5` or `Scale: 1.0 + %BEAT(0.25) * 0.3` each frame)
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ---

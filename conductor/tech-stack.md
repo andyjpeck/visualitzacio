@@ -58,7 +58,7 @@ To guarantee uncompromised 60+ FPS rendering while providing rich interactive UI
     - `$TREBLE`: Normalized high-frequency energy (0.0 – 1.0).
     - `$RMS`: Overall root-mean-square audio energy (0.0 – 1.0).
     - `$BPM`: Detected or configured tempo in beats per minute.
-    - `$BEAT`: Normalized pulse trigger (1.0 on transient beat, decaying to 0.0).
+    - `$BEAT`: **Binary trigger: `1.0` if the current frame is a beat, `0.0` otherwise.**
     - `$TIME`: Elapsed time in seconds since playback start.
     - `$FRAME`: Monotonically increasing frame counter integer.
 - **Built-in System Functions (%FUNCTION):**
@@ -69,10 +69,14 @@ To guarantee uncompromised 60+ FPS rendering while providing rich interactive UI
       - `band_width`: Frequency width in $[0.0, 1.0]$.
       - `channel`: `0` = Left + Right (default mono mix), `1` = Left channel, `2` = Right channel.
       - Example: `%FFT(0, 0.3, 1)` calculates the lowest 30% of frequencies (approx. 20Hz–158Hz) on the left audio channel.
+    - **`%BEAT([decay_seconds = 0.2])` / `%BEAT_SECONDS([decay_seconds = 0.2])`:**
+      - Transient attack pulse envelope: Jumps to `1.0` on beat and decays exponentially to `0.0` over `decay_seconds` (default: 0.2s).
+    - **`%BEAT_FRAMES([decay_frames = 12])`:**
+      - Transient attack pulse envelope: Jumps to `1.0` on beat and decays exponentially to `0.0` over `decay_frames` frames (default: 12 frames).
 - **Universal Parameter Binding:**
   - Every component parameter (e.g., `scale`, `rotation`, `opacity`, `positionX`, `positionY`, `blend`) supports dual modes:
     - **Literal Mode:** Static scalar/boolean/enum value.
-    - **Expression Mode:** Compiles an expression string (e.g. `Blend: %FFT(0, 0.3, 1) * 0.5`, `Scale: 1.0 + sin($TIME * 2) * $TREBLE`).
+    - **Expression Mode:** Compiles an expression string (e.g. `Blend: %FFT(0, 0.3, 1) * 0.5`, `Scale: 1.0 + %BEAT(0.3) * 0.4`).
 - **Compilation & Caching:**
   - Expression strings are compiled into AST execution functions on edit (`parser.compile(expr)`).
   - Pre-allocated variable context object and bound audio buffers passed into `.evaluate(scope)` each frame to eliminate GC allocation.

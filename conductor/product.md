@@ -17,9 +17,13 @@ The platform is designed to serve two complementary environments:
   - Universal parameter architecture: every component parameter can exist either as a fixed value (knob, slider, switch) or bind dynamically to a mathematical expression.
 - **Dynamic Expression Engine & Universal Parameter Binding:**
   - Mathematical formulas evaluated once per frame inside the Render Data Plane.
-  - **Special Values ($VARIABLE):** Built-in audio/system variables formatted with `$` (e.g., `$BASS`, `$MID`, `$TREBLE`, `$BPM`, `$RMS`, `$TIME`, `$BEAT`, `$FRAME`).
-  - **System Functions (%FUNCTION):** Built-in DSP functions formatted with `%` prefix, such as `%FFT(lower_band, band_width, channel)` with normalized logarithmic frequency inputs $[0.0, 1.0]$ spanning 20Hz–20,000Hz.
-  - Example: Binding blend amount to `%FFT(0, 0.3, 1) * 0.5` or scale to `1.0 + sin($TIME * 2) * $TREBLE`.
+  - **Special Values ($VARIABLE):** Built-in audio/system variables formatted with `$` (e.g., `$BASS`, `$MID`, `$TREBLE`, `$BPM`, `$RMS`, `$TIME`, `$BEAT` [binary 1/0], `$FRAME`).
+  - **System Functions (%FUNCTION):** Built-in DSP functions formatted with `%` prefix:
+    - `%FFT(lower_band, band_width, channel)` with normalized logarithmic frequency inputs $[0.0, 1.0]$.
+    - `%BEAT_SECONDS(decay_seconds)`: Transient attack pulse (1.0 decaying exponentially to 0.0 over time in seconds).
+    - `%BEAT_FRAMES(decay_frames)`: Transient attack pulse (1.0 decaying exponentially to 0.0 over frame count).
+    - `%BEAT(...)`: Shorthand for `%BEAT_SECONDS(0.2)`.
+  - Example: Binding blend amount to `%FFT(0, 0.3, 1) * 0.5` or scale to `1.0 + %BEAT_SECONDS(0.3) * 0.5`.
 - **Reactive Audio Engine:**
   - Multi-source audio input: Microphone / Line-in, Local audio files (MP3, WAV, FLAC), and System / Tab audio capture (via getDisplayMedia / audio stream capture).
   - Web Audio API real-time FFT frequency spectrum, waveform time-domain data, beat detection, and RMS energy tracking exposed as reactive variables to all components.
