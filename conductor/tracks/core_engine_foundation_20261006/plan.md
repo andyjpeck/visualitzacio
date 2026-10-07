@@ -60,6 +60,7 @@
   - [ ] Bundle a default test graphic
 - [ ] Task: Frame Buffer Container & Named Buffer Routing (TDD)
   - [ ] Write tests for container child registration and hierarchical render dispatching
+  - [ ] Write tests for Winamp AVS coordinate transformations (`positionX` and `positionY` in $[-1.0, 1.0]$ with `(0, 0)` at center)
   - [ ] Write tests for Master Frame Buffer root lifecycle (verifying `blend_mode: "replace"` creates a clean slate while feedback blend modes feed previous frame texture into next frame)
   - [ ] Write tests for `save_to="@NAME"` publishing to `BufferPool` and `load_from="@NAME"` upstream texture sampling (e.g., 4-corner multi-quad replication)
   - [ ] Write tests verifying that disabled/errored buffer nodes skip render traversal safely

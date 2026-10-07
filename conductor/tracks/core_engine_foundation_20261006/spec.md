@@ -53,7 +53,13 @@ This bootstrap track establishes Visualització's foundational architecture: a h
 - **Frame Buffer Component (Container, Compositor & Buffer Router):**
   - Serves as a modular container for child visual components (such as the Static Image).
   - Renders child components into an offscreen `THREE.WebGLRenderTarget`.
-  - Exposes container-level modulation parameters: Position (X, Y), Scale/Zoom, Rotation, Opacity, and Blend Mode (`blend_mode`).
+  - Exposes container-level modulation parameters:
+    - **Position X (`positionX`):** Horizontal translation in $[-1.0, 1.0]$ (`-1.0` = left edge, `1.0` = right edge, `0.0` = center).
+    - **Position Y (`positionY`):** Vertical translation in $[-1.0, 1.0]$ (`-1.0` = bottom edge, `1.0` = top edge, `0.0` = center).
+    - **Scale/Zoom:** Scaling factor (default: `1.0`).
+    - **Rotation:** Rotation angle.
+    - **Opacity:** Layer opacity in $[0.0, 1.0]$ (default: `1.0`).
+    - **Blend Mode (`blend_mode`):** One of the 6 blend mode enums.
   - **Master Frame Buffer Root:**
     - Every preset pipeline is strictly rooted in a single **Master Frame Buffer** (`is_master: true`), enclosing all visual components and child buffers.
     - **Clean Slate vs. Frame Feedback:** The Master Frame Buffer's blend mode determines the canvas lifecycle:
@@ -62,7 +68,7 @@ This bootstrap track establishes Visualització's foundational architecture: a h
   - **Named Buffer Routing (`save_to` & `load_from`):**
     - **Buffer Production (`save_to="@NAME"`):** Frame buffers can publish their rendered output into a global `BufferPool` keyed by a normalized identifier (e.g., `@BUFFER_A`).
     - **Buffer Consumption (`load_from="@NAME"`):** Frame buffers can load and sample an upstream rendered texture from `BufferPool` as a textured quad before or alongside compositing child components.
-    - **Compositing & Multi-Quad Routing:** Enables complex multi-pass routing such as 4-corner scaled replication (e.g., loading `@BUFFER_A` into 4 child buffers scaled to 25% and translated to upper-left, upper-right, lower-left, lower-right), recursive feedback echoes, and PIP.
+    - **Compositing & Multi-Quad Routing:** Enables complex multi-pass routing such as 4-corner scaled replication (e.g., loading `@BUFFER_A` into 4 child buffers scaled to 0.5 and translated to corners: top-left $x=-0.5, y=0.5$; top-right $x=0.5, y=0.5$; bottom-left $x=-0.5, y=-0.5$; bottom-right $x=0.5, y=-0.5$), recursive feedback echoes, and PIP.
     - **Cycle Prevention & Error Handling:** If a circular dependency or nonexistent buffer name is configured, the affected buffer is disabled from rendering, flagged with a visual error state, and logged to the Diagnostics Console (preventing infinite loops or application freezing).
   - Supports 6 distinct blend modes:
     1. **Replace:** Overwrites existing pixels completely with the new layer data.
@@ -114,7 +120,7 @@ This bootstrap track establishes Visualització's foundational architecture: a h
 11. Binding dynamic expressions with special values or system functions (e.g. `opacity: #FFT(0, 0.3, 1) * 0.5` or `scale: 1.0 + #BEAT(0.2) * 0.3`) dynamically modulates visual parameters to the audio at 60+ FPS.
 12. Tweaking Frame Buffer blend modes (Replace, Additive, Maximum, Minimum, Subtractive, Multiplicative) produces the expected visual compositing.
 13. Every preset is structured with a single Master Frame Buffer root node; switching its blend mode to `Replace` starts each frame with a clean slate, while feedback blend modes (or partial opacity) feed previous frames into next frames via ping-pong FBOs to generate motion decay trails.
-14. Frame buffers can produce named buffers (`save_to="@NAME"`) and consume named buffers (`load_from="@NAME"`), allowing multiple child buffers to sample and composite an upstream buffer (e.g. four scaled instances in each corner). If a cycle or missing buffer occurs, the node disables and enters an error state.
+14. Frame buffers can produce named buffers (`save_to="@NAME"`) and consume named buffers (`load_from="@NAME"`), allowing multiple child buffers to sample and composite an upstream buffer using Winamp AVS coordinates $[-1.0, 1.0]$ (e.g. four corner instances: top-left at $x=-0.5, y=0.5$; top-right at $x=0.5, y=0.5$; bottom-left at $x=-0.5, y=-0.5$; bottom-right at $x=0.5, y=-0.5$). If a cycle or missing buffer occurs, the node disables and enters an error state.
 15. An FPS counter is displayed on the live preview canvas by default in Studio mode, accurately reflects rendering frame rate, is toggleable on/off by the user, and does not cause React re-render loops.
 16. Exporting the active setup downloads a valid nested JSON preset file; importing that file perfectly restores the component tree, parameter expressions, and visual state with automatic graph layout.
 

@@ -41,6 +41,11 @@ To guarantee uncompromised 60+ FPS rendering while providing rich interactive UI
 - **Shaders:** Custom GLSL fragment and vertex passes.
 - **Runtime Shader Error Boundary:** Intercepts shader compilation logs (`gl.getShaderInfoLog`) and surfaces diagnostics to the in-app Diagnostics Console without crashing WebGL context.
 - **Context Loss & Asset Recovery:** Listens to `webglcontextlost` and `webglcontextrestored` to rebuild render targets and materials seamlessly. Raw asset references/URLs are retained in the State Plane memory so textures re-instantiate automatically.
+- **Screen Coordinate System (Winamp AVS / WebGL NDC):**
+  - All 2D visual elements, quads, and container transformations operate in a normalized Cartesian coordinate space from `-1.0` to `1.0`:
+    - `x`: `-1.0` (left edge) to `1.0` (right edge), with `0.0` at horizontal center.
+    - `y`: `-1.0` (bottom edge) to `1.0` (top edge), with `0.0` at vertical center.
+  - Position parameters (`positionX`, `positionY`) map directly to this normalized range.
 - **Viewport Resizing & DPR Clamping:** Window resize events debounce FBO reallocation by 150ms and clamp device pixel ratio (`Math.min(window.devicePixelRatio, 2)`) to eliminate GC memory thrashing and excessive VRAM usage.
 
 ## 5. Audio Engine & Hardware Integration
