@@ -12,6 +12,9 @@
   - *Studio / Editor Mode:* Split-view with node graph, parameter inspectors, audio FFT visualizer, and MIDI mapping HUD.
   - *Live Performance Mode:* Fullscreen distraction-free canvas with auto-hiding HUD controls on mouse inactivity.
 - **Tactile Modulation:** Knobs, faders, and formula inputs display live visual pulsing/deflection reflecting real-time audio reactivity.
+- **Master Frame Buffer Anchor:**
+  - The node graph visually anchors the **Master Frame Buffer** as the permanent root container with a distinctive header/crown badge and subtle glowing boundary.
+  - The Master Frame Buffer cannot be deleted, but selecting it opens its inspector, allowing the user to configure its blend mode (clean slate vs. frame feedback trails), background clear color, and master transforms.
 - **Named Buffer Visual Indicators:**
   - Nodes publishing a buffer (`save_to="#NAME"`) display an emerald/cyan badge indicating the broadcast target name.
   - Nodes consuming a buffer (`load_from="#NAME"`) feature an intuitive dropdown menu populated with all currently active `#BUFFER` names in the project.

@@ -53,6 +53,11 @@ This bootstrap track establishes Visualització's foundational architecture: a h
   - Serves as a modular container for child visual components (such as the Static Image).
   - Renders child components into an offscreen `THREE.WebGLRenderTarget`.
   - Exposes container-level modulation parameters: Position (X, Y), Scale/Zoom, Rotation, Opacity, and Blend Mode.
+  - **Master Frame Buffer Root:**
+    - Every preset pipeline is strictly rooted in a single **Master Frame Buffer** (`is_master: true`), enclosing all visual components and child buffers.
+    - **Clean Slate vs. Frame Feedback:** The Master Frame Buffer's blend mode determines the canvas lifecycle:
+      - `Replace` (opacity 1.0): Clears the render target at the start of every frame, providing a clean slate.
+      - Feedback blend modes (`Additive`, `Maximum`, `Minimum`, `Subtractive`, `Multiplicative`, or opacity < 1.0): Utilizes dual-FBO ping-pong render targets to feed the previous frame's rendered output into the next frame, producing classic motion trails, phosphor decay, and feedback textures.
   - **Named Buffer Routing (`save_to` & `load_from`):**
     - **Buffer Production (`save_to="#NAME"`):** Frame buffers can publish their rendered output into a global `BufferPool` keyed by a normalized identifier (e.g., `#BUFFER_A`).
     - **Buffer Consumption (`load_from="#NAME"`):** Frame buffers can load and sample an upstream rendered texture from `BufferPool` as a textured quad before or alongside compositing child components.
@@ -81,7 +86,8 @@ This bootstrap track establishes Visualització's foundational architecture: a h
 ### 2.6 Declarative Nested JSON Preset Schema (Import & Export)
 - The entire visualizer preset is represented as a single portable JSON document.
 - **Nested Component Hierarchy:**
-  - Containers (such as `frame_buffer`) serialize a `children` array containing nested child components.
+  - The root element (`root`) is strictly the **Master Frame Buffer** (`is_master: true`), containing child components and nested buffers in its `children` array.
+  - Containers serialize a `children` array containing nested child components.
   - Parameters serialize with `{ "mode": "literal" | "expression", "value": ... }`.
 - **Import / Export Actions:**
   - Export: Download active preset as a `.json` file or copy to clipboard.
@@ -103,8 +109,9 @@ This bootstrap track establishes Visualització's foundational architecture: a h
 9. Typing `$` or `%` in the formula editor automatically opens the inline documentation dropdown showing variable definitions and live audio values.
 10. Binding dynamic expressions with special values or system functions (e.g. `Blend: %FFT(0, 0.3, 1) * 0.5` or `Scale: 1.0 + %BEAT(0.2) * 0.3`) dynamically modulates visual parameters to the audio at 60+ FPS.
 11. Tweaking Frame Buffer blend modes (Replace, Additive, Maximum, Minimum, Subtractive, Multiplicative) produces the expected visual compositing.
-12. Frame buffers can produce named buffers (`save_to="#NAME"`) and consume named buffers (`load_from="#NAME"`), allowing multiple child buffers to sample and composite an upstream buffer (e.g. four scaled instances in each corner).
-13. Exporting the active setup downloads a valid nested JSON preset file; importing that file perfectly restores the component tree, parameter expressions, and visual state.
+12. Every preset is structured with a single Master Frame Buffer root node; switching its blend mode to `Replace` starts each frame with a clean slate, while feedback blend modes (or partial opacity) feed previous frames into next frames via ping-pong FBOs to generate motion decay trails.
+13. Frame buffers can produce named buffers (`save_to="#NAME"`) and consume named buffers (`load_from="#NAME"`), allowing multiple child buffers to sample and composite an upstream buffer (e.g. four scaled instances in each corner).
+14. Exporting the active setup downloads a valid nested JSON preset file; importing that file perfectly restores the component tree, parameter expressions, and visual state.
 
 ## 5. Out of Scope for Track 1
 - Full arbitrary GLSL shader editor / custom user shader authoring (Track 2).

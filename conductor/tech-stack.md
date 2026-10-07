@@ -33,9 +33,11 @@ To guarantee uncompromised 60+ FPS rendering while providing rich interactive UI
   - Any Frame Buffer component can consume an existing buffer via `load_from="#NAME"`, rendering the sampled texture on a quad with independent scaling, position, rotation, opacity, and blend modes.
   - Multiple components can simultaneously consume the same buffer (e.g. four scaled copies in four corners).
   - Topological sort guarantees upstream producer buffers render prior to downstream consumers.
-- **Dual-FBO Ping-Pong Feedback Loop:**
-  - Emulates classic Winamp AVS and MilkDrop frame feedback (warp meshes, decay trails, motion vectors).
-  - Maintains dual `THREE.WebGLRenderTarget` instances; renders current scene + feedback pass into Target B reading Target A as a texture uniform, swapping targets each frame.
+- **Master Frame Buffer & Dual-FBO Ping-Pong Feedback Loop:**
+  - Every preset pipeline is rooted in a single **Master Frame Buffer** that encloses all other components and frame buffers.
+  - The Master Frame Buffer manages dual `THREE.WebGLRenderTarget` instances (ping-pong FBOs):
+    - **Clean Slate Mode (`blend_mode: "replace"`, opacity `1.0`):** Target buffer is cleared at the start of each frame before rendering children; each frame starts fresh with no historical trail.
+    - **Frame Feedback Mode (Additive, Maximum, Minimum, Subtractive, Multiplicative, or partial opacity):** The previous frame's rendered texture is retained and composited into the current frame via a feedback pass before or during child rendering, creating classic Winamp AVS/MilkDrop decay trails, motion blur, and psychedelic echoes.
 - **Shaders:** Custom GLSL fragment and vertex passes.
 - **Runtime Shader Error Boundary:** Intercepts shader compilation logs (`gl.getShaderInfoLog`) and surfaces diagnostics to the in-app Diagnostics Console without crashing WebGL context.
 - **Context Loss Handling:** Listens to `webglcontextlost` and `webglcontextrestored` to rebuild render targets and materials seamlessly.
@@ -93,7 +95,7 @@ To guarantee uncompromised 60+ FPS rendering while providing rich interactive UI
 ## 7. Declarative JSON Preset Schema & Persistence
 - **Architecture:** The entire visualizer preset is serialized as a single, portable, human-readable JSON document for seamless import, export, and sharing.
 - **Hierarchical Nested Component Schema:**
-  Container components (like `FrameBufferContainer`) house a nested `children` array containing child component nodes, allowing arbitrary nesting:
+  Every preset defines exactly one **Master Frame Buffer** at the root (`root`), which houses all child components inside its nested `children` array:
   ```json
   {
     "version": "1.0",
@@ -101,13 +103,14 @@ To guarantee uncompromised 60+ FPS rendering while providing rich interactive UI
     "author": "User",
     "created_at": "2026-10-07T00:00:00Z",
     "root": {
-      "id": "fb_main",
+      "id": "master_buffer",
       "type": "frame_buffer",
+      "is_master": true,
       "parameters": {
         "scale": { "mode": "expression", "value": "1.0 + %BEAT(0.25) * 0.4" },
         "rotation": { "mode": "literal", "value": 0.0 },
         "opacity": { "mode": "literal", "value": 1.0 },
-        "blend_mode": { "mode": "literal", "value": "add" }
+        "blend_mode": { "mode": "literal", "value": "replace" }
       },
       "children": [
         {

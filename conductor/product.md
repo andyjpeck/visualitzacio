@@ -13,7 +13,8 @@ The platform is designed to serve two complementary environments:
 
 ## Core Capabilities
 - **Modular Component Pipeline & Named Buffer Routing:** 
-  - Composable node graph where visual generators, geometric transforms, color mappers, feedback loops, and post-processing passes can be chained in real time.
+  - **Master Frame Buffer Root:** Every preset is structured with a single **Master Frame Buffer** at its root, inside of which all visual generators, child buffers, and transformations live.
+  - **Frame Feedback vs. Clean Slate:** The Master Frame Buffer fully supports blend modes (Replace, Additive, Maximum, Minimum, Subtractive, Multiplicative) and opacity. When set to `Replace`, every frame starts with a clean slate; when set to additive, maximum, or feedback blend modes, the previous frame is continuously fed into the next frame to generate motion trails, decay, and feedback textures.
   - **Named Frame Buffers (`#BUFFER_NAME`):** Frame Buffer components can produce named textures (`save_to="#NAME"`) and consume named textures (`load_from="#NAME"`). This allows complex multi-quad compositing, tiling, feedback loops, and picture-in-picture arrangements (e.g. rendering a graphic into `#BUFFER_A` and compositing four scaled, transposed copies into the corners of a master buffer).
   - Universal parameter architecture: every component parameter can exist either as a fixed value (knob, slider, switch) or bind dynamically to a mathematical expression.
 - **Dynamic Expression Engine & Universal Parameter Binding:**

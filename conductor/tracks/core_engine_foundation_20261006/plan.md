@@ -39,6 +39,7 @@
 
 - [ ] Task: Offscreen Frame Buffer Pipeline & Buffer Pool (TDD)
   - [ ] Write tests for render target allocation, resizing, and ping-pong texture management
+  - [ ] Write tests for Master Frame Buffer dual-FBO ping-pong feedback loop vs. clean slate clear mode
   - [ ] Write tests for `BufferPool` managing named render targets (`save_to` and `load_from` lookup and fallback)
   - [ ] Implement `BufferPool` and `FrameBufferRenderer` managing `THREE.WebGLRenderTarget` textures
 - [ ] Task: Custom GLSL Blend Mode Compositor (TDD)
@@ -57,11 +58,12 @@
   - [ ] Bundle a default test graphic
 - [ ] Task: Frame Buffer Container & Named Buffer Routing (TDD)
   - [ ] Write tests for container child registration and hierarchical render dispatching
+  - [ ] Write tests for Master Frame Buffer root lifecycle (verifying `blend_mode: "replace"` creates a clean slate while feedback blend modes feed previous frame texture into next frame)
   - [ ] Write tests for `save_to="#NAME"` publishing to `BufferPool` and `load_from="#NAME"` upstream texture sampling (e.g., 4-corner multi-quad replication)
   - [ ] Implement `FrameBufferContainer` rendering child component textures into its render target, saving to named targets, and sampling from loaded buffers
   - [ ] Wire per-frame dynamic expression evaluation into Frame Buffer transformation uniforms (evaluating expressions like `Blend: %FFT(0, 0.3, 1) * 0.5` or `Scale: 1.0 + %BEAT(0.25) * 0.3` each frame)
 - [ ] Task: Declarative Nested JSON Preset Serializer (TDD)
-  - [ ] Write unit tests for nested tree serialization (`children` arrays, `save_to`, `load_from`, expression parameters) and deserialization
+  - [ ] Write unit tests for nested tree serialization (`root` strictly as Master Frame Buffer with `children` arrays, `save_to`, `load_from`, expression parameters) and deserialization
   - [ ] Implement `PresetSerializer` importing/exporting full component trees and parameter expression states
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
@@ -79,7 +81,7 @@
 - [ ] Task: Split Layout, Node Inspector & Preset Import/Export UI (TDD)
   - [ ] Write tests for node selection and inspector parameter synchronization
   - [ ] Implement Split-View UI: Left preview viewport, Right vertically split panel
-  - [ ] Integrate `@xyflow/react` in top-right panel displaying Frame Buffer container and Image node
+  - [ ] Integrate `@xyflow/react` in top-right panel displaying the non-deletable Master Frame Buffer container anchor and nested Image node
   - [ ] Integrate `ParameterControl` into bottom-right Node Inspector for seamless parameter editing
   - [ ] Add header buttons for Preset Export (.json download) and Import (file upload/drop)
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
