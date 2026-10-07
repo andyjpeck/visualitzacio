@@ -19,7 +19,7 @@ The platform is designed to serve two complementary environments:
   - Universal parameter architecture: every component parameter can exist either as a fixed value (knob, slider, switch) or bind dynamically to a mathematical expression.
   - **Screen Coordinate System (Winamp AVS Standard):** All visual positioning and screen coordinates follow the Winamp AVS / WebGL NDC standard ranging from `-1.0` to `1.0` with `(0.0, 0.0)` at center: `x` spans `-1.0` (left) to `1.0` (right), and `y` spans `-1.0` (bottom) to `1.0` (top).
 - **Dynamic Expression Engine & Universal Parameter Binding:**
-  - Mathematical formulas evaluated once per frame inside the Render Data Plane. Supports standard arithmetic operators, including the binary modulo operator (`%`, e.g. `$FRAME % 60`).
+  - Mathematical formulas evaluated once per frame inside the Render Data Plane, supporting standard mathematical operators and functions.
   - **Special Values ($VARIABLE):** Built-in audio/system variables formatted with `$` (e.g., `$BASS`, `$MID`, `$TREBLE`, `$BPM`, `$RMS`, `$TIME`, `$BEAT` [binary 1/0], `$FRAME`).
   - **System Functions (#FUNCTION):** Built-in DSP functions formatted with `#` prefix:
     - `#FFT(lower_band, band_width, channel)` with normalized logarithmic frequency inputs $[0.0, 1.0]$.

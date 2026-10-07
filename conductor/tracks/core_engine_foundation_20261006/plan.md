@@ -27,7 +27,7 @@
   - [ ] Implement `AudioManager` with autoplay policy unlock, sample player, and uncompressed `getUserMedia` stream capture
   - [ ] Bundle a lightweight default ambient/rhythm audio test sample
 - [ ] Task: Dynamic Expression Engine & Sandboxing (TDD)
-  - [ ] Write unit tests for `ExpressionPreprocessor` token rewriting (`#FUNC(` $\to$ `__fn_FUNC(`, `$VAR` $\to$ `__var_VAR`), preserving modulo (`%`) operator
+  - [ ] Write unit tests for `ExpressionPreprocessor` token rewriting (`#FUNC(` $\to$ `__fn_FUNC(`, `$VAR` $\to$ `__var_VAR`)
   - [ ] Write unit tests for `$SPECIAL_VALUE` token extraction (`$BASS`, `$MID`, `$TREBLE`, `$BPM`, `$RMS`, `$TIME`, binary `$BEAT`, `$FRAME`)
   - [ ] Write unit tests for `#FFT(lower_band, band_width, channel)` system function evaluation with logarithmic frequency mapping ($20\text{Hz}-20000\text{Hz}$)
   - [ ] Write unit tests for `#BEAT()`, `#BEAT_SECONDS(decay_seconds)`, and `#BEAT_FRAMES(decay_frames)` exponential decay envelopes

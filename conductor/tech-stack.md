@@ -96,13 +96,13 @@ To guarantee uncompromised 60+ FPS rendering while providing rich interactive UI
   - Animatable component parameters (e.g. Frame Buffer `scale`, `rotation`, `opacity`, `positionX`, `positionY`, `blend_mode`) support dual modes:
     - **Literal Mode (Schema `"mode": "literal"`, UI "Fixed Mode"):** Static scalar/boolean/enum value.
     - **Expression Mode (Schema `"mode": "expression"`, UI "Dynamic Expression Mode"):** Compiles an expression string (e.g. `Opacity: #FFT(0, 0.3, 1) * 0.5`, `Scale: 1.0 + #BEAT(0.3) * 0.4`).
-- **Token Preprocessing & Modulo Operator Preservation:**
-  - Standard `expr-eval` treats `%` as the binary modulo operator (`a % b`) and does not natively parse `$` or `#` identifiers.
+- **Token Preprocessing & Function Syntax:**
+  - Standard `expr-eval` does not natively parse `$` or `#` identifiers.
   - All `#` system functions require parentheses (e.g., `#BEAT()`).
-  - An `ExpressionPreprocessor` selectively transforms tokens prior to compilation without disturbing the modulo operator:
+  - An `ExpressionPreprocessor` transforms tokens prior to compilation:
     - Rewrites function calls: `/#([A-Za-z_][A-Za-z0-9_]*)\s*\(/g` $\to$ `__fn_$1(`
     - Rewrites variables: `/\$([A-Za-z_][A-Za-z0-9_]*)/g` $\to$ `__var_$1`
-    - Preserves standard arithmetic and modulo: expressions like `$FRAME % 60` safely transform to `__var_FRAME % 60`.
+    - Standard mathematical operations and functions remain untouched.
 - **Compilation & Caching:**
   - Preprocessed expression strings compile into AST execution functions on edit (`parser.compile(expr)`).
   - Pre-allocated variable context object (`scope`) is mutated in-place each frame to eliminate garbage collection.

@@ -41,9 +41,9 @@ This bootstrap track establishes Visualització's foundational architecture: a h
       - Transient attack pulse: Jumps to `1.0` on a detected beat, exponentially decaying to `0.0` over `decay_frames` frames (default: 12 frames).
 - **Universal Parameter Binding:**
   - All component parameters (e.g., Frame Buffer `scale`, `rotation`, `opacity`, `positionX`, `positionY`, `blend_mode`) can be set to a static literal value or bound to a dynamic expression (e.g., `opacity: #FFT(0, 0.3, 1) * 0.5`, `scale: 1.0 + #BEAT(0.25) * 0.4`).
-- **Fault-Tolerant Sandboxing & Modulo Preservation:**
+- **Fault-Tolerant Sandboxing:**
   - Preprocessor selectively transforms system functions (`#NAME(` $\to$ `__fn_NAME(`) and special variables (`$NAME` $\to$ `__var_NAME`) prior to compiling with `expr-eval`.
-  - The standard binary modulo operator `%` (e.g., `$FRAME % 60`) is preserved and fully functional.
+  - Standard mathematical expressions and operators remain untouched and fully functional.
   - Guarded against syntax errors, division by zero, `NaN`, and `Infinity`. Safe fallback to previous valid frame value, or initial literal value on frame 0.
 
 ### 2.4 Modular Visual Pipeline: Image & Frame Buffer Components
@@ -114,7 +114,7 @@ This bootstrap track establishes Visualització's foundational architecture: a h
 3. Binary `$BEAT` evaluates to `1.0` on beat frames and `0.0` on non-beat frames.
 4. `#BEAT()`, `#BEAT_SECONDS(decay)`, and `#BEAT_FRAMES(decay)` decay smoothly from `1.0` to `0.0` following exponential curves.
 5. System function `#FFT(lower_band, band_width, channel)` evaluates correctly with logarithmic frequency scaling and stereo channel selection.
-6. The standard binary modulo operator `%` (e.g. `$FRAME % 60`) functions correctly alongside `#FUNCTION(...)` system calls.
+6. Standard mathematical operators and functions evaluate correctly alongside `#FUNCTION(...)` system calls and `$VARIABLE` tokens.
 7. The Static Image component loads and displays an image inside a Frame Buffer container.
 8. Selecting the Frame Buffer node in the node graph opens its parameters in the bottom-right inspector.
 9. Clicking `f(x)` on any parameter toggles it between fixed widget and dynamic formula input.
