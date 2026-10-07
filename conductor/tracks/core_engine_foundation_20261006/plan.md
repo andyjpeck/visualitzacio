@@ -18,7 +18,7 @@
 ## Phase 2: Reactive Audio Engine & Dynamic Expression Evaluator
 
 - [ ] Task: Audio Feature Extraction & DSP Utilities (TDD)
-  - [ ] Write unit tests for logarithmic frequency band aggregation (`$BASS`, `$MID`, `$TREBLE`) and channel splitting
+  - [ ] Write unit tests for logarithmic frequency band aggregation (`$BASS`, `$MID`, `$TREBLE`), time-domain waveform data extraction, and channel splitting
   - [ ] Write unit tests for binary `$BEAT` detection (evaluating to 1 on beat frame, 0 otherwise)
   - [ ] Write unit tests for RMS energy smoothing and attack/decay calculations
   - [ ] Implement `AudioAnalyzer` utility class computing normalized values from raw Web Audio `AnalyserNode`
@@ -63,6 +63,7 @@
   - [ ] Write tests for Winamp AVS coordinate transformations (`positionX` and `positionY` in $[-1.0, 1.0]$ with `(0, 0)` at center)
   - [ ] Write tests for Master Frame Buffer root lifecycle (verifying `blend_mode: "replace"` creates a clean slate while feedback blend modes feed previous frame texture into next frame)
   - [ ] Write tests for `save_to="@NAME"` publishing to `BufferPool` and `load_from="@NAME"` upstream texture sampling (e.g., 4-corner multi-quad replication)
+  - [ ] Write tests verifying topological render pass ordering (producer buffers rendered prior to consumer buffers regardless of tree order)
   - [ ] Write tests verifying that disabled/errored buffer nodes skip render traversal safely
   - [ ] Implement `FrameBufferContainer` rendering child component textures into its render target, saving to named targets, and sampling from loaded buffers
   - [ ] Wire per-frame dynamic expression evaluation into Frame Buffer transformation uniforms (evaluating expressions like `opacity: #FFT(0, 0.3, 1) * 0.5` or `scale: 1.0 + #BEAT(0.25) * 0.3` each frame)

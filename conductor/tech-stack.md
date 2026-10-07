@@ -50,7 +50,7 @@ To guarantee uncompromised 60+ FPS rendering while providing rich interactive UI
 
 ## 5. Audio Engine & Hardware Integration
 - **Audio Processing:** Native Web Audio API (`AudioContext`, `AnalyserNode` with `fftSize = 2048`, `smoothingTimeConstant = 0.8`).
-- **Stereo & Multi-Channel Analysis:** Supports stereo channel splitting (`ChannelSplitterNode`) for distinct Left, Right, and Mono ($L+R$) spectral extraction.
+- **Stereo & Multi-Channel Analysis:** Supports stereo channel splitting (`ChannelSplitterNode`) for distinct Left, Right, and Mono ($(L+R)/2$) spectral extraction.
 - **Logarithmic Frequency Binning:**
   - Converts linear FFT bins into logarithmic psychoacoustic energy bands: `bass` (20–250 Hz), `mid` (250–4000 Hz), and `treble` (4000–16000 Hz).
   - Exponential mapping: $f(x) = 20 \times 10^{3x}$ for $x \in [0.0, 1.0]$ spanning 20Hz – 20,000Hz.
@@ -63,10 +63,9 @@ To guarantee uncompromised 60+ FPS rendering while providing rich interactive UI
 - **Hardware Integration:** Web MIDI API (`navigator.requestMIDIAccess`) with dynamic MIDI Learn, state machine, and value smoothing (slew-rate limiting / lerp).
 
 ## 6. Dynamic Expression Engine
-- **Parser & Evaluator:** `expr-eval` (lightweight, zero-`eval` safe mathematical expression evaluator compiling expressions into AST execution functions).
-- **Execution & Scope Lifecycle:**
-  - Evaluated **once per frame** in the Render Data Plane for uniform and parameter modulation.
-  - Pre-allocated variable scope object (`scope`) is mutated in-place each frame to eliminate garbage collection.
+- **Two-Tier Expression Architecture:**
+  1. **Tier 1 (Universal Parameter Modulation — MVP):** `expr-eval` (lightweight, zero-`eval` safe AST evaluator compiling scalar formulas evaluated **once per frame** for uniform and parameter modulation). Pre-allocated variable scope object (`scope`) is mutated in-place each frame to eliminate garbage collection.
+  2. **Tier 2 (High-Throughput Procedural Loops — Track 2 Duperscope):** JIT-compiled sandboxed JavaScript functions executing multi-line imperative statements (`init`, `frame`, `beat`, `point`) capable of running up to 240,000 evaluations/sec in per-vertex point loops.
 - **Language & Symbol Reference:**
   - System reactive variables (`$VARIABLE`): See [System Variables Reference](./system_variables.md).
   - Built-in audio/DSP functions (`#FUNCTION`): See [System Functions Reference](./system_functions.md).

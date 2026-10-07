@@ -108,6 +108,7 @@ Supports 6 distinct WebGL compositing blend modes:
   "is_master": true,
   "parameters": {
     "blend_mode": { "mode": "fixed", "value": "replace" },
+    "clear_color": { "mode": "fixed", "value": "#000000" },
     "opacity": { "mode": "fixed", "value": 1.0 },
     "scale": { "mode": "fixed", "value": 1.0 },
     "rotation": { "mode": "fixed", "value": 0.0 },
@@ -135,8 +136,9 @@ A master scene renders a visual element into `@BUFFER_A`, and four child buffers
   "enabled": true,
   "is_master": true,
   "parameters": {
-    "blend_mode": { "mode": "literal", "value": "replace" },
-    "opacity": { "mode": "literal", "value": 1.0 }
+    "blend_mode": { "mode": "fixed", "value": "replace" },
+    "clear_color": { "mode": "fixed", "value": "#000000" },
+    "opacity": { "mode": "fixed", "value": 1.0 }
   },
   "children": [
     {
