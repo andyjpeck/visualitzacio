@@ -28,9 +28,9 @@ To guarantee uncompromised 60+ FPS rendering while providing rich interactive UI
 ## 4. Graphics, Shaders & Feedback Rendering Pipeline
 - **3D / 2D Engine:** Three.js (WebGL 2.0 rendering context)
 - **Named Buffer Architecture (`save_to` & `load_from`):**
-  - Managed via an offscreen `BufferPool` maintaining a registry of `THREE.WebGLRenderTarget` instances keyed by `#NAME`.
-  - Any Frame Buffer component can publish its rendered texture to the pool via `save_to="#NAME"`.
-  - Any Frame Buffer component can consume an existing buffer via `load_from="#NAME"`, rendering the sampled texture on a quad with independent scaling, position, rotation, opacity, and blend modes.
+  - Managed via an offscreen `BufferPool` maintaining a registry of `THREE.WebGLRenderTarget` instances keyed by `@NAME`.
+  - Any Frame Buffer component can publish its rendered texture to the pool via `save_to="@NAME"`.
+  - Any Frame Buffer component can consume an existing buffer via `load_from="@NAME"`, rendering the sampled texture on a quad with independent scaling, position, rotation, opacity, and blend modes.
   - Multiple components can simultaneously consume the same buffer (e.g. four scaled copies in four corners).
   - Topological sort guarantees upstream producer buffers render prior to downstream consumers. If a cyclic dependency or nonexistent buffer is detected, the affected buffer is disabled from rendering, flagged with an error state, and logged to the Diagnostics Console.
 - **Master Frame Buffer & Dual-FBO Ping-Pong Feedback Loop:**
@@ -70,27 +70,27 @@ To guarantee uncompromised 60+ FPS rendering while providing rich interactive UI
     - `$BEAT`: **Binary trigger: `1.0` if the current frame is a beat, `0.0` otherwise.**
     - `$TIME`: Elapsed time in seconds since playback start.
     - `$FRAME`: Monotonically increasing frame counter integer.
-- **Built-in System Functions (%FUNCTION):**
-  - Formatted with a leading `%` in uppercase:
-    - **`%FFT(lower_band, band_width, channel)`:**
+- **Built-in System Functions (#FUNCTION):**
+  - Formatted with a leading `#` in uppercase (all `#` functions require parentheses):
+    - **`#FFT(lower_band, band_width, channel)`:**
       - Calculates energy of a custom frequency window.
       - `lower_band`: Normalized start frequency in $[0.0, 1.0]$ mapped logarithmically to $[20\text{Hz}, 20000\text{Hz}]$.
       - `band_width`: Frequency width in $[0.0, 1.0]$.
       - `channel`: `0` = Left + Right (default mono mix), `1` = Left channel, `2` = Right channel.
-      - Example: `%FFT(0, 0.3, 1)` calculates the lowest 30% of frequencies (approx. 20Hz–158Hz) on the left audio channel.
-    - **`%BEAT([decay_seconds = 0.2])` / `%BEAT_SECONDS([decay_seconds = 0.2])`:**
+      - Example: `#FFT(0, 0.3, 1)` calculates the lowest 30% of frequencies (approx. 20Hz–158Hz) on the left audio channel.
+    - **`#BEAT([decay_seconds = 0.2])` / `#BEAT_SECONDS([decay_seconds = 0.2])`:**
       - Transient attack pulse envelope: Jumps to `1.0` on beat and decays exponentially to `0.0` over `decay_seconds` (default: 0.2s).
-    - **`%BEAT_FRAMES([decay_frames = 12])`:**
+    - **`#BEAT_FRAMES([decay_frames = 12])`:**
       - Transient attack pulse envelope: Jumps to `1.0` on beat and decays exponentially to `0.0` over `decay_frames` frames (default: 12 frames).
 - **Universal Parameter Binding:**
   - Every component parameter (e.g., `scale`, `rotation`, `opacity`, `positionX`, `positionY`, `blend_mode`) supports dual modes:
     - **Literal Mode (Schema `"mode": "literal"`, UI "Fixed Mode"):** Static scalar/boolean/enum value.
-    - **Expression Mode (Schema `"mode": "expression"`, UI "Dynamic Expression Mode"):** Compiles an expression string (e.g. `Opacity: %FFT(0, 0.3, 1) * 0.5`, `Scale: 1.0 + %BEAT(0.3) * 0.4`).
+    - **Expression Mode (Schema `"mode": "expression"`, UI "Dynamic Expression Mode"):** Compiles an expression string (e.g. `Opacity: #FFT(0, 0.3, 1) * 0.5`, `Scale: 1.0 + #BEAT(0.3) * 0.4`).
 - **Token Preprocessing & Modulo Operator Preservation:**
-  - Standard `expr-eval` treats `%` as the binary modulo operator (`a % b`) and does not natively parse `$` identifiers.
-  - All `%` system functions require parentheses (e.g., `%BEAT()`).
+  - Standard `expr-eval` treats `%` as the binary modulo operator (`a % b`) and does not natively parse `$` or `#` identifiers.
+  - All `#` system functions require parentheses (e.g., `#BEAT()`).
   - An `ExpressionPreprocessor` selectively transforms tokens prior to compilation without disturbing the modulo operator:
-    - Rewrites function calls: `/%([A-Za-z_][A-Za-z0-9_]*)\s*\(/g` $\to$ `__fn_$1(`
+    - Rewrites function calls: `/#([A-Za-z_][A-Za-z0-9_]*)\s*\(/g` $\to$ `__fn_$1(`
     - Rewrites variables: `/\$([A-Za-z_][A-Za-z0-9_]*)/g` $\to$ `__var_$1`
     - Preserves standard arithmetic and modulo: expressions like `$FRAME % 60` safely transform to `__var_FRAME % 60`.
 - **Compilation & Caching:**
@@ -115,7 +115,7 @@ To guarantee uncompromised 60+ FPS rendering while providing rich interactive UI
       "type": "frame_buffer",
       "is_master": true,
       "parameters": {
-        "scale": { "mode": "expression", "value": "1.0 + %BEAT(0.25) * 0.4" },
+        "scale": { "mode": "expression", "value": "1.0 + #BEAT(0.25) * 0.4" },
         "rotation": { "mode": "literal", "value": 0.0 },
         "opacity": { "mode": "literal", "value": 1.0 },
         "blend_mode": { "mode": "literal", "value": "replace" }

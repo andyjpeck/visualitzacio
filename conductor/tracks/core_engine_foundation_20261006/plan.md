@@ -26,10 +26,10 @@
   - [ ] Implement `AudioManager` with autoplay policy unlock, sample player, and uncompressed `getUserMedia` stream capture
   - [ ] Bundle a lightweight default ambient/rhythm audio test sample
 - [ ] Task: Dynamic Expression Engine & Sandboxing (TDD)
-  - [ ] Write unit tests for `ExpressionPreprocessor` token rewriting (`%FUNC(` $\to$ `__fn_FUNC(`, `$VAR` $\to$ `__var_VAR`), preserving modulo (`%`) operator
+  - [ ] Write unit tests for `ExpressionPreprocessor` token rewriting (`#FUNC(` $\to$ `__fn_FUNC(`, `$VAR` $\to$ `__var_VAR`), preserving modulo (`%`) operator
   - [ ] Write unit tests for `$SPECIAL_VALUE` token extraction (`$BASS`, `$MID`, `$TREBLE`, `$BPM`, `$RMS`, `$TIME`, binary `$BEAT`, `$FRAME`)
-  - [ ] Write unit tests for `%FFT(lower_band, band_width, channel)` system function evaluation with logarithmic frequency mapping ($20\text{Hz}-20000\text{Hz}$)
-  - [ ] Write unit tests for `%BEAT()`, `%BEAT_SECONDS(decay_seconds)`, and `%BEAT_FRAMES(decay_frames)` exponential decay envelopes
+  - [ ] Write unit tests for `#FFT(lower_band, band_width, channel)` system function evaluation with logarithmic frequency mapping ($20\text{Hz}-20000\text{Hz}$)
+  - [ ] Write unit tests for `#BEAT()`, `#BEAT_SECONDS(decay_seconds)`, and `#BEAT_FRAMES(decay_frames)` exponential decay envelopes
   - [ ] Write unit tests for mathematical expression compilation, NaN/Infinity fallback, Frame 0 initial literal fallback, and zero-allocation per-frame evaluation
   - [ ] Implement `ExpressionEngine` wrapping `expr-eval` with preprocessor, pre-allocated evaluation scope, function bindings, and safe numeric clamping
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
@@ -41,7 +41,7 @@
 - [ ] Task: Offscreen Frame Buffer Pipeline & Buffer Pool (TDD)
   - [ ] Write tests for render target allocation, resizing, and ping-pong texture management
   - [ ] Write tests for Master Frame Buffer dual-FBO ping-pong feedback loop vs. clean slate clear mode
-  - [ ] Write tests for `BufferPool` managing named render targets (`save_to` and `load_from` lookup, DAG cycle detection, and buffer-disabled error states)
+  - [ ] Write tests for `BufferPool` managing named render targets (`save_to` and `load_from` lookup with `@NAME`, DAG cycle detection, and buffer-disabled error states)
   - [ ] Implement `BufferPool` and `FrameBufferRenderer` managing `THREE.WebGLRenderTarget` textures
 - [ ] Task: Custom GLSL Blend Mode Compositor (TDD)
   - [ ] Write tests verifying shader compilation and blend mode uniform switching
@@ -60,10 +60,10 @@
 - [ ] Task: Frame Buffer Container & Named Buffer Routing (TDD)
   - [ ] Write tests for container child registration and hierarchical render dispatching
   - [ ] Write tests for Master Frame Buffer root lifecycle (verifying `blend_mode: "replace"` creates a clean slate while feedback blend modes feed previous frame texture into next frame)
-  - [ ] Write tests for `save_to="#NAME"` publishing to `BufferPool` and `load_from="#NAME"` upstream texture sampling (e.g., 4-corner multi-quad replication)
+  - [ ] Write tests for `save_to="@NAME"` publishing to `BufferPool` and `load_from="@NAME"` upstream texture sampling (e.g., 4-corner multi-quad replication)
   - [ ] Write tests verifying that disabled/errored buffer nodes skip render traversal safely
   - [ ] Implement `FrameBufferContainer` rendering child component textures into its render target, saving to named targets, and sampling from loaded buffers
-  - [ ] Wire per-frame dynamic expression evaluation into Frame Buffer transformation uniforms (evaluating expressions like `opacity: %FFT(0, 0.3, 1) * 0.5` or `scale: 1.0 + %BEAT(0.25) * 0.3` each frame)
+  - [ ] Wire per-frame dynamic expression evaluation into Frame Buffer transformation uniforms (evaluating expressions like `opacity: #FFT(0, 0.3, 1) * 0.5` or `scale: 1.0 + #BEAT(0.25) * 0.3` each frame)
   - [ ] Write integration test verifying `RenderEngine` driving `FrameBufferContainer` with active audio telemetry and expression modulation
 - [ ] Task: Declarative Nested JSON Preset Serializer (TDD)
   - [ ] Write unit tests for nested tree serialization (`root` strictly as Master Frame Buffer with `children` arrays, `save_to`, `load_from`, expression parameters) and deserialization
@@ -79,7 +79,7 @@
   - [ ] Implement collapsible bottom Diagnostics Console with status bar alert badge
 - [ ] Task: Universal `f(x)` Parameter Component (TDD)
   - [ ] Write unit tests for parameter mode toggle (Fixed widget vs. Dynamic formula input)
-  - [ ] Write unit tests for inline autocomplete dropdown triggered by `$` and `%`, testing definition tooltips, usage documentation, keyboard navigation, and syntax status chip
+  - [ ] Write unit tests for inline autocomplete dropdown triggered by `$` and `#`, testing definition tooltips, usage documentation, keyboard navigation, and syntax status chip
   - [ ] Implement `ParameterControl` component featuring the `f(x)` toggle button, inline token autocomplete dropdown with parameter documentation, and syntax validation status chip
 - [ ] Task: Split-View Shell, Node Pipeline Graph (`@xyflow/react`) & Auto-Layout (TDD)
   - [ ] Write tests for node selection, inspector parameter synchronization, and viewport mounting

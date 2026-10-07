@@ -28,21 +28,21 @@ This bootstrap track establishes Visualització's foundational architecture: a h
     - **`$BEAT`**: Binary trigger (evaluates strictly to `1.0` if the current frame is a beat, `0.0` otherwise).
     - `$TIME`: Elapsed time in seconds.
     - `$FRAME`: Monotonically increasing frame counter integer.
-- **Built-in System Functions (%FUNCTION):**
-  - Formatted with leading `%` in uppercase:
-    - **`%FFT(lower_band, band_width, channel)`:**
+- **Built-in System Functions (#FUNCTION):**
+  - Formatted with leading `#` in uppercase (all `#` functions require parentheses):
+    - **`#FFT(lower_band, band_width, channel)`:**
       - Calculates energy of a custom frequency window.
       - `lower_band`: Normalized start frequency in $[0.0, 1.0]$ mapped logarithmically ($f = 20 \times 10^{3x}$) to $[20\text{Hz}, 20000\text{Hz}]$.
       - `band_width`: Frequency window width in $[0.0, 1.0]$.
       - `channel`: `0` = Left + Right (default mono mix), `1` = Left channel, `2` = Right channel.
-    - **`%BEAT([decay_seconds = 0.2])` / `%BEAT_SECONDS([decay_seconds = 0.2])`:**
+    - **`#BEAT([decay_seconds = 0.2])` / `#BEAT_SECONDS([decay_seconds = 0.2])`:**
       - Transient attack pulse: Jumps to `1.0` on a detected beat, exponentially decaying to `0.0` over `decay_seconds` (default: 0.2s).
-    - **`%BEAT_FRAMES([decay_frames = 12])`:**
+    - **`#BEAT_FRAMES([decay_frames = 12])`:**
       - Transient attack pulse: Jumps to `1.0` on a detected beat, exponentially decaying to `0.0` over `decay_frames` frames (default: 12 frames).
 - **Universal Parameter Binding:**
-  - All component parameters (e.g., Frame Buffer `scale`, `rotation`, `opacity`, `positionX`, `positionY`, `blend_mode`) can be set to a static literal value or bound to a dynamic expression (e.g., `opacity: %FFT(0, 0.3, 1) * 0.5`, `scale: 1.0 + %BEAT(0.25) * 0.4`).
+  - All component parameters (e.g., Frame Buffer `scale`, `rotation`, `opacity`, `positionX`, `positionY`, `blend_mode`) can be set to a static literal value or bound to a dynamic expression (e.g., `opacity: #FFT(0, 0.3, 1) * 0.5`, `scale: 1.0 + #BEAT(0.25) * 0.4`).
 - **Fault-Tolerant Sandboxing & Modulo Preservation:**
-  - Preprocessor selectively transforms system functions (`%NAME(` $\to$ `__fn_NAME(`) and special variables (`$NAME` $\to$ `__var_NAME`) prior to compiling with `expr-eval`.
+  - Preprocessor selectively transforms system functions (`#NAME(` $\to$ `__fn_NAME(`) and special variables (`$NAME` $\to$ `__var_NAME`) prior to compiling with `expr-eval`.
   - The standard binary modulo operator `%` (e.g., `$FRAME % 60`) is preserved and fully functional.
   - Guarded against syntax errors, division by zero, `NaN`, and `Infinity`. Safe fallback to previous valid frame value, or initial literal value on frame 0.
 
@@ -60,9 +60,9 @@ This bootstrap track establishes Visualització's foundational architecture: a h
       - `Replace` (opacity 1.0): Clears the render target at the start of every frame, providing a clean slate.
       - Feedback blend modes (`Additive`, `Maximum`, `Minimum`, `Subtractive`, `Multiplicative`, or opacity < 1.0): Utilizes dual-FBO ping-pong render targets to feed the previous frame's rendered output into the next frame, producing classic motion trails, phosphor decay, and feedback textures.
   - **Named Buffer Routing (`save_to` & `load_from`):**
-    - **Buffer Production (`save_to="#NAME"`):** Frame buffers can publish their rendered output into a global `BufferPool` keyed by a normalized identifier (e.g., `#BUFFER_A`).
-    - **Buffer Consumption (`load_from="#NAME"`):** Frame buffers can load and sample an upstream rendered texture from `BufferPool` as a textured quad before or alongside compositing child components.
-    - **Compositing & Multi-Quad Routing:** Enables complex multi-pass routing such as 4-corner scaled replication (e.g., loading `#BUFFER_A` into 4 child buffers scaled to 25% and translated to upper-left, upper-right, lower-left, lower-right), recursive feedback echoes, and PIP.
+    - **Buffer Production (`save_to="@NAME"`):** Frame buffers can publish their rendered output into a global `BufferPool` keyed by a normalized identifier (e.g., `@BUFFER_A`).
+    - **Buffer Consumption (`load_from="@NAME"`):** Frame buffers can load and sample an upstream rendered texture from `BufferPool` as a textured quad before or alongside compositing child components.
+    - **Compositing & Multi-Quad Routing:** Enables complex multi-pass routing such as 4-corner scaled replication (e.g., loading `@BUFFER_A` into 4 child buffers scaled to 25% and translated to upper-left, upper-right, lower-left, lower-right), recursive feedback echoes, and PIP.
     - **Cycle Prevention & Error Handling:** If a circular dependency or nonexistent buffer name is configured, the affected buffer is disabled from rendering, flagged with a visual error state, and logged to the Diagnostics Console (preventing infinite loops or application freezing).
   - Supports 6 distinct blend modes:
     1. **Replace:** Overwrites existing pixels completely with the new layer data.
@@ -78,9 +78,9 @@ This bootstrap track establishes Visualització's foundational architecture: a h
 - **Right Panel (Vertically Split):**
   - **Top Sub-Panel:** Interactive Node Pipeline Graph (`@xyflow/react`) displaying components and container connections.
   - **Bottom Sub-Panel (Node Inspector):** Dynamically displays the parameter controls for the selected node.
-  - **Universal `f(x)` Parameter Toggle:** Each parameter row displays an `f(x)` button. In Fixed mode, it renders knobs/sliders/inputs. When toggled into Expression mode, it morphs into a formula input with `$SPECIAL_VALUE` and `%FUNCTION` auto-suggestions, syntax validation, and formula status chips.
+  - **Universal `f(x)` Parameter Toggle:** Each parameter row displays an `f(x)` button. In Fixed mode, it renders knobs/sliders/inputs. When toggled into Expression mode, it morphs into a formula input with `$SPECIAL_VALUE` and `#FUNCTION` auto-suggestions, syntax validation, and formula status chips.
   - **Inline Autocomplete & Documentation Dropdown:**
-    - Triggered automatically when typing `$` or `%` inside the formula input.
+    - Triggered automatically when typing `$` or `#` inside the formula input.
     - Displays full variable and function definitions, parameter signatures, and usage documentation.
     - Full keyboard navigation (Arrow keys, Enter/Tab).
 - **Collapsible Bottom Bar:** In-app Diagnostics / Error Console with glowing warning/error badge.
@@ -104,17 +104,17 @@ This bootstrap track establishes Visualització's foundational architecture: a h
 1. The web app builds and runs cleanly via `npm run dev` and passes `npm test`.
 2. Audio plays from bundled sample or mic, populating special values (`$BASS`, `$MID`, `$TREBLE`, `$RMS`, binary `$BEAT`).
 3. Binary `$BEAT` evaluates to `1.0` on beat frames and `0.0` on non-beat frames.
-4. `%BEAT()`, `%BEAT_SECONDS(decay)`, and `%BEAT_FRAMES(decay)` decay smoothly from `1.0` to `0.0` following exponential curves.
-5. System function `%FFT(lower, width, channel)` evaluates correctly with logarithmic frequency scaling and stereo channel selection.
-6. The standard binary modulo operator `%` (e.g. `$FRAME % 60`) functions correctly alongside `%FUNCTION(...)` system calls.
+4. `#BEAT()`, `#BEAT_SECONDS(decay)`, and `#BEAT_FRAMES(decay)` decay smoothly from `1.0` to `0.0` following exponential curves.
+5. System function `#FFT(lower_band, band_width, channel)` evaluates correctly with logarithmic frequency scaling and stereo channel selection.
+6. The standard binary modulo operator `%` (e.g. `$FRAME % 60`) functions correctly alongside `#FUNCTION(...)` system calls.
 7. The Static Image component loads and displays an image inside a Frame Buffer container.
 8. Selecting the Frame Buffer node in the node graph opens its parameters in the bottom-right inspector.
 9. Clicking `f(x)` on any parameter toggles it between fixed widget and dynamic formula input.
-10. Typing `$` or `%` in the formula editor automatically opens the inline documentation dropdown showing variable and function definitions.
-11. Binding dynamic expressions with special values or system functions (e.g. `opacity: %FFT(0, 0.3, 1) * 0.5` or `scale: 1.0 + %BEAT(0.2) * 0.3`) dynamically modulates visual parameters to the audio at 60+ FPS.
+10. Typing `$` or `#` in the formula editor automatically opens the inline documentation dropdown showing variable and function definitions.
+11. Binding dynamic expressions with special values or system functions (e.g. `opacity: #FFT(0, 0.3, 1) * 0.5` or `scale: 1.0 + #BEAT(0.2) * 0.3`) dynamically modulates visual parameters to the audio at 60+ FPS.
 12. Tweaking Frame Buffer blend modes (Replace, Additive, Maximum, Minimum, Subtractive, Multiplicative) produces the expected visual compositing.
 13. Every preset is structured with a single Master Frame Buffer root node; switching its blend mode to `Replace` starts each frame with a clean slate, while feedback blend modes (or partial opacity) feed previous frames into next frames via ping-pong FBOs to generate motion decay trails.
-14. Frame buffers can produce named buffers (`save_to="#NAME"`) and consume named buffers (`load_from="#NAME"`), allowing multiple child buffers to sample and composite an upstream buffer (e.g. four scaled instances in each corner). If a cycle or missing buffer occurs, the node disables and enters an error state.
+14. Frame buffers can produce named buffers (`save_to="@NAME"`) and consume named buffers (`load_from="@NAME"`), allowing multiple child buffers to sample and composite an upstream buffer (e.g. four scaled instances in each corner). If a cycle or missing buffer occurs, the node disables and enters an error state.
 15. An FPS counter is displayed on the live preview canvas by default in Studio mode, accurately reflects rendering frame rate, is toggleable on/off by the user, and does not cause React re-render loops.
 16. Exporting the active setup downloads a valid nested JSON preset file; importing that file perfectly restores the component tree, parameter expressions, and visual state with automatic graph layout.
 

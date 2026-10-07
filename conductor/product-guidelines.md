@@ -22,8 +22,8 @@
   - The Master Frame Buffer cannot be deleted, but selecting it opens its inspector, allowing the user to configure its `blend_mode` (clean slate vs. frame feedback trails), background clear color, and master transforms.
   - Presets serialize the component tree hierarchy without manual canvas coordinates; upon import, the graph executes clean automatic hierarchical layout.
 - **Named Buffer Visual Indicators & Error State:**
-  - Nodes publishing a buffer (`save_to="#NAME"`) display an emerald/cyan badge indicating the broadcast target name.
-  - Nodes consuming a buffer (`load_from="#NAME"`) feature an intuitive dropdown menu populated with all currently active `#BUFFER` names in the project.
+  - Nodes publishing a buffer (`save_to="@NAME"`) display an emerald/cyan badge indicating the broadcast target name.
+  - Nodes consuming a buffer (`load_from="@NAME"`) feature an intuitive dropdown menu populated with all currently active `@BUFFER` names in the project.
   - If a cyclic dependency or nonexistent buffer name is selected, the buffer node transitions into a visible error state (amber/red glow) and the node is disabled until resolved.
 
 ## 3. Universal Parameter Pattern: The `f(x)` Expression Switcher
@@ -36,9 +36,9 @@ To maintain a unified, predictable visual language across all components when sw
   - Clicking `f(x)` smoothly morphs the fixed control into a monospace formula input field.
   - The `f(x)` button glows in the active theme accent color (e.g. electric cyan `#00f0ff`).
   - **Inline Autocomplete & Documentation Dropdown:**
-    - Appears automatically below the cursor upon typing `$` or `%`.
+    - Appears automatically below the cursor upon typing `$` or `#`.
     - **Variables (`$`):** Lists `$BASS`, `$MID`, `$TREBLE`, `$BPM`, `$RMS`, `$TIME`, `$BEAT`, `$FRAME` with human-readable definitions and documentation.
-    - **System Functions (`%`):** Lists `%FFT(...)`, `%BEAT()`, `%BEAT_SECONDS(...)`, `%BEAT_FRAMES(...)` with full function signatures, parameter descriptions, and return value ranges.
+    - **System Functions (`#`):** Lists `#FFT(...)`, `#BEAT()`, `#BEAT_SECONDS(...)`, `#BEAT_FRAMES(...)` with full function signatures, parameter descriptions, and return value ranges.
     - Full keyboard navigation (Up/Down arrow keys, Enter/Tab to select and insert with cursor positioned inside function parentheses).
   - **Expression Validation & Status Chip:** Validates syntax upon typing. Displays an evaluated checkmark or result summary chip. Invalid formulas pulse amber/red with an inline tooltip, safely retaining the previous valid frame value (or default literal on frame 0) without breaking rendering. *(Note: 60 FPS real-time deflecting telemetry values in chips/autocomplete are reserved for Track 2's advanced modulation HUD).*
 
