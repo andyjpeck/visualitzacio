@@ -22,10 +22,12 @@ To maintain a unified, predictable visual language across all components when sw
 - **Dynamic Expression Mode (Active):**
   - Clicking `f(x)` smoothly morphs the fixed control into a monospace formula input field.
   - The `f(x)` button glows in the active theme accent color (e.g. electric cyan `#00f0ff`).
-  - **Autocomplete & Token Hints:**
-    - Typing `$` exposes an auto-suggest popover with descriptions for available special values (`$BASS`, `$MID`, `$TREBLE`, `$BPM`, `$RMS`, `$TIME`, `$BEAT` [binary 1/0], `$FRAME`).
-    - Typing `%` exposes an auto-suggest popover for built-in system functions (`%FFT(...)`, `%BEAT()`, `%BEAT_SECONDS(decay_seconds)`, `%BEAT_FRAMES(decay_frames)`).
-  - **Live Evaluation Preview:** A subtle chip displays the real-time calculated scalar value next to the field as audio plays.
+  - **Inline Autocomplete & Documentation Dropdown:**
+    - Appears automatically below the cursor upon typing `$` or `%`.
+    - **Variables (`$`):** Lists `$BASS`, `$MID`, `$TREBLE`, `$BPM`, `$RMS`, `$TIME`, `$BEAT`, `$FRAME`. Each entry displays the variable name, a human-readable definition, and a **real-time live calculated value preview** (e.g., `$BASS: 0.68`).
+    - **System Functions (`%`):** Lists `%FFT(...)`, `%BEAT()`, `%BEAT_SECONDS(...)`, `%BEAT_FRAMES(...)`. Each entry shows the full function signature, parameter definitions, and return range.
+    - Keyboard navigation (Up/Down arrow keys, Enter/Tab to select and insert with cursor inside parentheses for functions).
+  - **Live Evaluation Preview Chip:** A subtle badge next to the input displaying the real-time evaluated result as music plays.
   - **Error Indication:** If the user enters an invalid formula, the field border pulses amber/red with an inline tooltip, and the engine safely falls back to the previous valid frame value without breaking visual output.
 
 ## 4. Diagnostics & Error Handling

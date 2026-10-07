@@ -72,7 +72,8 @@
   - [ ] Implement collapsible bottom Diagnostics Console with status bar alert badge
 - [ ] Task: Universal `f(x)` Parameter Component (TDD)
   - [ ] Write unit tests for parameter mode toggle (Fixed widget vs. Dynamic formula input)
-  - [ ] Implement `ParameterControl` component featuring the `f(x)` toggle button, formula autocomplete for `$SPECIAL_VALUE` and `%FUNCTION` tokens, and real-time evaluation preview chip
+  - [ ] Write unit tests for inline autocomplete dropdown triggered by `$` and `%`, testing definition tooltips, live value display, and keyboard navigation
+  - [ ] Implement `ParameterControl` component featuring the `f(x)` toggle button, inline token autocomplete dropdown with real-time value previews and parameter documentation, and evaluation chip
 - [ ] Task: Split Layout, Node Inspector & Preset Import/Export UI (TDD)
   - [ ] Write tests for node selection and inspector parameter synchronization
   - [ ] Implement Split-View UI: Left preview viewport, Right vertically split panel

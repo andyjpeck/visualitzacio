@@ -67,6 +67,10 @@ This bootstrap track establishes Visualització's foundational architecture: a h
   - **Top Sub-Panel:** Interactive Node Pipeline Graph (`@xyflow/react`) displaying components and container connections.
   - **Bottom Sub-Panel (Node Inspector):** Dynamically displays the parameter controls for the selected node.
   - **Universal `f(x)` Parameter Toggle:** Each parameter row displays an `f(x)` button. In Fixed mode, it renders knobs/sliders/inputs. When toggled into Expression mode, it morphs into a formula input with `$SPECIAL_VALUE` and `%FUNCTION` auto-suggestions, syntax validation, and live preview evaluation chips.
+  - **Inline Autocomplete & Documentation Dropdown:**
+    - Triggered automatically when typing `$` or `%` inside the formula input.
+    - Displays full variable and function definitions alongside live real-time values (e.g. `$BASS: 0.68`).
+    - Full keyboard navigation (Arrow keys, Enter/Tab).
 - **Collapsible Bottom Bar:** In-app Diagnostics / Error Console with glowing warning/error badge.
 
 ### 2.6 Declarative Nested JSON Preset Schema (Import & Export)
@@ -91,9 +95,10 @@ This bootstrap track establishes Visualització's foundational architecture: a h
 6. The Static Image component loads and displays an image inside a Frame Buffer container.
 7. Selecting the Frame Buffer node in the node graph opens its parameters in the bottom-right inspector.
 8. Clicking `f(x)` on any parameter toggles it between fixed widget and dynamic formula input.
-9. Binding dynamic expressions with special values or system functions (e.g. `Blend: %FFT(0, 0.3, 1) * 0.5` or `Scale: 1.0 + %BEAT(0.2) * 0.3`) dynamically modulates visual parameters to the audio at 60+ FPS.
-10. Tweaking Frame Buffer blend modes (Replace, Additive, Maximum, Minimum, Subtractive, Multiplicative) produces the expected visual compositing.
-11. Exporting the active setup downloads a valid nested JSON preset file; importing that file perfectly restores the component tree, parameter expressions, and visual state.
+9. Typing `$` or `%` in the formula editor automatically opens the inline documentation dropdown showing variable definitions and live audio values.
+10. Binding dynamic expressions with special values or system functions (e.g. `Blend: %FFT(0, 0.3, 1) * 0.5` or `Scale: 1.0 + %BEAT(0.2) * 0.3`) dynamically modulates visual parameters to the audio at 60+ FPS.
+11. Tweaking Frame Buffer blend modes (Replace, Additive, Maximum, Minimum, Subtractive, Multiplicative) produces the expected visual compositing.
+12. Exporting the active setup downloads a valid nested JSON preset file; importing that file perfectly restores the component tree, parameter expressions, and visual state.
 
 ## 5. Out of Scope for Track 1
 - Full arbitrary GLSL shader editor / custom user shader authoring (Track 2).
