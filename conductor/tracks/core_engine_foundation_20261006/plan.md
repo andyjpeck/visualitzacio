@@ -4,8 +4,9 @@
 
 - [ ] Task: Project Scaffolding with Vite, React 19, TypeScript, and Tailwind CSS
   - [ ] Initialize Vite React TypeScript project with Tailwind CSS configuration
-  - [ ] Configure Vitest and React Testing Library setup
+  - [ ] Configure Vitest and React Testing Library setup with WebGL/Web Audio mocks
   - [ ] Configure ESLint and Prettier per `code_styleguides/typescript.md`
+  - [ ] Configure `vite.config.ts` base path and GitHub Actions workflow (`.github/workflows/deploy.yml`) for automated GitHub Pages deployment
 - [ ] Task: Two-Plane Architecture Skeleton (TDD)
   - [ ] Write unit tests for decoupled Engine Loop controller (state subscriber vs. RAF ticker) and throttled FPS counter
   - [ ] Implement `RenderEngine` core class managing `requestAnimationFrame`, throttled FPS monitoring, and Three.js canvas mount

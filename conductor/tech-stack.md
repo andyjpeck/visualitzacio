@@ -140,3 +140,12 @@ To guarantee uncompromised 60+ FPS rendering while providing rich interactive UI
 ## 8. Testing & Quality Assurance
 - **Unit & Integration Testing:** Vitest + React Testing Library
 - **Linting & Formatting:** ESLint + Prettier
+
+## 9. Hosting, Deployment & CI/CD
+- **Hosting Platform:** GitHub Pages (`https://andyjpeck.github.io/visualitzacio/`)
+- **CI/CD Pipeline:** Automated deployment via GitHub Actions (`.github/workflows/deploy.yml`) on every push to `main`:
+  - Installs dependencies (`npm ci`).
+  - Runs ESLint and Vitest test suites.
+  - Builds production bundle (`npm run build`) with `base: '/visualitzacio/'`.
+  - Automatically deploys static artifact to GitHub Pages environment.
+- **Security & Device APIs:** Native HTTPS provided by GitHub Pages, satisfying browser security policies required for Web Audio microphone capture (`getUserMedia`), Web MIDI (`navigator.requestMIDIAccess`), and Fullscreen APIs.
