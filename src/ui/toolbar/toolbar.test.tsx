@@ -93,4 +93,22 @@ describe('Toolbar Component', () => {
 
     expect(useAppStore.getState().isPresetSettingsOpen).toBe(true)
   })
+
+  it('stops sample playback when switching to mic and disables play button while mic is active', async () => {
+    useAppStore.setState({ isPlaying: true, sourceType: 'sample' })
+    const { rerender } = render(<Toolbar audioManager={mockAudioManager} />)
+
+    const micButton = screen.getByRole('button', { name: /use microphone/i })
+    await act(async () => {
+      fireEvent.click(micButton)
+    })
+
+    expect(mockAudioManager.pauseSample).toHaveBeenCalledTimes(1)
+    expect(mockAudioManager.enableMicrophone).toHaveBeenCalledTimes(1)
+    expect(useAppStore.getState().sourceType).toBe('mic')
+
+    rerender(<Toolbar audioManager={mockAudioManager} />)
+    const playButton = screen.getByRole('button', { name: /^play$/i })
+    expect(playButton).toBeDisabled()
+  })
 })

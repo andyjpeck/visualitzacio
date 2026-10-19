@@ -9,6 +9,7 @@ export interface AudioManagerOptions {
 export class AudioManager {
   private audioContext: AudioContext | null = null
   private masterGain: GainNode | null = null
+  private micGain: GainNode | null = null
   private analyserNode: AnalyserNode | null = null
   private sampleBuffer: AudioBuffer | null = null
   private currentSourceNode: AudioBufferSourceNode | null = null
@@ -45,20 +46,33 @@ export class AudioManager {
       const ctx = this.factory()
       this.audioContext = ctx
 
+      // Master output volume for sample playback
       this.masterGain = ctx.createGain()
       this.masterGain.gain.value = this.volume
+
+      // Microphone preamp boost (3.5x) so natural voice/room sound clearly drives FFT
+      this.micGain = ctx.createGain()
+      this.micGain.gain.value = 3.5
 
       this.analyserNode = ctx.createAnalyser()
       this.analyserNode.fftSize = 2048
       this.analyserNode.smoothingTimeConstant = 0.8
+      this.analyserNode.minDecibels = -90
+      this.analyserNode.maxDecibels = -10
 
-      // Master audio output chain: masterGain -> analyserNode -> destination
+      // Audio routing:
+      // 1. Sample goes to speakers (masterGain -> destination)
+      this.masterGain.connect(ctx.destination)
+      // 2. Sample also goes to analyser (masterGain -> analyserNode)
       this.masterGain.connect(this.analyserNode)
-      this.analyserNode.connect(ctx.destination)
 
-      // Mute gain for microphone sink (keeps Chromium audio thread running without speaker feedback)
+      // 3. Mic preamp connects to analyser
+      this.micGain.connect(this.analyserNode)
+
+      // 4. Analyser connects to a 0.0 volume mute sink to keep Chromium audio pump active without speaker feedback
       this.muteGainNode = ctx.createGain()
       this.muteGainNode.gain.value = 0.0
+      this.analyserNode.connect(this.muteGainNode)
       this.muteGainNode.connect(ctx.destination)
 
       this.sampleBuffer = null
@@ -143,21 +157,28 @@ export class AudioManager {
         throw new Error('getUserMedia is not supported on this platform/browser')
       }
 
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          echoCancellation: false,
-          noiseSuppression: false,
-          autoGainControl: false,
-        },
-      })
+      let stream: MediaStream
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            echoCancellation: false,
+            noiseSuppression: false,
+            autoGainControl: false,
+          },
+        })
+      } catch {
+        // Fallback to standard audio options if platform rejects strict unconstrained constraints
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      }
 
       this.micStream = stream
       this.micSourceNode = ctx.createMediaStreamSource(stream)
 
-      // Connect mic to analyserNode and to mute sink
-      this.micSourceNode.connect(this.analyserNode!)
-      if (this.muteGainNode) {
-        this.micSourceNode.connect(this.muteGainNode)
+      // Connect mic to preamp gain (which feeds analyserNode)
+      if (this.micGain) {
+        this.micSourceNode.connect(this.micGain)
+      } else if (this.analyserNode) {
+        this.micSourceNode.connect(this.analyserNode)
       }
 
       this.sourceType = 'mic'
@@ -178,7 +199,11 @@ export class AudioManager {
    */
   disableMicrophone(): void {
     if (this.micSourceNode) {
-      this.micSourceNode.disconnect()
+      try {
+        this.micSourceNode.disconnect()
+      } catch {
+        // Already disconnected
+      }
       this.micSourceNode = null
     }
     if (this.micStream) {
@@ -233,6 +258,7 @@ export class AudioManager {
     }
     this.audioContext = null
     this.masterGain = null
+    this.micGain = null
     this.analyserNode = null
     this.muteGainNode = null
   }

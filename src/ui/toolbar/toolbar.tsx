@@ -33,45 +33,36 @@ export function Toolbar({ audioManager }: ToolbarProps): React.ReactElement {
     (state) => state.togglePresetSettings,
   )
 
+  const isMicActive = sourceType === 'mic'
+
   const handlePlayPause = async () => {
-    if (!audioManager) return
+    if (!audioManager || isMicActive) return
 
     if (isPlaying) {
-      if (sourceType === 'sample') {
-        audioManager.pauseSample()
-      } else {
-        audioManager.disableMicrophone()
-      }
+      audioManager.pauseSample()
       setIsPlaying(false)
     } else {
-      if (sourceType === 'sample') {
-        await audioManager.playSample()
-        setIsPlaying(true)
-      } else {
-        const ok = await audioManager.enableMicrophone()
-        if (ok) {
-          setIsPlaying(true)
-        } else {
-          setAudioError(audioManager.getLastError() || 'Microphone error')
-        }
-      }
+      await audioManager.playSample()
+      setIsPlaying(true)
     }
   }
 
-  const handleSelectSample = async () => {
+  const handleSelectSample = () => {
     if (!audioManager) return
+    audioManager.disableMicrophone()
+    setIsPlaying(false)
     setSourceType('sample')
     setAudioError(null)
-    if (isPlaying) {
-      audioManager.disableMicrophone()
-      await audioManager.playSample()
-    }
   }
 
   const handleSelectMic = async () => {
     if (!audioManager) return
+    // Stop the sample immediately if playing
+    audioManager.pauseSample()
+    setIsPlaying(false)
     setSourceType('mic')
     setAudioError(null)
+
     const ok = await audioManager.enableMicrophone()
     if (ok) {
       setIsPlaying(true)
@@ -95,15 +86,26 @@ export function Toolbar({ audioManager }: ToolbarProps): React.ReactElement {
     <>
       {/* Top Floating Glassmorphic Toolbar */}
       <header className="fixed top-4 right-4 z-40 flex items-center gap-2 p-1.5 rounded-xl backdrop-blur-md bg-cyber-void/85 border border-white/10 shadow-2xl select-none">
-        {/* Play / Pause */}
+        {/* Play / Pause (Controls Sample Player; disabled when Mic is active) */}
         <button
           type="button"
           onClick={handlePlayPause}
-          aria-label={isPlaying ? 'Pause' : 'Play'}
-          title={isPlaying ? 'Pause audio' : 'Play procedural drum beat'}
-          className="p-2 rounded-lg bg-cyber-cyan text-black hover:bg-cyber-cyan/90 transition-all font-bold shadow-md shadow-cyber-cyan/20 cursor-pointer"
+          disabled={isMicActive}
+          aria-label={isPlaying && !isMicActive ? 'Pause' : 'Play'}
+          title={
+            isMicActive
+              ? 'Sample playback disabled while Microphone is active'
+              : isPlaying
+                ? 'Pause audio'
+                : 'Play procedural drum beat'
+          }
+          className={`p-2 rounded-lg font-bold shadow-md transition-all ${
+            isMicActive
+              ? 'bg-slate-800 text-slate-500 border border-white/5 cursor-not-allowed opacity-40'
+              : 'bg-cyber-cyan text-black hover:bg-cyber-cyan/90 shadow-cyber-cyan/20 cursor-pointer'
+          }`}
         >
-          {isPlaying ? (
+          {isPlaying && !isMicActive ? (
             <Pause className="w-4 h-4 fill-current" />
           ) : (
             <Play className="w-4 h-4 fill-current ml-0.5" />
