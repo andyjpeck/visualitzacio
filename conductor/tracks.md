@@ -12,7 +12,7 @@ This registry tracks the planned, active, and completed workstreams across Visua
 
 - [ ] **Track 2: Dynamic Expression Engine & Parameter Binding**
   *Goal: `expr-eval` sandboxing, real-time `$VARIABLE` bindings, `#FUNCTION(...)` library with `#BEAT_FRAMES` decay curves, and live formula test input.*  
-  *Status: Planned (Spec & Plan to follow Track 1)*
+  *Link: [./tracks/track_2_expression_engine/index.md](./tracks/track_2_expression_engine/index.md)* (In Progress)
 
 - [ ] **Track 3: Modular Frame Buffer, Ping-Pong Feedback & Named Buffers**
   *Goal: Master Frame Buffer root lifecycle, dual-FBO ping-pong feedback motion trails, 6 GLSL blend modes, `@NAME` buffer pool, Built-in Frame Buffer Preset Selector, and Static Image component.*  
