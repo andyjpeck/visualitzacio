@@ -37,6 +37,7 @@ export function ViewportCanvas({
       presetSettings: {
         target_fps: initialSettings.targetFps,
         resolution_scale: initialSettings.resolutionScale,
+        audio_bands: initialSettings.audioBands,
       },
       onFpsUpdate: (fps) => {
         setCurrentFps(fps)

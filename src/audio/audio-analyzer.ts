@@ -1,4 +1,8 @@
 import type { FrameContext } from '../contracts/frame-context'
+import {
+  DEFAULT_AUDIO_BANDS,
+  type AudioBandsSettings,
+} from '../contracts/preset-settings'
 
 /**
  * Logarithmic frequency mapping: f = 20 * 10^(3x) for x in [0.0, 1.0].
@@ -23,6 +27,7 @@ export interface AudioAnalyzerOptions {
   beatCooldownMs?: number
   rmsAttack?: number
   rmsDecay?: number
+  audioBands?: Partial<AudioBandsSettings>
 }
 
 /**
@@ -36,6 +41,7 @@ export class AudioAnalyzer {
   private readonly beatCooldownMs: number
   private readonly rmsAttack: number
   private readonly rmsDecay: number
+  private audioBands: AudioBandsSettings
 
   private smoothedRms = 0
   private lastBeatTimeMs = -1000
@@ -56,6 +62,10 @@ export class AudioAnalyzer {
     this.beatCooldownMs = options.beatCooldownMs ?? 120
     this.rmsAttack = options.rmsAttack ?? 0.8
     this.rmsDecay = options.rmsDecay ?? 0.15
+    this.audioBands = {
+      ...DEFAULT_AUDIO_BANDS,
+      ...options.audioBands,
+    }
 
     const binCount = this.fftSize / 2
     this.byteFrequencyData = new Uint8Array(binCount)
@@ -63,8 +73,27 @@ export class AudioAnalyzer {
   }
 
   /**
-   * Aggregates frequency bins into $BASS (20-250 Hz), $MID (250-4000 Hz),
-   * and $TREBLE (4000-16000 Hz) and computes binary $BEAT and rolling $BPM.
+   * Updates frequency band cutoff boundaries ($BASS, $MID, $TREBLE).
+   *
+   * @param bands - Partial or complete frequency band settings.
+   */
+  setAudioBands(bands: Partial<AudioBandsSettings>): void {
+    this.audioBands = {
+      ...this.audioBands,
+      ...bands,
+    }
+  }
+
+  /**
+   * Returns currently active frequency band cutoff boundaries.
+   */
+  getAudioBands(): AudioBandsSettings {
+    return { ...this.audioBands }
+  }
+
+  /**
+   * Aggregates frequency bins into $BASS, $MID, and $TREBLE using configured band cutoffs
+   * and computes binary $BEAT and rolling $BPM.
    */
   processFrequencyData(
     freqData: Uint8Array,
@@ -86,13 +115,22 @@ export class AudioAnalyzer {
       const centerFreq = (i + 0.5) * binResolution
       const value = freqData[i] / 255.0
 
-      if (centerFreq >= 20 && centerFreq < 250) {
+      if (
+        centerFreq >= this.audioBands.bassMin &&
+        centerFreq < this.audioBands.bassMax
+      ) {
         bassSum += value
         bassCount++
-      } else if (centerFreq >= 250 && centerFreq < 4000) {
+      } else if (
+        centerFreq >= this.audioBands.midMin &&
+        centerFreq < this.audioBands.midMax
+      ) {
         midSum += value
         midCount++
-      } else if (centerFreq >= 4000 && centerFreq <= 16000) {
+      } else if (
+        centerFreq >= this.audioBands.trebleMin &&
+        centerFreq <= this.audioBands.trebleMax
+      ) {
         trebleSum += value
         trebleCount++
       }

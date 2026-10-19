@@ -11,6 +11,7 @@ The `contracts` directory contains core TypeScript data contracts, interfaces, a
 
 - [**`preset-settings.ts`**](file:///C:/Users/andyj/Documents/visualitzacio/src/contracts/preset-settings.ts):
   - Defines `PresetSettings` and `ResolutionScale` (`1.0`, `0.75`, `0.5`, `0.25`).
+  - Defines `AudioBandsSettings` and `DEFAULT_AUDIO_BANDS` specifying customizable cutoff boundaries for `$BASS` (default 20–250 Hz), `$MID` (default 250–4000 Hz), and `$TREBLE` (default 4000–16000 Hz).
   - Sets default target FPS (60 FPS) and rendering scale for hardware efficiency.
 
 - [**`renderer-like.ts`**](file:///C:/Users/andyj/Documents/visualitzacio/src/contracts/renderer-like.ts):

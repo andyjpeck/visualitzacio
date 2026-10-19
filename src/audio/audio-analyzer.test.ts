@@ -49,6 +49,23 @@ describe('AudioAnalyzer DSP Utilities', () => {
       expect(frameContext.$TREBLE).toBe(0.0)
     })
 
+    it('supports customizing frequency band cutoff boundaries', () => {
+      // Configure Bass to 20-500 Hz instead of 20-250 Hz
+      analyzer.setAudioBands({ bassMax: 500, midMin: 500 })
+      expect(analyzer.getAudioBands().bassMax).toBe(500)
+      expect(analyzer.getAudioBands().midMin).toBe(500)
+
+      const sampleRate = 44100
+      const binCount = 1024
+      const freqData = new Uint8Array(binCount)
+      // Bin 15 is around 323 Hz (44100 / 2048 * 15.5) -> previously $MID, now $BASS
+      freqData[15] = 255
+
+      analyzer.processFrequencyData(freqData, sampleRate, frameContext)
+      expect(frameContext.$BASS).toBeGreaterThan(0.0)
+      expect(frameContext.$MID).toBe(0.0)
+    })
+
     it('populates mid frequency band when mid range bins are energized', () => {
       const sampleRate = 44100
       const binCount = 1024

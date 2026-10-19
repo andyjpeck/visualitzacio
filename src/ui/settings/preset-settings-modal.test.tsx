@@ -14,7 +14,7 @@ describe('PresetSettingsModal', () => {
 
   it('renders target FPS and resolution scale options when open', () => {
     render(<PresetSettingsModal />)
-    expect(screen.getByText('Preset Performance Settings')).toBeInTheDocument()
+    expect(screen.getByText(/Preset Performance/i)).toBeInTheDocument()
     expect(screen.getByText('30 FPS')).toBeInTheDocument()
     expect(screen.getByText('60 FPS')).toBeInTheDocument()
     expect(screen.getByText('120 FPS')).toBeInTheDocument()
@@ -33,6 +33,23 @@ describe('PresetSettingsModal', () => {
     const button05 = screen.getByText('0.50x (Performance)')
     fireEvent.click(button05)
     expect(useAppStore.getState().resolutionScale).toBe(0.5)
+  })
+
+  it('allows customizing frequency band boundaries and resetting defaults', () => {
+    render(<PresetSettingsModal />)
+
+    const bassMaxInput = screen.getByLabelText('Bass maximum frequency')
+    fireEvent.change(bassMaxInput, { target: { value: '300' } })
+
+    expect(useAppStore.getState().audioBands.bassMax).toBe(300)
+    expect(useAppStore.getState().audioBands.midMin).toBe(300)
+
+    // Reset defaults button restores 250 Hz
+    const resetBtn = screen.getByText('Reset Defaults')
+    fireEvent.click(resetBtn)
+
+    expect(useAppStore.getState().audioBands.bassMax).toBe(250)
+    expect(useAppStore.getState().audioBands.midMin).toBe(250)
   })
 
   it('closes when close button is clicked', () => {

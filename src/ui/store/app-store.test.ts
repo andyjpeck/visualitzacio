@@ -48,4 +48,16 @@ describe('useAppStore (Zustand State Plane)', () => {
     expect(useAppStore.getState().targetFps).toBe(30)
     expect(useAppStore.getState().resolutionScale).toBe(0.5)
   })
+
+  it('updates audio frequency bands and resets to default values', () => {
+    const store = useAppStore.getState()
+    expect(store.audioBands.bassMax).toBe(250)
+
+    store.setAudioBands({ bassMax: 350, midMin: 350 })
+    expect(useAppStore.getState().audioBands.bassMax).toBe(350)
+    expect(useAppStore.getState().audioBands.midMin).toBe(350)
+
+    store.resetAudioBands()
+    expect(useAppStore.getState().audioBands.bassMax).toBe(250)
+  })
 })

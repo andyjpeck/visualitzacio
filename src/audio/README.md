@@ -12,10 +12,11 @@ The `audio` directory provides Web Audio API graph management, digital signal pr
   - Exposes an active `AnalyserNode` connected to a silent sink (`0.0` gain) to keep the browser audio thread pumped without speaker feedback.
 
 - [**`audio-analyzer.ts`**](file:///C:/Users/andyj/Documents/visualitzacio/src/audio/audio-analyzer.ts):
-  - Extracts frequency energy into discrete logarithmic bands:
-    - **`$BASS`** (20 Hz - 250 Hz)
-    - **`$MID`** (250 Hz - 4000 Hz)
-    - **`$TREBLE`** (4000 Hz - 16000 Hz)
+  - Extracts frequency energy into discrete logarithmic bands with customizable cutoff boundaries:
+    - **`$BASS`** (default 20 Hz – 250 Hz)
+    - **`$MID`** (default 250 Hz – 4000 Hz)
+    - **`$TREBLE`** (default 4000 Hz – 16000 Hz)
+  - Supports dynamic runtime cutoff updates via `setAudioBands()` synchronized from preset settings.
   - Computes smoothed Root-Mean-Square (RMS) amplitude with asymmetric attack and decay filters.
   - Detects percussive transients to trigger instantaneous **`$BEAT`** flags and calculates rolling **`$BPM`** tempo.
 

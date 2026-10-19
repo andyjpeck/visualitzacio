@@ -7,11 +7,18 @@ import { AudioTelemetryOverlay } from './ui/hud/audio-telemetry-overlay'
 import { AudioManager } from './audio/audio-manager'
 import { AudioAnalyzer } from './audio/audio-analyzer'
 import type { RenderEngine } from './engine/render-engine'
+import { useAppStore } from './ui/store/app-store'
 
 export function App(): React.ReactElement {
   const [engine, setEngine] = useState<RenderEngine | null>(null)
   const [audioManager] = useState(() => new AudioManager())
   const [audioAnalyzer] = useState(() => new AudioAnalyzer())
+  const audioBands = useAppStore((state) => state.audioBands)
+
+  // Synchronize dynamic frequency band cutoffs to audio analyzer
+  useEffect(() => {
+    audioAnalyzer.setAudioBands(audioBands)
+  }, [audioAnalyzer, audioBands])
 
   // Clean up Web Audio pipeline on unmount
   useEffect(() => {

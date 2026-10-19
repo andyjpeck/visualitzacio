@@ -17,7 +17,7 @@ export interface RenderEngineOptions {
   canvas?: HTMLCanvasElement
   renderer?: RendererLike
   scheduler?: Scheduler
-  presetSettings?: PresetSettings
+  presetSettings?: Partial<PresetSettings>
   onFpsUpdate?: (fps: number) => void
   onBeforeUpdate?: (frameContext: FrameContext, timestamp: number) => void
 }
@@ -53,8 +53,9 @@ export class RenderEngine {
    * @param options - Configuration options for the render pipeline.
    */
   constructor(options: RenderEngineOptions = {}) {
-    this.presetSettings = options.presetSettings ?? {
+    this.presetSettings = {
       ...DEFAULT_PRESET_SETTINGS,
+      ...options.presetSettings,
     }
     this.onFpsUpdate = options.onFpsUpdate
     this.onBeforeUpdate = options.onBeforeUpdate

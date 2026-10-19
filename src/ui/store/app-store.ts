@@ -1,5 +1,9 @@
 import { create } from 'zustand'
-import type { ResolutionScale } from '../../contracts/preset-settings'
+import {
+  DEFAULT_AUDIO_BANDS,
+  type AudioBandsSettings,
+  type ResolutionScale,
+} from '../../contracts/preset-settings'
 
 export type AudioSourceType = 'sample' | 'mic' | 'file'
 
@@ -16,9 +20,10 @@ export interface AppState {
   isPresetSettingsOpen: boolean
   currentFps: number
 
-  // Preset-wide performance settings
+  // Preset-wide performance & DSP settings
   targetFps: number
   resolutionScale: ResolutionScale
+  audioBands: AudioBandsSettings
 
   // Actions
   setIsPlaying: (isPlaying: boolean) => void
@@ -36,6 +41,8 @@ export interface AppState {
 
   setTargetFps: (fps: number) => void
   setResolutionScale: (scale: ResolutionScale) => void
+  setAudioBands: (bands: Partial<AudioBandsSettings>) => void
+  resetAudioBands: () => void
 }
 
 export const useAppStore = create<AppState>((set) => ({
@@ -51,6 +58,7 @@ export const useAppStore = create<AppState>((set) => ({
 
   targetFps: 60,
   resolutionScale: 1.0,
+  audioBands: { ...DEFAULT_AUDIO_BANDS },
 
   setIsPlaying: (isPlaying) => set({ isPlaying }),
   togglePlay: () => set((state) => ({ isPlaying: !state.isPlaying })),
@@ -70,4 +78,12 @@ export const useAppStore = create<AppState>((set) => ({
 
   setTargetFps: (targetFps) => set({ targetFps }),
   setResolutionScale: (resolutionScale) => set({ resolutionScale }),
+  setAudioBands: (bands) =>
+    set((state) => ({
+      audioBands: {
+        ...state.audioBands,
+        ...bands,
+      },
+    })),
+  resetAudioBands: () => set({ audioBands: { ...DEFAULT_AUDIO_BANDS } }),
 }))
