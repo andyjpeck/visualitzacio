@@ -2,6 +2,7 @@ import { act, fireEvent, render, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createDefaultFrameContext } from '../../contracts/frame-context'
 import type { RenderEngine } from '../../engine/render-engine'
+import { TestVisualNode } from '../../engine/visual-node'
 import { useAppStore } from '../store/app-store'
 import { FormulaTestbed } from './formula-testbed'
 
@@ -235,5 +236,35 @@ describe('FormulaTestbed Component', () => {
     } finally {
       window.requestAnimationFrame = originalRaf
     }
+  })
+
+  it('binds dynamic expression to nested TestVisualNode inside container nodes (regression test)', () => {
+    const setScaleExpressionSpy = vi.fn()
+    const mockTestVisualNode = {
+      setScaleExpression: setScaleExpressionSpy,
+    }
+
+    // Mock an engine where TestVisualNode is nested inside a container (like FrameBufferNode)
+    const hierarchicalEngine = {
+      getFrameContext: () => createDefaultFrameContext(),
+      getNodes: () => [], // top-level nodes array might not have TestVisualNode directly
+      getAllNodes: () => [mockTestVisualNode], // getAllNodes traverses hierarchy
+    } as unknown as RenderEngine
+
+    // Use prototype check compatibility by setting mockTestVisualNode prototype
+    Object.setPrototypeOf(mockTestVisualNode, TestVisualNode.prototype)
+
+    const { rerender } = render(<FormulaTestbed engine={hierarchicalEngine} />)
+
+    // Initially bound
+    expect(setScaleExpressionSpy).toHaveBeenCalledWith('1.0 + $BASS * 0.8', expect.anything())
+
+    // Changing active formula updates the nested TestVisualNode
+    act(() => {
+      useAppStore.setState({ activeFormula: 'sin($TIME) * 1.5' })
+    })
+    rerender(<FormulaTestbed engine={hierarchicalEngine} />)
+
+    expect(setScaleExpressionSpy).toHaveBeenCalledWith('sin($TIME) * 1.5', expect.anything())
   })
 })

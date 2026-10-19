@@ -196,4 +196,30 @@ describe('RenderEngine (TDD)', () => {
     engine.dispose()
     expect(poolDispose).toHaveBeenCalled()
   })
+
+  it('recursively discovers child nodes across container hierarchies with getAllNodes()', () => {
+    const mockRenderer = createMockRenderer()
+    const mockScheduler = createMockScheduler(1000)
+
+    const engine = new RenderEngine({
+      renderer: mockRenderer,
+      scheduler: mockScheduler,
+    })
+
+    const leafNode: VisualNode = { update: vi.fn() }
+    const containerNode: VisualNode = {
+      update: vi.fn(),
+      getChildren: () => [leafNode],
+    }
+
+    engine.addNode(containerNode)
+
+    expect(engine.getNodes()).toHaveLength(1)
+    expect(engine.getNodes()[0]).toBe(containerNode)
+
+    const allNodes = engine.getAllNodes()
+    expect(allNodes).toHaveLength(2)
+    expect(allNodes).toContain(containerNode)
+    expect(allNodes).toContain(leafNode)
+  })
 })

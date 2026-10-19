@@ -210,10 +210,30 @@ export class RenderEngine {
   }
 
   /**
-   * Returns a read-only array of all visual nodes currently attached to the engine pipeline.
+   * Returns a read-only array of top-level visual nodes attached to the engine pipeline.
    */
   getNodes(): readonly VisualNode[] {
     return this.nodes
+  }
+
+  /**
+   * Returns all visual nodes across the entire node hierarchy (including child nodes within container nodes like FrameBufferNode).
+   */
+  getAllNodes(): readonly VisualNode[] {
+    const result: VisualNode[] = []
+    const traverse = (nodeList: readonly VisualNode[]) => {
+      for (const node of nodeList) {
+        result.push(node)
+        if (typeof node.getChildren === 'function') {
+          const children = node.getChildren()
+          if (children && children.length > 0) {
+            traverse(children)
+          }
+        }
+      }
+    }
+    traverse(this.nodes)
+    return result
   }
 
   /**

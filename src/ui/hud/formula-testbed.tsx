@@ -64,7 +64,7 @@ export function FormulaTestbed({ engine, historyLengthRef }: FormulaTestbedProps
   // Sync formula with 3D scene node
   useEffect(() => {
     if (!engine) return
-    const nodes = engine.getNodes()
+    const nodes = typeof engine.getAllNodes === 'function' ? engine.getAllNodes() : engine.getNodes()
     for (const node of nodes) {
       if (node instanceof TestVisualNode) {
         if (bindFormulaToScene && validation.isValid) {
@@ -80,7 +80,7 @@ export function FormulaTestbed({ engine, historyLengthRef }: FormulaTestbedProps
   useEffect(() => {
     return () => {
       if (!engine) return
-      const nodes = engine.getNodes()
+      const nodes = typeof engine.getAllNodes === 'function' ? engine.getAllNodes() : engine.getNodes()
       for (const node of nodes) {
         if (node instanceof TestVisualNode) {
           node.setScaleExpression(null)

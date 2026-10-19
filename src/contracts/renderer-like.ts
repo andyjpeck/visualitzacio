@@ -32,5 +32,6 @@ export interface VisualNode {
   init?(renderer: RendererLike, bufferPool?: unknown): void
   resize?(width: number, height: number, pixelRatio?: number, resolutionScale?: number): void
   update(ctx: FrameContext): void
+  getChildren?(): readonly VisualNode[]
   dispose?(): void
 }
