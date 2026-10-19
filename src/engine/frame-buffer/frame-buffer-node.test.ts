@@ -189,29 +189,32 @@ describe('FrameBufferNode', () => {
     expect(mat?.uniforms.uBlendMode.value).toBe(1) // BLEND_MODES.additive
   })
 
-  it('manages autoClear and clearDepth safely during feedback and child passes', () => {
+  it('isolates child rendering into childTarget and composites into writeTarget with feedback shader', () => {
     const node = new FrameBufferNode({
-      id: 'fb-autoclear',
+      id: 'fb-multipass',
       feedback: true,
+      blendMode: 'additive',
     })
     node.init(mockRenderer)
     node.resize(800, 600, 1.0, 1.0)
 
-    let autoClearDuringChildUpdate = true
     const childMock: VisualNode = {
-      update: vi.fn(() => {
-        autoClearDuringChildUpdate = mockRenderer.autoClear ?? true
-      }),
+      update: vi.fn(),
     }
     node.addChild(childMock)
 
     const ctx = createDefaultFrameContext()
     node.update(ctx)
 
+    // Renderer clear called for child target and write target
     expect(mockRenderer.clear).toHaveBeenCalled()
-    expect(mockRenderer.clearDepth).toHaveBeenCalled()
-    expect(autoClearDuringChildUpdate).toBe(false)
-    expect(mockRenderer.autoClear).toBe(true)
+    // Child updated
+    expect(childMock.update).toHaveBeenCalledWith(ctx)
+
+    // Feedback material configured for compositing pass
+    const mat = node.getFeedbackMaterial()
+    expect(mat?.uniforms.uHasBase.value).toBe(1)
+    expect(mat?.uniforms.uBlendMode.value).toBe(1) // additive
   })
 
   it('clears both ping-pong buffers when clearBuffer is invoked', () => {

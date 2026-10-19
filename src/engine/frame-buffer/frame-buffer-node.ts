@@ -81,6 +81,9 @@ export class FrameBufferNode implements VisualNode {
   private feedbackQuad: THREE.Mesh | null = null
   private feedbackMaterial: THREE.ShaderMaterial | null = null
 
+  // Offscreen target for child rendering during feedback compositing
+  private childTarget: THREE.WebGLRenderTarget | null = null
+
   constructor(options: FrameBufferNodeOptions) {
     this.id = options.id
     this.name = options.name ?? 'Frame Buffer'
@@ -224,6 +227,9 @@ export class FrameBufferNode implements VisualNode {
     if (this.fboB) {
       this.fboB.dispose()
     }
+    if (this.childTarget) {
+      this.childTarget.dispose()
+    }
 
     const options: THREE.RenderTargetOptions = {
       format: THREE.RGBAFormat,
@@ -238,8 +244,10 @@ export class FrameBufferNode implements VisualNode {
 
     if (this.feedback) {
       this.fboB = new THREE.WebGLRenderTarget(targetW, targetH, options)
+      this.childTarget = new THREE.WebGLRenderTarget(targetW, targetH, options)
     } else {
       this.fboB = null
+      this.childTarget = null
     }
 
     this.pingPongIndex = 0
@@ -388,41 +396,43 @@ export class FrameBufferNode implements VisualNode {
     const readTarget = this.getReadTarget()
 
     // 1. Direct render pass into write FBO
-    if (writeTarget && this.renderer.setRenderTarget) {
-      this.renderer.setRenderTarget(writeTarget)
-    }
+    if (this.feedback && readTarget && this.childTarget && this.feedbackMaterial && this.feedbackScene && this.feedbackCamera) {
+      // Step A: Render children isolated into childTarget
+      if (this.renderer.setRenderTarget) {
+        this.renderer.setRenderTarget(this.childTarget)
+      }
+      if (this.renderer.clear) {
+        this.renderer.clear()
+      }
+      for (const child of this.children) {
+        child.update(ctx)
+      }
 
-    if (this.feedback && readTarget && this.feedbackMaterial && this.feedbackScene && this.feedbackCamera) {
-      // Clear write target
+      // Step B: Render feedbackScene quad into writeTarget combining feedback history and child render
+      if (writeTarget && this.renderer.setRenderTarget) {
+        this.renderer.setRenderTarget(writeTarget)
+      }
       if (this.renderer.clear) {
         this.renderer.clear()
       }
 
       // Configure feedback shader uniforms
-      this.feedbackMaterial.uniforms.uBlendTexture.value = readTarget.texture
-      this.feedbackMaterial.uniforms.uHasBase.value = 0
+      this.feedbackMaterial.uniforms.uBaseTexture.value = readTarget.texture
+      this.feedbackMaterial.uniforms.uBlendTexture.value = this.childTarget.texture
+      this.feedbackMaterial.uniforms.uHasBase.value = 1
       this.feedbackMaterial.uniforms.uOpacity.value = this.opacityVal
       this.feedbackMaterial.uniforms.uBlendMode.value = BLEND_MODES[this.blendMode as BlendModeName] ?? 0
       this.feedbackMaterial.uniforms.uScale.value.set(this.scaleVal, this.scaleVal)
       this.feedbackMaterial.uniforms.uRotation.value = this.rotationVal
       this.feedbackMaterial.uniforms.uOffset.value.set(this.positionXVal, this.positionYVal)
 
-      // Render decayed and transformed feedback quad
+      // Render composited feedback quad
       this.renderer.render(this.feedbackScene, this.feedbackCamera)
-
-      // Render children on top of feedback quad without clearing
-      const prevAutoClear = this.renderer.autoClear
-      this.renderer.autoClear = false
-      if (this.renderer.clearDepth) {
-        this.renderer.clearDepth()
-      }
-
-      for (const child of this.children) {
-        child.update(ctx)
-      }
-
-      this.renderer.autoClear = prevAutoClear ?? true
     } else {
+      if (writeTarget && this.renderer.setRenderTarget) {
+        this.renderer.setRenderTarget(writeTarget)
+      }
+
       if (this.isMaster && this.blendMode === 'replace') {
         if (this.renderer.clear) {
           this.renderer.clear()
@@ -472,6 +482,10 @@ export class FrameBufferNode implements VisualNode {
     if (this.fboB) {
       this.fboB.dispose()
       this.fboB = null
+    }
+    if (this.childTarget) {
+      this.childTarget.dispose()
+      this.childTarget = null
     }
 
     if (this.compositeQuad) {

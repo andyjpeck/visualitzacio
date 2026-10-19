@@ -157,38 +157,55 @@ vec2 transformUv(vec2 uv, vec2 scale, float rotation, vec2 offset) {
 }
 
 void main() {
-  vec2 sampleUv = transformUv(vUv, uScale, uRotation, uOffset);
-  vec4 fg = vec4(0.0);
-  if (sampleUv.x >= 0.0 && sampleUv.x <= 1.0 && sampleUv.y >= 0.0 && sampleUv.y <= 1.0) {
-    fg = texture2D(uBlendTexture, sampleUv);
-  }
-
   if (uHasBase == 0) {
+    // Single-texture pass: sample uBlendTexture transformed with opacity
+    vec2 sampleUv = transformUv(vUv, uScale, uRotation, uOffset);
+    vec4 fg = vec4(0.0);
+    if (sampleUv.x >= 0.0 && sampleUv.x <= 1.0 && sampleUv.y >= 0.0 && sampleUv.y <= 1.0) {
+      fg = texture2D(uBlendTexture, sampleUv);
+    }
     gl_FragColor = vec4(fg.rgb * uOpacity, fg.a * uOpacity);
     return;
   }
 
-  vec4 bg = texture2D(uBaseTexture, vUv);
+  // Dual-texture compositing pass:
+  // uBaseTexture = decayed feedback history / background (transformed by scale, rotation, offset, decayed by uOpacity)
+  vec2 trailUv = transformUv(vUv, uScale, uRotation, uOffset);
+  vec4 bg = vec4(0.0);
+  if (trailUv.x >= 0.0 && trailUv.x <= 1.0 && trailUv.y >= 0.0 && trailUv.y <= 1.0) {
+    bg = texture2D(uBaseTexture, trailUv) * uOpacity;
+  }
+
+  // uBlendTexture = fresh child render / foreground (untransformed at screen vUv)
+  vec4 fg = texture2D(uBlendTexture, vUv);
+
   vec4 result = bg;
 
   if (uBlendMode == 0) {
-    // replace
-    result = mix(bg, fg, uOpacity);
+    // replace: blend fg over decayed bg based on fg opacity/alpha
+    float alpha = fg.a > 0.0 ? fg.a : clamp(max(fg.r, max(fg.g, fg.b)) * 3.0, 0.0, 1.0);
+    result = mix(bg, fg, alpha);
   } else if (uBlendMode == 1) {
-    // additive
-    result = bg + fg * uOpacity;
+    // additive: add fresh foreground light to background trails
+    result = clamp(bg + fg, 0.0, 1.0);
   } else if (uBlendMode == 2) {
-    // maximum
-    result = max(bg, fg * uOpacity);
+    // maximum: brightest per-channel pixels win
+    result = max(bg, fg);
   } else if (uBlendMode == 3) {
-    // minimum
-    result = min(bg, mix(vec4(1.0), fg, uOpacity));
+    // minimum: darkest per-channel pixels win (ignoring empty transparent background)
+    if (bg.a < 0.01) {
+      result = fg;
+    } else if (fg.a < 0.01) {
+      result = bg;
+    } else {
+      result = min(bg, fg);
+    }
   } else if (uBlendMode == 4) {
-    // subtractive
-    result = max(vec4(0.0), bg - fg * uOpacity);
+    // subtractive: subtract foreground intensity from background
+    result = max(vec4(0.0), bg - fg);
   } else if (uBlendMode == 5) {
-    // multiplicative
-    result = mix(bg, bg * fg, uOpacity);
+    // multiplicative: multiply background trails by foreground colors
+    result = bg * fg;
   }
 
   gl_FragColor = result;
