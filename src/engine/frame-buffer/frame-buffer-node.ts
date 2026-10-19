@@ -9,6 +9,7 @@ import {
   type BlendModeName,
   createCompositingMaterial,
 } from './compositing-shader'
+import type { BufferPool } from './buffer-pool'
 
 export interface FrameBufferNodeOptions {
   id: string
@@ -56,6 +57,7 @@ export class FrameBufferNode implements VisualNode {
   private positionYParam: DynamicParam<number> | null = null
 
   private renderer: RendererLike | null = null
+  private bufferPool: BufferPool | null = null
   private readonly children: VisualNode[] = []
 
   private fboA: THREE.WebGLRenderTarget | null = null
@@ -156,11 +158,40 @@ export class FrameBufferNode implements VisualNode {
     return this.positionYVal
   }
 
-  init(renderer: RendererLike): void {
+  /**
+   * Dynamically toggles ping-pong feedback loop mode, allocating or releasing second FBO.
+   *
+   * @param feedback - True to enable dual-FBO ping-pong feedback.
+   */
+  setFeedback(feedback: boolean): void {
+    if (this.feedback === feedback) return
+    this.feedback = feedback
+    if (feedback && !this.feedbackQuad) {
+      this.initFeedbackQuad()
+    }
+    const targetW = Math.max(1, Math.floor(this.width * this.pixelRatio * this.resolutionScale))
+    const targetH = Math.max(1, Math.floor(this.height * this.pixelRatio * this.resolutionScale))
+    this.allocateRenderTargets(targetW, targetH)
+  }
+
+  init(renderer: RendererLike, bufferPool?: BufferPool): void {
     this.renderer = renderer
+    if (bufferPool) {
+      this.bufferPool = bufferPool
+      if (this.saveTo) {
+        this.bufferPool.recordNodeMapping(this.id, this.saveTo)
+      }
+      if (this.loadFrom) {
+        this.bufferPool.recordDependency(this.id, this.loadFrom)
+      }
+    }
     for (const child of this.children) {
       if (child.init) {
-        child.init(renderer)
+        if (this.bufferPool) {
+          child.init(renderer, this.bufferPool)
+        } else {
+          child.init(renderer)
+        }
       }
     }
   }
@@ -249,7 +280,11 @@ export class FrameBufferNode implements VisualNode {
   addChild(node: VisualNode): void {
     this.children.push(node)
     if (this.renderer && node.init) {
-      node.init(this.renderer)
+      if (this.bufferPool) {
+        node.init(this.renderer, this.bufferPool)
+      } else {
+        node.init(this.renderer)
+      }
     }
     if (node.resize) {
       node.resize(this.width, this.height, this.pixelRatio, this.resolutionScale)
@@ -282,15 +317,24 @@ export class FrameBufferNode implements VisualNode {
   bindExpression(
     param: 'opacity' | 'scale' | 'rotation' | 'positionX' | 'positionY',
     expr: string | number | null,
-    engine: ExpressionEngine,
+    engine?: ExpressionEngine,
   ): void {
+    if (typeof expr === 'number') {
+      if (param === 'opacity') { this.opacityVal = expr; this.opacityParam = null }
+      if (param === 'scale') { this.scaleVal = expr; this.scaleParam = null }
+      if (param === 'rotation') { this.rotationVal = expr; this.rotationParam = null }
+      if (param === 'positionX') { this.positionXVal = expr; this.positionXParam = null }
+      if (param === 'positionY') { this.positionYVal = expr; this.positionYParam = null }
+      return
+    }
+
     if (expr === null || expr === undefined || expr === '') {
       if (param === 'opacity') this.opacityParam = null
       if (param === 'scale') this.scaleParam = null
       if (param === 'rotation') this.rotationParam = null
       if (param === 'positionX') this.positionXParam = null
       if (param === 'positionY') this.positionYParam = null
-    } else {
+    } else if (engine) {
       const dynamic = createDynamicParam(expr, engine)
       if (param === 'opacity') this.opacityParam = dynamic
       if (param === 'scale') this.scaleParam = dynamic
@@ -398,6 +442,14 @@ export class FrameBufferNode implements VisualNode {
     // 3. Swap ping-pong buffers if feedback is active
     if (this.feedback) {
       this.swap()
+    }
+
+    // Register texture in global BufferPool if saveTo is configured
+    if (this.saveTo && this.bufferPool) {
+      const outputTarget = this.feedback ? this.getReadTarget() : writeTarget
+      if (outputTarget) {
+        this.bufferPool.register(this.saveTo, outputTarget.texture)
+      }
     }
 
     // 4. Composite to display if master root

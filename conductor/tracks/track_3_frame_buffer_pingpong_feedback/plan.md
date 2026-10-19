@@ -28,23 +28,23 @@
 
 ## Phase 3: Named Buffers (@NAME), Static Image Component & Built-in Templates (TDD)
 
-- [ ] Task: Global `BufferPool` & Named Texture Routing (TDD)
-  - [ ] Write unit tests for `BufferPool`: registering textures via `save_to`, resolving textures via `load_from`, detecting circular dependencies, and safe error fallbacks.
-  - [ ] Implement `BufferPool` class and integrate into `RenderEngine` frame lifecycle.
-- [ ] Task: Static Image Component (`StaticImageNode`) (TDD)
-  - [ ] Write unit tests for `StaticImageNode`: texture loading, aspect-ratio calculations for `cover`, `contain`, `stretch` fit modes, and opacity modulation.
-  - [ ] Implement `StaticImageNode` with WebGL texture loader and aspect-preserving quad geometry.
-- [ ] Task: Built-in Frame Buffer Templates Catalog (TDD)
-  - [ ] Create `src/engine/frame-buffer/frame-buffer-templates.ts` defining all 6 curated templates:
+- [x] Task: Global `BufferPool` & Named Texture Routing (TDD)
+  - [x] Write unit tests for `BufferPool`: registering textures via `save_to`, resolving textures via `load_from`, detecting circular dependencies, and safe error fallbacks.
+  - [x] Implement `BufferPool` class and integrate into `RenderEngine` frame lifecycle.
+- [x] Task: Static Image Component (`StaticImageNode`) (TDD)
+  - [x] Write unit tests for `StaticImageNode`: texture loading, aspect-ratio calculations for `cover`, `contain`, `stretch` fit modes, and opacity modulation.
+  - [x] Implement `StaticImageNode` with WebGL texture loader and aspect-preserving quad geometry.
+- [x] Task: Built-in Frame Buffer Templates Catalog (TDD)
+  - [x] Create `src/engine/frame-buffer/frame-buffer-templates.ts` defining all 6 curated templates:
     1. Clean Slate Default
     2. Analog Phosphor Trails
     3. Infinite Feedback Vortex
     4. 4-Corner Multi-Screen Replicator
     5. Picture-in-Picture (PIP) Echo
     6. Beat-Pulsed Shockwave Feedback
-  - [ ] Write unit tests validating that all templates conform to the JSON preset schema and instantiate without errors.
-- [ ] Task: Phase 3 Checkpoint & Integration Verification
-  - [ ] Run full test suite (`npm test`) and verify named buffer routing and template definitions.
+  - [x] Write unit tests validating that all templates conform to the JSON preset schema and instantiate without errors.
+- [x] Task: Phase 3 Checkpoint & Integration Verification
+  - [x] Run full test suite (`npm test`) and verify named buffer routing and template definitions.
 
 ---
 

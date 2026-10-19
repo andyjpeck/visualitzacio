@@ -112,7 +112,7 @@ describe('RenderEngine (TDD)', () => {
     })
 
     engine.addNode(mockNode)
-    expect(mockNode.init).toHaveBeenCalledWith(mockRenderer)
+    expect(mockNode.init).toHaveBeenCalledWith(mockRenderer, expect.anything())
 
     engine.start()
     mockScheduler.triggerFrame(1016)
@@ -169,5 +169,31 @@ describe('RenderEngine (TDD)', () => {
     expect(onBeforeUpdate).toHaveBeenCalledTimes(1)
     expect(nodeUpdate).toHaveBeenCalledTimes(1)
     expect(engine.getFrameContext().$BASS).toBe(0.88)
+  })
+
+  it('manages BufferPool lifecycle, passes it on node.init, and disposes it on engine.dispose', () => {
+    const mockRenderer = createMockRenderer()
+    const mockScheduler = createMockScheduler(1000)
+
+    const engine = new RenderEngine({
+      renderer: mockRenderer,
+      scheduler: mockScheduler,
+    })
+
+    const pool = engine.getBufferPool()
+    expect(pool).toBeDefined()
+
+    const initSpy = vi.fn()
+    const mockNode: VisualNode = {
+      init: initSpy,
+      update: vi.fn(),
+    }
+
+    engine.addNode(mockNode)
+    expect(initSpy).toHaveBeenCalledWith(mockRenderer, pool)
+
+    const poolDispose = vi.spyOn(pool, 'dispose')
+    engine.dispose()
+    expect(poolDispose).toHaveBeenCalled()
   })
 })

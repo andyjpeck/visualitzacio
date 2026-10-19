@@ -29,8 +29,8 @@ export interface Scheduler {
  * Minimal node interface implemented by visual passes and components in the render pipeline.
  */
 export interface VisualNode {
-  init?(renderer: RendererLike): void
-  resize?(width: number, height: number, pixelRatio: number, resolutionScale?: number): void
+  init?(renderer: RendererLike, bufferPool?: unknown): void
+  resize?(width: number, height: number, pixelRatio?: number, resolutionScale?: number): void
   update(ctx: FrameContext): void
   dispose?(): void
 }
