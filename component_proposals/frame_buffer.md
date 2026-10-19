@@ -1,5 +1,8 @@
 # Frame Buffer Component Proposal
 
+> **Component Type:** `frame_buffer`  
+> **Status:** Planned for Track 3 (Modular Frame Buffer, Ping-Pong Feedback & Named Buffers)
+
 ## 1. Overview & Vision
 
 The **Frame Buffer** component is Visualització's foundational container, render-to-texture mechanism, and compositing layer. Inspired by Winamp AVS's nested render lists and render-to-texture buffers, it serves three critical architectural roles:
@@ -40,8 +43,8 @@ flowchart TD
 
 | Phase | When It Executes | Typical Purpose | Frequency |
 | :--- | :--- | :--- | :--- |
-| **`setup`** | On preset load or canvas resize. | Allocates offscreen WebGL render targets matching canvas dimensions (with pixel ratio scaling). Allocates dual ping-pong buffers if feedback blend modes or partial opacity are configured. | Lifecycle event |
-| **`pre-render`** | Beginning of frame for this buffer. | If `load_from="@NAME"` is configured, retrieves the referenced texture from the global `BufferPool` and renders it onto a background quad. If `is_master: true` and `blend_mode: "Replace"`, clears the screen to clean slate. | ~60 Hz |
+| **`setup`** | On preset load or canvas resize. | Allocates offscreen WebGL render targets matching canvas dimensions (scaled by `resolution_scale` and clamped DPR). Allocates dual ping-pong buffers if feedback blend modes or partial opacity are configured. | Lifecycle event |
+| **`pre-render`** | Beginning of frame for this buffer. | If `load_from="@NAME"` is configured, retrieves the referenced texture from the global `BufferPool` and renders it onto a background quad. If `is_master: true` and `blend_mode: "replace"` with opacity `1.0`, clears the screen to clean slate. | ~60 Hz |
 | **`child-render`** | Middle of frame. | Traverses and executes all child visual components and nested buffers sequentially inside this buffer's render target. | ~60 Hz |
 | **`post-render`** | End of frame for this buffer. | If `save_to="@NAME"` is configured, publishes the completed render target texture to `BufferPool`. If ping-pong feedback is active, swaps read/write buffers. Composites final quad into parent target. | ~60 Hz |
 
@@ -51,8 +54,8 @@ flowchart TD
 
 The Frame Buffer exposes top-level modulation parameters that transform its entire rendered contents before compositing into its parent target:
 
-- **Position X (`positionX`):** Horizontal translation in $[-1.0, 1.0]$ (`-1.0` = left edge, `1.0` = right edge, `0.0` = center).
-- **Position Y (`positionY`):** Vertical translation in $[-1.0, 1.0]$ (`-1.0` = bottom edge, `1.0` = top edge, `0.0` = center).
+- **Position X (`position_x`):** Horizontal translation in $[-1.0, 1.0]$ (`-1.0` = left edge, `1.0` = right edge, `0.0` = center).
+- **Position Y (`position_y`):** Vertical translation in $[-1.0, 1.0]$ (`-1.0` = bottom edge, `1.0` = top edge, `0.0` = center).
 - **Scale (`scale`):** Uniform zoom/scale factor (Default: `1.0`).
 - **Rotation (`rotation`):** Rotation angle in radians (Default: `0.0`).
 - **Opacity (`opacity`):** Layer opacity in $[0.0, 1.0]$ (Default: `1.0`).
@@ -67,7 +70,7 @@ Every preset hierarchy is rooted in a single Master Frame Buffer (`is_master: tr
 
 ### Clean Slate vs. Frame Feedback
 The Master Frame Buffer's blend mode and opacity govern canvas persistence:
-- **Clean Slate (`Replace`, Opacity = 1.0):** Clears the canvas buffer at the start of every frame. Visuals render crisp with zero persistence.
+- **Clean Slate (`"replace"`, Opacity = 1.0):** Clears the canvas buffer at the start of every frame. Visuals render crisp with zero persistence.
 - **Feedback Loop (Feedback Blend Modes or Opacity < 1.0):** Activates dual-FBO ping-pong buffers. At the start of frame $T$, the completed output of frame $T-1$ is blended into the canvas before new elements are drawn, creating classic motion trails, phosphor decay, and infinite feedback zooms.
 
 ---
@@ -76,8 +79,8 @@ The Master Frame Buffer's blend mode and opacity govern canvas persistence:
 
 Frame buffers can decouple from strict tree hierarchies by publishing and consuming named textures:
 
-- **Buffer Production (`save_to="@BUFFER_NAME"`):** Publishes the buffer's rendered output into the global `BufferPool`.
-- **Buffer Consumption (`load_from="@BUFFER_NAME"`):** Injects the upstream named buffer as a texture source before rendering children.
+- **Buffer Production (`save_to: "@BUFFER_NAME"`):** Publishes the buffer's rendered output into the global `BufferPool`.
+- **Buffer Consumption (`load_from: "@BUFFER_NAME"`):** Injects the upstream named buffer as a texture source before rendering children.
 - **Cycle Prevention & Error Handling:** If a circular dependency (e.g. `@BUFFER_A` loading `@BUFFER_B` while `@BUFFER_B` loads `@BUFFER_A`) or missing buffer is detected, the dependent buffer is automatically disabled, displayed with an error state badge in the UI, and logged to the diagnostics console.
 
 ---
@@ -86,18 +89,20 @@ Frame buffers can decouple from strict tree hierarchies by publishing and consum
 
 Supports 6 distinct WebGL compositing blend modes:
 
-| Blend Mode | Math Operation | Visual Description |
-| :--- | :--- | :--- |
-| **`Replace`** | $C_{out} = C_{src}$ | Completely overwrites underlying pixels. Clean slate default. |
-| **`Additive`** | $C_{out} = \min(1, C_{dst} + C_{src})$ | Adds color channels. Bright spots glow and overexpose; black areas remain transparent. |
-| **`Maximum`** | $C_{out} = \max(C_{dst}, C_{src})$ | Takes the highest channel value between source and destination. |
-| **`Minimum`** | $C_{out} = \min(C_{dst}, C_{src})$ | Takes the lowest channel value between source and destination. |
-| **`Subtractive`** | $C_{out} = \max(0, C_{dst} - C_{src})$ | Inverts and subtracts top layer brightness from background. |
-| **`Multiplicative`**| $C_{out} = C_{dst} \times C_{src}$ | Multiplies color channels. Produces shading, tinting, and darkening. |
+| Blend Mode (`blend_mode`) | UI Label | Math Operation | Visual Description |
+| :--- | :--- | :--- | :--- |
+| **`"replace"`** | *Replace* | $C_{out} = C_{src}$ | Completely overwrites underlying pixels. Clean slate default. |
+| **`"additive"`** | *Additive* | $C_{out} = \min(1, C_{dst} + C_{src})$ | Adds color channels. Bright spots glow and overexpose; black areas remain transparent. |
+| **`"maximum"`** | *Maximum* | $C_{out} = \max(C_{dst}, C_{src})$ | Takes the highest channel value between source and destination. |
+| **`"minimum"`** | *Minimum* | $C_{out} = \min(C_{dst}, C_{src})$ | Takes the lowest channel value between source and destination. |
+| **`"subtractive"`** | *Subtractive* | $C_{out} = \max(0, C_{dst} - C_{src})$ | Inverts and subtracts top layer brightness from background. |
+| **`"multiplicative"`**| *Multiplicative* | $C_{out} = C_{dst} \times C_{src}$ | Multiplies color channels. Produces shading, tinting, and darkening. |
 
 ---
 
 ## 7. Component Preset Schema (JSON)
+
+Static buffer routing identifiers (`save_to`, `load_from`) are stored as plain strings or `null`, while modulatable parameters use `{ "mode", "value" }`:
 
 ```json
 {
@@ -112,10 +117,10 @@ Supports 6 distinct WebGL compositing blend modes:
     "opacity": { "mode": "fixed", "value": 1.0 },
     "scale": { "mode": "fixed", "value": 1.0 },
     "rotation": { "mode": "fixed", "value": 0.0 },
-    "positionX": { "mode": "fixed", "value": 0.0 },
-    "positionY": { "mode": "fixed", "value": 0.0 },
-    "save_to": { "mode": "fixed", "value": null },
-    "load_from": { "mode": "fixed", "value": null }
+    "position_x": { "mode": "fixed", "value": 0.0 },
+    "position_y": { "mode": "fixed", "value": 0.0 },
+    "save_to": null,
+    "load_from": null
   },
   "children": []
 }
@@ -147,57 +152,69 @@ A master scene renders a visual element into `@BUFFER_A`, and four child buffers
       "type": "frame_buffer",
       "enabled": true,
       "parameters": {
-        "save_to": { "mode": "fixed", "value": "@BUFFER_A" },
+        "save_to": "@BUFFER_A",
         "opacity": { "mode": "fixed", "value": 0.0 }
       },
       "children": [ /* Visual generator child */ ]
     },
     {
       "id": "corner-tl",
+      "name": "Top-Left Replicator",
       "type": "frame_buffer",
+      "enabled": true,
       "parameters": {
-        "load_from": { "mode": "fixed", "value": "@BUFFER_A" },
+        "load_from": "@BUFFER_A",
         "scale": { "mode": "fixed", "value": 0.5 },
-        "positionX": { "mode": "fixed", "value": -0.5 },
-        "positionY": { "mode": "fixed", "value": 0.5 }
-      }
+        "position_x": { "mode": "fixed", "value": -0.5 },
+        "position_y": { "mode": "fixed", "value": 0.5 }
+      },
+      "children": []
     },
     {
       "id": "corner-tr",
+      "name": "Top-Right Replicator",
       "type": "frame_buffer",
+      "enabled": true,
       "parameters": {
-        "load_from": { "mode": "fixed", "value": "@BUFFER_A" },
+        "load_from": "@BUFFER_A",
         "scale": { "mode": "fixed", "value": 0.5 },
-        "positionX": { "mode": "fixed", "value": 0.5 },
-        "positionY": { "mode": "fixed", "value": 0.5 }
-      }
+        "position_x": { "mode": "fixed", "value": 0.5 },
+        "position_y": { "mode": "fixed", "value": 0.5 }
+      },
+      "children": []
     },
     {
       "id": "corner-bl",
+      "name": "Bottom-Left Replicator",
       "type": "frame_buffer",
+      "enabled": true,
       "parameters": {
-        "load_from": { "mode": "fixed", "value": "@BUFFER_A" },
+        "load_from": "@BUFFER_A",
         "scale": { "mode": "fixed", "value": 0.5 },
-        "positionX": { "mode": "fixed", "value": -0.5 },
-        "positionY": { "mode": "fixed", "value": -0.5 }
-      }
+        "position_x": { "mode": "fixed", "value": -0.5 },
+        "position_y": { "mode": "fixed", "value": -0.5 }
+      },
+      "children": []
     },
     {
       "id": "corner-br",
+      "name": "Bottom-Right Replicator",
       "type": "frame_buffer",
+      "enabled": true,
       "parameters": {
-        "load_from": { "mode": "fixed", "value": "@BUFFER_A" },
+        "load_from": "@BUFFER_A",
         "scale": { "mode": "fixed", "value": 0.5 },
-        "positionX": { "mode": "fixed", "value": 0.5 },
-        "positionY": { "mode": "fixed", "value": -0.5 }
-      }
+        "position_x": { "mode": "fixed", "value": 0.5 },
+        "position_y": { "mode": "fixed", "value": -0.5 }
+      },
+      "children": []
     }
   ]
 }
 ```
 
 ### Example B: Beat-Reactive Infinite Feedback Tunnel
-Master Frame Buffer uses `additive` blend mode with slight decay and scale modulation to create a vortex trail:
+Master Frame Buffer uses `"additive"` blend mode with slight decay and scale modulation to create a vortex trail:
 
 ```json
 {

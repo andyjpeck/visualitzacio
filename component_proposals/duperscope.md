@@ -1,7 +1,7 @@
 # Duperscope Component Proposal
 
 > **Component Type:** `duperscope`  
-> **Status:** Planned for Track 2 (Generative Visual Synthesis & Duperscope MVP)
+> **Status:** Planned for Track 5 (Generative Visual Synthesis & Duperscope)
 
 ## 1. Overview & Vision
 
@@ -24,7 +24,7 @@ flowchart TD
     Beat{"Beat Detected?"}
     BeatExec["3. beat (On Transient Beat Event)\nDiscrete state jumps, pulse kicks, color shifts"]
     PointLoop["4. point (N times per frame: i = 0 ... n-1)\nComputes vertex (x, y, r, g, b, a) & audio sample v"]
-    Render["WebGL Draw Call\nTHREE.BufferGeometry (gl.LINES / gl.POINTS / gl.LINE_LOOP)"]
+    Render["WebGL Draw Call\nTHREE.BufferGeometry (gl.LINE_STRIP / gl.POINTS / gl.LINE_LOOP)"]
 
     Init --> Frame
     Frame --> Beat
@@ -57,7 +57,7 @@ flowchart TD
 
 | Variable | Scope / Phase | Access | Description |
 | :--- | :--- | :--- | :--- |
-| `n` | `init`, `frame`, `point` | **Read / Write** in `init`, `frame`; **Read-Only** in `point` | **Total point count** (Default: 200, Range: 1 to 4096). Modifiable dynamically in `init` or `frame`. Setting `n = 1` allows drawing a single reactive dot. |
+| `n` | `init`, `frame`, `point` | **Read / Write** in `init`, `frame`; **Read-Only** in `point` | **Total point count** (Initialized to the `points` parameter default `200`, clamped to `[1, 4096]`). Scripts may dynamically override `n` in `init` or `frame`. Setting `n = 1` allows drawing a single reactive dot. |
 | `i` | `point` | **Read-Only** | **Normalized point index** from `0.0` to `1.0` (computed as `n > 1 ? pointIndex / (n - 1) : 0.0`). |
 | `v` | `point` | **Read-Only** | **Current point audio sample** at normalized position `i` according to the selected `audio_mode` (Waveform: $[-1.0, 1.0]$, Spectrum: $[0.0, 1.0]$). Fast shorthand for `#WAVEFORM(i)` or `#FFT(i)`. |
 | `x` | `point` | **Read / Write** | **Output horizontal position** $[-1.0, 1.0]$. (Initial default: `(i * 2.0) - 1.0`). |
@@ -66,7 +66,7 @@ flowchart TD
 | `g` | `frame`, `point` | **Read / Write** | **Green color channel** $[0.0, 1.0]$. Values set in `frame` persist as the base default for all points. |
 | `b` | `frame`, `point` | **Read / Write** | **Blue color channel** $[0.0, 1.0]$. Values set in `frame` persist as the base default for all points. |
 | `a` | `frame`, `point` | **Read / Write** | **Alpha transparency** $[0.0, 1.0]$ (Default: `1.0`). Values set in `frame` persist as base default. |
-| `linesize` | `frame`, `point` | **Read / Write** | **Line stroke width / particle point size** (Default: `1.0`). |
+| `linesize` | `frame`, `point` | **Read / Write** | **Line stroke width / particle point size** in pixels (Default: `1.0`). |
 
 ### B. User-Defined Persistent State
 Custom variables assigned in `init`, `frame`, or `beat` (e.g. `rot = rot + 0.02;`, `phase`, `zoom`) automatically persist across frames on the component instance's state context.
@@ -75,7 +75,7 @@ Custom variables assigned in `init`, `frame`, or `beat` (e.g. `rot = rot + 0.02;
 - All standard Visualització system variables (`$VARIABLE`) and functions (`#FUNCTION(...)`) can be referenced in any code block.
 - **Audio Function Synergy:**
   - `v` is a convenient zero-overhead shorthand automatically bound to the point's index `i` based on the component's `audio_mode`.
-  - For advanced multi-band sampling within the same script, scripts can also call `#FFT(position, bandwidth, channel)` or `#WAVEFORM(position, channel)` anywhere in `frame` or `point`.
+  - For advanced multi-band sampling within the same script, scripts can also call `#FFT(position, [band_width = 0.02], [channel = 0])` or `#WAVEFORM(position, [channel = 0])` anywhere in `frame` or `point`.
 
 ---
 
@@ -84,12 +84,12 @@ Custom variables assigned in `init`, `frame`, or `beat` (e.g. `rot = rot + 0.02;
 Duperscope allows selecting the primary audio stream sampled by the automatic `v` variable:
 
 1. **Audio Mode (`audio_mode`):**
-   - `Waveform` (Time-domain oscilloscope data): $v \in [-1.0, 1.0]$.
-   - `Spectrum` (Frequency-domain FFT data): $v \in [0.0, 1.0]$.
+   - `"waveform"` (UI label: *Waveform* — time-domain oscilloscope data): $v \in [-1.0, 1.0]$.
+   - `"spectrum"` (UI label: *Spectrum* — frequency-domain FFT data): $v \in [0.0, 1.0]$.
 2. **Audio Channel (`channel`):**
-   - `Center` (Mono mixdown: $(L + R) / 2$)
-   - `Left` ($L$ channel only)
-   - `Right` ($R$ channel only)
+   - `"center"` (UI label: *Center* — Mono mixdown: $(L + R) / 2$)
+   - `"left"` (UI label: *Left* — $L$ channel only)
+   - `"right"` (UI label: *Right* — $R$ channel only)
 
 ---
 
@@ -97,20 +97,24 @@ Duperscope allows selecting the primary audio stream sampled by the automatic `v
 
 Duperscope translates evaluated points directly into a dynamic `THREE.BufferGeometry`:
 
-| Draw Mode (`draw_mode`) | WebGL Primitive | Visual Appearance |
-| :--- | :--- | :--- |
-| `Lines` (Default) | `gl.LINE_STRIP` | Continuous connected line strip through points $0 \dots n-1$. |
-| `Points` | `gl.POINTS` | Discrete particles / dots at each point. Size controlled by `linesize`. When `n = 1`, renders a single controllable particle. |
-| `Line Loop` | `gl.LINE_LOOP` | Closed continuous polyline automatically connecting point $n-1$ back to point $0$. |
+| Draw Mode (`draw_mode`) | UI Label | WebGL Primitive / Geometry | Visual Appearance |
+| :--- | :--- | :--- | :--- |
+| `"lines"` (Default) | *Lines* | `gl.LINE_STRIP` (`linesize == 1`) / `THREE.Line2` (`linesize > 1`) | Continuous connected line strip through points $0 \dots n-1$. |
+| `"points"` | *Points* | `gl.POINTS` (`gl_PointSize = aLineSize`) | Discrete particles / dots at each point. Size controlled per-vertex by `linesize`. When `n = 1`, renders a single controllable particle. |
+| `"line_loop"` | *Line Loop* | `gl.LINE_LOOP` (`linesize == 1`) / closed `THREE.Line2` (`linesize > 1`) | Closed continuous polyline automatically connecting point $n-1$ back to point $0$. |
 
 ### WebGL Implementation Strategy
-- A dedicated `THREE.BufferGeometry` stores pre-allocated `position` (`Float32Array(max_points * 3)`) and `color` (`Float32Array(max_points * 4)`) attributes.
-- On each frame, the evaluated $(x, y, 0)$ and $(r, g, b, a)$ buffer slices are marked `needsUpdate = true` and `drawRange.count = n`.
-- Rendered using an unlit vertex-colored shader or `THREE.LineBasicMaterial` / `THREE.PointsMaterial` with premultiplied or additive blending.
+- A dedicated `THREE.BufferGeometry` stores pre-allocated `position` (`Float32Array(max_points * 3)`), `color` (`Float32Array(max_points * 4)`), and `aLineSize` (`Float32Array(max_points)`) attributes.
+- On each frame, the evaluated $(x, y, 0)$, $(r, g, b, a)$, and `linesize` buffer slices are marked `needsUpdate = true` and `drawRange.count = n`.
+- Because WebGL 2.0 implementations on Windows (ANGLE) and macOS (Metal) clamp native `gl.lineWidth()` to `1.0px`:
+  - **`"points"` mode** uses a custom vertex shader reading the per-vertex `aLineSize` attribute into `gl_PointSize`.
+  - **`"lines"` and `"line_loop"` modes** use fast native `THREE.Line` / `THREE.LineLoop` when `linesize <= 1.0`, and automatically switch to `THREE.Line2` (`LineSegmentsGeometry` screen-space quad strips) when `linesize > 1.0`.
 
 ---
 
 ## 7. Component Preset Schema (JSON)
+
+Multi-line script properties (`code_init`, `code_frame`, `code_beat`, `code_point`) are stored as plain strings, while modulatable scalar/enum parameters use the standard `{ "mode", "value" }` structure:
 
 ```json
 {
@@ -123,10 +127,10 @@ Duperscope translates evaluated points directly into a dynamic `THREE.BufferGeom
     "audio_mode": { "mode": "fixed", "value": "waveform" },
     "channel": { "mode": "fixed", "value": "center" },
     "draw_mode": { "mode": "fixed", "value": "lines" },
-    "code_init": { "mode": "fixed", "value": "n = 400; rot = 0; zoom = 1.0;" },
-    "code_frame": { "mode": "fixed", "value": "rot = rot + 0.01 + ($BASS * 0.03); r = 0.2 + ($BASS * 0.8); g = 0.5; b = 1.0;" },
-    "code_beat": { "mode": "fixed", "value": "zoom = 1.3;" },
-    "code_point": { "mode": "fixed", "value": "zoom = zoom + (1.0 - zoom) * 0.05;\nrad = i * PI * 2;\ndist = (0.5 + v * 0.3) * zoom;\nx = cos(rad + rot) * dist;\ny = sin(rad + rot) * dist;" }
+    "code_init": "n = 400; rot = 0; zoom = 1.0;",
+    "code_frame": "rot = rot + 0.01 + ($BASS * 0.03); r = 0.2 + ($BASS * 0.8); g = 0.5; b = 1.0;",
+    "code_beat": "zoom = 1.3;",
+    "code_point": "zoom = zoom + (1.0 - zoom) * 0.05;\nrad = i * PI * 2;\ndist = (0.5 + v * 0.3) * zoom;\nx = cos(rad + rot) * dist;\ny = sin(rad + rot) * dist;"
   }
 }
 ```

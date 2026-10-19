@@ -8,18 +8,19 @@ All system functions use an uppercase name prefixed with a hash/pound sign (`#`)
 
 ## Function Catalog
 
-### 1. `#FFT(lower_band, band_width, [channel = 0])`
+### 1. `#FFT(lower_band, [band_width = 0.02], [channel = 0])`
 Calculates the normalized frequency energy of a custom frequency window from the live audio FFT spectrum.
 
 - **Arguments:**
   - `lower_band` (`float`, range `0.0` to `1.0`): The normalized start frequency. Mapped logarithmically across the human audible spectrum ($20\text{ Hz}$ to $20,000\text{ Hz}$) using $f = 20 \times 10^{3x}$.
-  - `band_width` (`float`, range `0.0` to `1.0`): The width of the frequency window to average.
+  - `band_width` (`float`, optional, default `0.02`, range `0.0` to `1.0`): The width of the frequency window to average (clamped so `lower_band + band_width <= 1.0`). When omitted, samples a narrow localized frequency slice (`0.02`).
   - `channel` (`int`, optional, default `0`): Stereo channel selection:
     - `0`: Center / Mono mixdown ($(Left + Right) / 2$)
     - `1`: Left audio channel only
     - `2`: Right audio channel only
 - **Returns:** `float` in range `0.0` to `1.0`.
 - **Examples:**
+  - `#FFT(i)`: Samples the frequency magnitude at normalized position `i` using the default `0.02` window width on the mono channel.
   - `#FFT(0.0, 0.25, 0)`: Evaluates sub-bass and bass energy on the mono channel.
   - `#FFT(0.8, 0.2, 1)`: Evaluates high treble sparkle on the left channel only.
 
@@ -45,9 +46,9 @@ Generates a transient beat attack pulse with a smooth exponential decay calculat
 
 - **Arguments:**
   - `decay_seconds` (`float`, optional, default `0.2`): The duration in seconds over which the pulse decays toward `0.0`.
-- **Behavior:**
-  - When a beat transient occurs, the function jumps instantly to `1.0`.
-  - On subsequent frames, it decays following an exponential curve $e^{-t / \tau}$ toward `0.0`.
+- **Behavior & Stateless Evaluation:**
+  - The audio/render engine maintains a single per-frame counter `secondsSinceLastBeat` in `FrameContext` (resetting to `0.0` whenever `$BEAT == 1.0`, and advancing by `$DT` otherwise).
+  - Each call to `#BEAT(d)` is evaluated as a pure, stateless function of `secondsSinceLastBeat` and `d` (e.g., $e^{-3 \cdot \text{secondsSinceLastBeat} / d}$ clamped to `0.0` when `secondsSinceLastBeat >= d`), allowing multiple calls with different decay durations in the same expression without per-call state allocation.
 - **Returns:** `float` in range `0.0` to `1.0`.
 - **Example:**
   - `1.0 + #BEAT(0.15) * 0.4`: Causes an element to punch up in scale on each beat and smoothly return to baseline over 150 milliseconds.
@@ -63,9 +64,9 @@ Generates a transient beat attack pulse that decays toward `0.0` over a specifie
     - `"exponential"` (default): Smooth natural analog decay ($e^{-k \cdot t}$), starting steep and tapering off softly.
     - `"linear"`: Constant rate decay ($(1 - f / \text{decay\_frames})$), producing a mechanical, steady fade to zero.
     - `"logarithmic"`: Inverted logarithmic decay (rapid initial drop followed by an elongated tail).
-- **Behavior:**
-  - When an instantaneous beat transient occurs, the pulse resets to `1.0`.
-  - On subsequent render frames, it attenuates according to the selected `curve` until reaching `0.0` at frame `decay_frames`.
+- **Behavior & Stateless Evaluation:**
+  - The audio/render engine maintains a single per-frame integer counter `framesSinceLastBeat` in `FrameContext` (resetting to `0` whenever `$BEAT == 1.0`, and incrementing by `1` on subsequent frames).
+  - Each call to `#BEAT_FRAMES(f, curve)` is evaluated as a pure, stateless mathematical function of `framesSinceLastBeat`, `f`, and `curve`, returning `0.0` once `framesSinceLastBeat >= decay_frames`.
 - **Returns:** `float` in range `0.0` to `1.0`.
 - **Examples:**
   - `#BEAT_FRAMES(12)`: Decays exponentially over 12 frames (~200ms at 60 FPS).

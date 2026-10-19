@@ -1,5 +1,8 @@
 # Static Image Component Proposal
 
+> **Component Type:** `static_image`  
+> **Status:** Planned for Track 3 (Modular Frame Buffer, Ping-Pong Feedback & Named Buffers)
+
 ## 1. Overview & Vision
 
 The **Static Image** component is Visualització's foundational 2D texture asset loader. It provides visual presets with baseline photographic, graphic, or logo textures that can be animated, echoed, and composited using parent Frame Buffer containers or downstream shaders.
@@ -31,14 +34,16 @@ flowchart TD
 
 ## 3. Aspect Ratio & Texture Filtering
 
-| Property | Options | Description |
+| Property | Options (JSON Literal / UI Label) | Description |
 | :--- | :--- | :--- |
-| **`fit_mode`** | `Contain`, `Cover`, `Stretch` | How the image fits within the $[-1.0, 1.0]$ bounds. `Cover` preserves aspect ratio filling screen, `Contain` preserves aspect ratio letterboxing, `Stretch` fits exact square. |
-| **`filter`** | `Linear`, `Nearest` | Texture sampling filter (`Linear` for smooth photographic scaling, `Nearest` for crisp pixel art). |
+| **`fit_mode`** | `"contain"` (*Contain*), `"cover"` (*Cover*), `"stretch"` (*Stretch*) | How the image fits within the $[-1.0, 1.0]$ bounds. `"cover"` preserves aspect ratio filling screen, `"contain"` preserves aspect ratio letterboxing, `"stretch"` fits exact square. |
+| **`filter`** | `"linear"` (*Linear*), `"nearest"` (*Nearest*) | Texture sampling filter (`"linear"` for smooth photographic scaling, `"nearest"` for crisp pixel art). |
 
 ---
 
 ## 4. Component Preset Schema (JSON)
+
+Static asset references (`source_url`) are stored as plain strings, while enum options use `{ "mode", "value" }`:
 
 ```json
 {
@@ -47,7 +52,7 @@ flowchart TD
   "type": "static_image",
   "enabled": true,
   "parameters": {
-    "source_url": { "mode": "fixed", "value": "/assets/default_graphic.png" },
+    "source_url": "/assets/default_graphic.png",
     "fit_mode": { "mode": "fixed", "value": "cover" },
     "filter": { "mode": "fixed", "value": "linear" }
   }
@@ -79,7 +84,7 @@ Static Image nested inside a Frame Buffer that scales with the beat:
       "type": "static_image",
       "enabled": true,
       "parameters": {
-        "source_url": { "mode": "fixed", "value": "/assets/smiley.png" },
+        "source_url": "/assets/smiley.png",
         "fit_mode": { "mode": "fixed", "value": "contain" },
         "filter": { "mode": "fixed", "value": "linear" }
       }

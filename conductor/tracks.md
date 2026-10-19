@@ -7,7 +7,7 @@ This registry tracks the planned, active, and completed workstreams across Visua
 ## MVP Milestones: Foundation & Visual Studio (Tracks 1 – 4)
 
 - [ ] **Track 1: Minimal Reactive Canvas & Audio Testbed**
-  *Goal: Two-Plane architecture, Web Audio analyzer, live preview canvas, toggleable FPS overlay, and day-1 reactive audio visuals.*  
+  *Goal: Two-Plane architecture, Web Audio analyzer, live preview canvas, clickable FPS overlay with preset performance settings (`target_fps`, `resolution_scale`), and day-1 reactive audio visuals.*  
   *Link: [./tracks/track_1_reactive_canvas_audio_testbed/index.md](./tracks/track_1_reactive_canvas_audio_testbed/index.md)*
 
 - [ ] **Track 2: Dynamic Expression Engine & Parameter Binding**
@@ -27,7 +27,7 @@ This registry tracks the planned, active, and completed workstreams across Visua
 ## Advanced Creative Capabilities (Tracks 5 – 8)
 
 - [ ] **Track 5: Generative Visual Synthesis & Duperscope**
-  *Goal: JIT-compiled procedural script runner (`init`, `frame`, `beat`, `point`), 4 draw modes, and classic generative curve presets.*  
+  *Goal: JIT-compiled procedural script runner (`init`, `frame`, `beat`, `point`), 3 draw modes, and classic generative curve presets.*  
   *Status: Planned*
 
 - [ ] **Track 6: Custom GLSL Shader Passes & Post-Processing Pipeline**

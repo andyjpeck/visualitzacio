@@ -14,11 +14,11 @@ The platform is designed to serve two complementary environments:
 ## Core Capabilities
 - **Modular Component Pipeline & Visual Hierarchy:**
   - Dynamic visualizer trees built from composable visual components and containers (such as [Frame Buffer](../component_proposals/frame_buffer.md), [Static Image](../component_proposals/static_image.md), and [Duperscope](../component_proposals/duperscope.md)).
-  - Universal parameter architecture: every component parameter can exist either as a fixed value (knob, slider, switch) or bind dynamically to a mathematical expression.
+  - Universal parameter architecture: modulatable component parameters can exist either as a fixed value (knob, slider, switch, dropdown) or bind dynamically to a mathematical expression.
 - **Dynamic Expression Engine & Universal Parameter Binding:**
   - Mathematical formulas evaluated once per frame inside the Render Data Plane, supporting standard mathematical operators and functions.
-  - **Special Values (`$VARIABLE`):** Real-time reactive variables representing audio energy, timing, and engine state (e.g. `$BASS`, `$MID`, `$TREBLE`, `$BPM`, `$RMS`, `$TIME`, `$BEAT`, `$FRAME`). See the complete [System Variables Reference](./system_variables.md).
-  - **System Functions (`#FUNCTION`):** Built-in DSP and envelope functions for frequency sampling, time-domain waveforms, and beat decay pulses (e.g. `#FFT(...)`, `#WAVEFORM(...)`, `#BEAT(...)`, `#BEAT_FRAMES(...)`). See the complete [System Functions Reference](./system_functions.md).
+  - **Special Values (`$VARIABLE`):** Real-time reactive variables representing audio energy, timing, and engine state (e.g., `$BASS`, `$TIME`, `$BEAT`). See the complete [System Variables Reference](./system_variables.md).
+  - **System Functions (`#FUNCTION`):** Built-in DSP and envelope functions for frequency sampling, time-domain waveforms, and beat decay pulses (e.g., `#FFT(...)`, `#WAVEFORM(...)`, `#BEAT(...)`). See the complete [System Functions Reference](./system_functions.md).
 - **Reactive Audio Engine:**
   - Multi-source audio input: Microphone / Line-in, Local audio files (MP3, WAV, FLAC), and System / Tab audio capture (via getDisplayMedia / audio stream capture).
   - Web Audio API real-time FFT frequency spectrum, waveform time-domain data, beat detection, and RMS energy tracking exposed as reactive variables to all components.
@@ -26,8 +26,9 @@ The platform is designed to serve two complementary environments:
   - Three.js + WebGL 2.0 graphics pipeline supporting 2D/3D geometry, particle systems, and customizable GLSL vertex and fragment post-processing shader passes.
 - **MIDI & Performance Controls:**
   - Web MIDI API integration allowing instant MIDI Learn / CC knob mapping to any component parameter for tactile physical control.
-- **Preset Management:**
+- **Preset Management & Per-Preset Performance Settings:**
   - Declarative JSON-based preset schema enabling seamless import, export, and sharing of modular visualization setups and preset libraries.
+  - **Preset-Wide Performance Settings:** Each preset stores its own configurable **Target FPS** (`target_fps`, default `60`) and **Render Resolution Scale** (`resolution_scale`, default `1.0`), allowing users to trade off resolution or frame rate for heavy visualizations.
 - **User Experience & Presentation:**
   - **MVP:** Sleek, responsive single-window interface with a collapsible floating HUD for parameter tweaking, preset switching, and full-screen canvas mode.
   - **Roadmap / Future:** Multi-window / Detached display output (Operator Control Console on screen 1, clean borderless projector window on screen 2 synced via BroadcastChannel).

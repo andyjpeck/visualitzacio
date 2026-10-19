@@ -21,14 +21,14 @@
 
 ---
 
-## Active Milestone: Track 1 Planning & Scaffolding
+## Active Milestone: Track 1 — Minimal Reactive Canvas & Audio Testbed
 
 1. **Track Planning (`conductor-new-track`):**
-   - [ ] Plan Track 1: "Core Engine & Audio-Reactive Foundation MVP".
-   - [ ] Generate `conductor/tracks/core_engine_foundation/spec.md` and `plan.md`.
-   - [ ] Register track in `conductor/tracks.md`.
+   - [x] Define 8-track granular roadmap in [`conductor/tracks.md`](./tracks.md).
+   - [x] Plan Track 1: "Minimal Reactive Canvas & Audio Testbed".
+   - [x] Generate [`conductor/tracks/track_1_reactive_canvas_audio_testbed/spec.md`](./tracks/track_1_reactive_canvas_audio_testbed/spec.md) and [`plan.md`](./tracks/track_1_reactive_canvas_audio_testbed/plan.md).
 
-2. **Scaffolding & Initial Phase Implementation:**
-   - [ ] Scaffold Vite TypeScript React project (`npm create vite@latest`).
-   - [ ] Install core dependencies (Three.js, `@xyflow/react`, Zustand, Tailwind CSS, Lucide, `expr-eval`, Vitest).
-   - [ ] Implement Phase 1 according to TDD workflow.
+2. **Track 1 Implementation (`conductor-implement`):**
+   - [ ] Phase 1: Project Scaffolding (Vite, React 19, TypeScript, Tailwind CSS, Three.js, Zustand, Lucide, Vitest), Two-Plane Render Loop, and GitHub Pages CI/CD deployment checkpoint.
+   - [ ] Phase 2: Reactive Web Audio Pipeline (`AudioAnalyzer`, `AudioManager`, `$BASS`/`$MID`/`$TREBLE`/`$RMS`/`$BEAT`/`$BPM`) and debug audio meter visual checkpoint.
+   - [ ] Phase 3: Live Reactive Visual Scene, Clickable FPS Badge (`target_fps` & `resolution_scale` preset settings), and end-to-end interactive verification.
