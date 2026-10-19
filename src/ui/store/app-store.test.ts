@@ -90,4 +90,31 @@ describe('useAppStore (Zustand State Plane)', () => {
     store.setIsAudioLoading(false)
     expect(useAppStore.getState().isAudioLoading).toBe(false)
   })
+
+  it('enforces single open dialog mutual exclusion', () => {
+    const store = useAppStore.getState()
+
+    // 1. Open preset settings -> only preset settings should be open
+    store.setIsPresetSettingsOpen(true)
+    expect(useAppStore.getState().isPresetSettingsOpen).toBe(true)
+    expect(useAppStore.getState().isFormulaTestbedOpen).toBe(false)
+    expect(useAppStore.getState().isTemplateSelectorOpen).toBe(false)
+
+    // 2. Open formula testbed -> preset settings automatically closes
+    store.setIsFormulaTestbedOpen(true)
+    expect(useAppStore.getState().isPresetSettingsOpen).toBe(false)
+    expect(useAppStore.getState().isFormulaTestbedOpen).toBe(true)
+    expect(useAppStore.getState().isTemplateSelectorOpen).toBe(false)
+
+    // 3. Open template selector -> formula testbed automatically closes
+    store.setIsTemplateSelectorOpen(true)
+    expect(useAppStore.getState().isPresetSettingsOpen).toBe(false)
+    expect(useAppStore.getState().isFormulaTestbedOpen).toBe(false)
+    expect(useAppStore.getState().isTemplateSelectorOpen).toBe(true)
+
+    // 4. Toggle preset settings open -> template selector closes
+    store.togglePresetSettings()
+    expect(useAppStore.getState().isPresetSettingsOpen).toBe(true)
+    expect(useAppStore.getState().isTemplateSelectorOpen).toBe(false)
+  })
 })

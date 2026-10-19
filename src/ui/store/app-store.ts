@@ -171,15 +171,33 @@ export const useAppStore = create<AppState>((set) => ({
   toggleFpsOverlay: () =>
     set((state) => ({ showFpsOverlay: !state.showFpsOverlay })),
   setIsPresetSettingsOpen: (isPresetSettingsOpen) =>
-    set({ isPresetSettingsOpen }),
+    set({
+      isPresetSettingsOpen,
+      ...(isPresetSettingsOpen ? { isFormulaTestbedOpen: false, isTemplateSelectorOpen: false } : {}),
+    }),
   togglePresetSettings: () =>
-    set((state) => ({ isPresetSettingsOpen: !state.isPresetSettingsOpen })),
+    set((state) => {
+      const next = !state.isPresetSettingsOpen
+      return {
+        isPresetSettingsOpen: next,
+        ...(next ? { isFormulaTestbedOpen: false, isTemplateSelectorOpen: false } : {}),
+      }
+    }),
   setCurrentFps: (currentFps) => set({ currentFps: Math.round(currentFps) }),
 
   setIsFormulaTestbedOpen: (isFormulaTestbedOpen) =>
-    set({ isFormulaTestbedOpen }),
+    set({
+      isFormulaTestbedOpen,
+      ...(isFormulaTestbedOpen ? { isPresetSettingsOpen: false, isTemplateSelectorOpen: false } : {}),
+    }),
   toggleFormulaTestbed: () =>
-    set((state) => ({ isFormulaTestbedOpen: !state.isFormulaTestbedOpen })),
+    set((state) => {
+      const next = !state.isFormulaTestbedOpen
+      return {
+        isFormulaTestbedOpen: next,
+        ...(next ? { isPresetSettingsOpen: false, isTemplateSelectorOpen: false } : {}),
+      }
+    }),
   setActiveFormula: (activeFormula) => set({ activeFormula }),
   setBindFormulaToScene: (bindFormulaToScene) => set({ bindFormulaToScene }),
   setIsFormulaPresetsOpen: (isFormulaPresetsOpen) => {
@@ -204,9 +222,19 @@ export const useAppStore = create<AppState>((set) => ({
     }),
 
   setSelectedTemplateId: (selectedTemplateId) => set({ selectedTemplateId }),
-  setIsTemplateSelectorOpen: (isTemplateSelectorOpen) => set({ isTemplateSelectorOpen }),
+  setIsTemplateSelectorOpen: (isTemplateSelectorOpen) =>
+    set({
+      isTemplateSelectorOpen,
+      ...(isTemplateSelectorOpen ? { isPresetSettingsOpen: false, isFormulaTestbedOpen: false } : {}),
+    }),
   toggleTemplateSelector: () =>
-    set((state) => ({ isTemplateSelectorOpen: !state.isTemplateSelectorOpen })),
+    set((state) => {
+      const next = !state.isTemplateSelectorOpen
+      return {
+        isTemplateSelectorOpen: next,
+        ...(next ? { isPresetSettingsOpen: false, isFormulaTestbedOpen: false } : {}),
+      }
+    }),
 
   setFeedbackEnabled: (feedbackEnabled) =>
     set({ feedbackEnabled, isCustomFeedbackConfig: true }),

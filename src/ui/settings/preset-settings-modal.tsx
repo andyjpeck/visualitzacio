@@ -1,7 +1,8 @@
 import React from 'react'
-import { Settings, X } from 'lucide-react'
+import { GripHorizontal, Settings, X } from 'lucide-react'
 import type { ResolutionScale } from '../../contracts/preset-settings'
 import { useAppStore } from '../store/app-store'
+import { useDraggableDialog } from '../hooks/use-draggable-dialog'
 import { useEscapeKey } from '../hooks/use-escape-key'
 import { FrequencyBandRow } from './frequency-band-row'
 import { getTemplateById } from '../../engine/frame-buffer/frame-buffer-templates'
@@ -41,6 +42,15 @@ export function PresetSettingsModal(): React.ReactElement | null {
   const setFeedbackScale = useAppStore((state) => state.setFeedbackScale)
   const setIsTemplateSelectorOpen = useAppStore((state) => state.setIsTemplateSelectorOpen)
 
+  const {
+    dialogRef,
+    position,
+    isDragging,
+    handlePointerDown,
+    handlePointerMove,
+    handlePointerUp,
+  } = useDraggableDialog()
+
   // Escape key closes modal
   useEscapeKey(isOpen, () => setIsOpen(false))
 
@@ -48,33 +58,45 @@ export function PresetSettingsModal(): React.ReactElement | null {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+      ref={dialogRef}
+      style={{
+        position: 'fixed',
+        left: `${position.x}px`,
+        top: `${position.y}px`,
+      }}
+      className="fixed z-50 w-[92vw] max-w-lg max-h-[90vh] flex flex-col p-6 rounded-xl border border-cyber-cyan/40 bg-cyber-panel/95 backdrop-blur-md text-slate-100 shadow-2xl shadow-cyber-cyan/20 animate-in fade-in"
       role="dialog"
-      aria-modal="true"
+      aria-modal="false"
       aria-labelledby="preset-settings-title"
-      onClick={() => setIsOpen(false)}
     >
+      {/* Header (Draggable Handle) */}
       <div
-        className="w-full max-w-lg max-h-[90vh] flex flex-col p-6 rounded-xl border border-cyber-cyan/40 bg-cyber-panel/95 text-slate-100 shadow-2xl shadow-cyber-cyan/10"
-        onClick={(e) => e.stopPropagation()}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerUp}
+        title="Drag to move settings dialog around screen"
+        className={`flex items-center justify-between pb-4 border-b border-white/10 shrink-0 select-none ${
+          isDragging ? 'cursor-grabbing' : 'cursor-grab'
+        }`}
+        data-testid="preset-settings-header"
       >
-        {/* Header */}
-        <div className="flex items-center justify-between pb-4 border-b border-white/10 shrink-0">
-          <div className="flex items-center gap-2 text-cyber-cyan">
-            <Settings className="w-5 h-5" />
-            <h2 id="preset-settings-title" className="text-base font-bold tracking-wide">
-              Preset Performance & DSP Settings
-            </h2>
-          </div>
-          <button
-            type="button"
-            onClick={() => setIsOpen(false)}
-            className="p-1 rounded-md text-slate-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
-            aria-label="Close settings"
-          >
-            <X className="w-5 h-5" />
-          </button>
+        <div className="flex items-center gap-2 text-cyber-cyan pointer-events-none">
+          <GripHorizontal className="w-5 h-5 text-slate-400" />
+          <Settings className="w-5 h-5" />
+          <h2 id="preset-settings-title" className="text-base font-bold tracking-wide">
+            Preset Performance & DSP Settings
+          </h2>
         </div>
+        <button
+          type="button"
+          onClick={() => setIsOpen(false)}
+          className="p-1 rounded-md text-slate-400 hover:text-white hover:bg-white/10 transition-colors pointer-events-auto cursor-pointer"
+          aria-label="Close settings"
+        >
+          <X className="w-5 h-5" />
+        </button>
+      </div>
 
         {/* Scrollable Content */}
         <div className="mt-5 space-y-6 overflow-y-auto pr-1">
@@ -314,6 +336,5 @@ export function PresetSettingsModal(): React.ReactElement | null {
           </button>
         </div>
       </div>
-    </div>
   )
 }

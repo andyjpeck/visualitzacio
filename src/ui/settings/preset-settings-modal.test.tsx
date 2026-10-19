@@ -70,4 +70,24 @@ describe('PresetSettingsModal', () => {
     const { container } = render(<PresetSettingsModal />)
     expect(container.firstChild).toBeNull()
   })
+
+  it('allows dragging the dialog by its header', () => {
+    render(<PresetSettingsModal />)
+    const header = screen.getByTestId('preset-settings-header')
+    const dialog = screen.getByRole('dialog')
+
+    expect(dialog).toHaveStyle({ position: 'fixed' })
+    const initialLeft = parseInt(dialog.style.left, 10)
+    const initialTop = parseInt(dialog.style.top, 10)
+
+    fireEvent.pointerDown(header, { button: 0, clientX: 100, clientY: 100, pointerId: 1 })
+    fireEvent.pointerMove(header, { clientX: 180, clientY: 150, pointerId: 1 })
+    fireEvent.pointerUp(header, { pointerId: 1 })
+
+    const newLeft = parseInt(dialog.style.left, 10)
+    const newTop = parseInt(dialog.style.top, 10)
+
+    expect(newLeft).toBe(initialLeft + 80)
+    expect(newTop).toBe(initialTop + 50)
+  })
 })

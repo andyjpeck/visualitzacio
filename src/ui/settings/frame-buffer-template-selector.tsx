@@ -1,5 +1,8 @@
 import React, { useState } from 'react'
+import { GripHorizontal, X } from 'lucide-react'
 import { useAppStore } from '../store/app-store'
+import { useDraggableDialog } from '../hooks/use-draggable-dialog'
+import { useEscapeKey } from '../hooks/use-escape-key'
 import {
   FRAME_BUFFER_TEMPLATES,
   type FrameBufferTemplate,
@@ -17,6 +20,18 @@ export function FrameBufferTemplateSelector(): React.ReactElement | null {
   const applyTemplate = useAppStore((state) => state.applyFrameBufferTemplate)
 
   const [pendingTemplate, setPendingTemplate] = useState<FrameBufferTemplate | null>(null)
+
+  const {
+    dialogRef,
+    position,
+    isDragging,
+    handlePointerDown,
+    handlePointerMove,
+    handlePointerUp,
+  } = useDraggableDialog()
+
+  // Escape key closes modal
+  useEscapeKey(isOpen, () => setIsOpen(false))
 
   if (!isOpen) return null
 
@@ -57,37 +72,46 @@ export function FrameBufferTemplateSelector(): React.ReactElement | null {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fade-in">
-      <div className="relative w-full max-w-2xl bg-slate-900/95 border border-cyan-500/40 rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-cyan-500/20 bg-slate-950/50">
-          <div className="flex items-center space-x-3">
-            <div className="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-pulse shadow-glow" />
-            <h2 className="text-base font-semibold tracking-wide text-cyan-300 uppercase">
-              Frame Buffer Templates
-            </h2>
-          </div>
-          <button
-            type="button"
-            onClick={() => setIsOpen(false)}
-            aria-label="Close template selector"
-            className="text-slate-400 hover:text-cyan-400 transition-colors p-1 rounded hover:bg-slate-800"
-          >
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
-          </button>
+    <div
+      ref={dialogRef}
+      style={{
+        position: 'fixed',
+        left: `${position.x}px`,
+        top: `${position.y}px`,
+      }}
+      className="fixed z-50 w-[92vw] max-w-2xl max-h-[85vh] bg-slate-900/95 border border-cyan-500/40 rounded-xl shadow-2xl overflow-hidden flex flex-col backdrop-blur-md animate-in fade-in"
+      role="dialog"
+      aria-modal="false"
+      aria-labelledby="template-selector-title"
+    >
+      {/* Header (Draggable Handle) */}
+      <div
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerUp}
+        title="Drag to move template dialog around screen"
+        className={`flex items-center justify-between px-6 py-4 border-b border-cyan-500/20 bg-slate-950/50 select-none ${
+          isDragging ? 'cursor-grabbing' : 'cursor-grab'
+        }`}
+        data-testid="template-selector-header"
+      >
+        <div className="flex items-center space-x-3 pointer-events-none">
+          <GripHorizontal className="w-5 h-5 text-slate-400" />
+          <div className="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-pulse shadow-glow" />
+          <h2 id="template-selector-title" className="text-base font-semibold tracking-wide text-cyan-300 uppercase">
+            Frame Buffer Templates
+          </h2>
         </div>
+        <button
+          type="button"
+          onClick={() => setIsOpen(false)}
+          aria-label="Close template selector"
+          className="text-slate-400 hover:text-cyan-400 transition-colors p-1 rounded hover:bg-slate-800 pointer-events-auto cursor-pointer"
+        >
+          <X className="w-5 h-5" />
+        </button>
+      </div>
 
         {/* Content list */}
         <div className="p-6 overflow-y-auto space-y-3 flex-1 custom-scrollbar">
@@ -183,6 +207,5 @@ export function FrameBufferTemplateSelector(): React.ReactElement | null {
           </div>
         )}
       </div>
-    </div>
   )
 }
