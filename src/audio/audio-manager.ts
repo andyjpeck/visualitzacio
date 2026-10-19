@@ -6,6 +6,13 @@ export interface AudioManagerOptions {
   createAudioContext?: () => AudioContext
 }
 
+/**
+ * Web Audio API pipeline and lifecycle manager.
+ * Manages audio graph routing across bundled procedural beat synthesis,
+ * live uncompressed microphone capture, and local user audio files.
+ * Provides mutual exclusivity, gain control, 60 FPS analysis node access,
+ * and track seeking.
+ */
 export class AudioManager {
   private audioContext: AudioContext | null = null
   private masterGain: GainNode | null = null
@@ -28,6 +35,11 @@ export class AudioManager {
   private playbackStartOffset = 0
   private pausedOffset = 0
 
+  /**
+   * Initializes the AudioManager with optional custom AudioContext factory for testing.
+   *
+   * @param options - Configuration options including custom AudioContext factory.
+   */
   constructor(options: AudioManagerOptions = {}) {
     this.factory =
       options.createAudioContext ??
@@ -172,10 +184,16 @@ export class AudioManager {
     return file.name
   }
 
+  /**
+   * Indicates whether a valid decoded audio buffer is loaded from user file.
+   */
   hasCustomFile(): boolean {
     return this.customBuffer !== null
   }
 
+  /**
+   * Returns the filename of the loaded custom audio file, or null if none loaded.
+   */
   getCustomFileName(): string | null {
     return this.customFileName
   }
@@ -368,6 +386,9 @@ export class AudioManager {
     }
   }
 
+  /**
+   * Sets the master output gain volume in the range [0.0, 1.0].
+   */
   setVolume(volume: number): void {
     this.volume = Math.max(0, Math.min(1, volume))
     if (this.masterGain?.gain) {
@@ -375,32 +396,53 @@ export class AudioManager {
     }
   }
 
+  /**
+   * Returns current master output volume level in [0.0, 1.0].
+   */
   getVolume(): number {
     return this.volume
   }
 
+  /**
+   * Checks whether any audio source (sample, file, or microphone) is currently active.
+   */
   isPlaying(): boolean {
     return this.playing
   }
 
+  /**
+   * Returns the currently active audio source type ('sample', 'mic', 'file', or 'none').
+   */
   getSourceType(): AudioSourceType {
     return this.sourceType
   }
 
+  /**
+   * Returns the last recorded error message (e.g. mic permission denial), or null.
+   */
   getLastError(): string | null {
     return this.lastError
   }
 
+  /**
+   * Returns the active AnalyserNode used for 60 FPS audio telemetry FFT extraction.
+   */
   getAnalyserNode(): AnalyserNode {
     this.ensureActiveGraph()
     return this.analyserNode!
   }
 
+  /**
+   * Returns the current AudioContext hardware sample rate (typically 44100 or 48000 Hz).
+   */
   getSampleRate(): number {
     this.ensureActiveGraph()
     return this.audioContext?.sampleRate || 44100
   }
 
+  /**
+   * Disposes the Web Audio pipeline, closes AudioContext, and frees system hardware resources.
+   */
   dispose(): void {
     this.pauseSample()
     this.disableMicrophone()

@@ -22,6 +22,11 @@ export interface RenderEngineOptions {
   onBeforeUpdate?: (frameContext: FrameContext, timestamp: number) => void
 }
 
+/**
+ * Core 60 FPS RenderEngine implementing the Two-Plane visualizer architecture.
+ * Manages the high-frequency WebGL rendering loop, RAF pacing, frame timing,
+ * in-place FrameContext mutations, and visual scene node updates decoupled from React.
+ */
 export class RenderEngine {
   private readonly renderer: RendererLike
   private readonly scheduler: Scheduler
@@ -42,6 +47,11 @@ export class RenderEngine {
   private height = 1080
   private pixelRatio = 1.0
 
+  /**
+   * Initializes the RenderEngine with optional canvas, renderer, scheduler, or performance preset settings.
+   *
+   * @param options - Configuration options for the render pipeline.
+   */
   constructor(options: RenderEngineOptions = {}) {
     this.presetSettings = options.presetSettings ?? {
       ...DEFAULT_PRESET_SETTINGS,
@@ -87,18 +97,30 @@ export class RenderEngine {
     }
   }
 
+  /**
+   * Returns the shared, in-place mutated FrameContext holding frame telemetry and audio energies.
+   */
   getFrameContext(): FrameContext {
     return this.frameContext
   }
 
+  /**
+   * Returns the underlying RendererLike (Three.js WebGLRenderer or mock).
+   */
   getRenderer(): RendererLike {
     return this.renderer
   }
 
+  /**
+   * Checks whether the rendering loop is actively executing.
+   */
   isRunning(): boolean {
     return this.running
   }
 
+  /**
+   * Starts the 60 FPS requestAnimationFrame rendering loop.
+   */
   start(): void {
     if (this.running) return
     this.running = true
@@ -115,6 +137,9 @@ export class RenderEngine {
     this.animationFrameId = this.scheduler.requestFrame(tick)
   }
 
+  /**
+   * Halts the rendering loop and cancels any pending animation frame callbacks.
+   */
   stop(): void {
     this.running = false
     if (this.animationFrameId !== null) {
@@ -123,6 +148,11 @@ export class RenderEngine {
     }
   }
 
+  /**
+   * Applies partial preset performance settings (target FPS, resolution scaling).
+   *
+   * @param settings - Partial preset settings to apply.
+   */
   setPresetSettings(settings: Partial<PresetSettings>): void {
     this.presetSettings = {
       ...this.presetSettings,
@@ -131,10 +161,21 @@ export class RenderEngine {
     this.applySize()
   }
 
+  /**
+   * Registers a pre-render hook called on each frame before node update passes.
+   * Typically used for feeding audio DSP telemetry into the FrameContext.
+   *
+   * @param cb - Pre-update callback function.
+   */
   setBeforeUpdate(cb?: (frameContext: FrameContext, timestamp: number) => void): void {
     this.onBeforeUpdate = cb
   }
 
+  /**
+   * Appends a VisualNode to the render pipeline and triggers its lifecycle initialization.
+   *
+   * @param node - Visual scene node implementing VisualNode.
+   */
   addNode(node: VisualNode): void {
     this.nodes.push(node)
     if (node.init) {
@@ -145,6 +186,11 @@ export class RenderEngine {
     }
   }
 
+  /**
+   * Removes a VisualNode from the pipeline and disposes its GPU resources.
+   *
+   * @param node - Visual scene node to remove.
+   */
   removeNode(node: VisualNode): void {
     const index = this.nodes.indexOf(node)
     if (index !== -1) {
@@ -155,6 +201,13 @@ export class RenderEngine {
     }
   }
 
+  /**
+   * Handles viewport resizing, updates FrameContext aspect/dimensions, and cascades to visual nodes.
+   *
+   * @param width - Viewport width in CSS pixels.
+   * @param height - Viewport height in CSS pixels.
+   * @param pixelRatio - Device pixel ratio (clamped to <= 2.0).
+   */
   resize(width: number, height: number, pixelRatio = 1.0): void {
     this.width = width
     this.height = height
@@ -226,6 +279,9 @@ export class RenderEngine {
     }
   }
 
+  /**
+   * Disposes the render engine, stops the animation loop, and releases all node and renderer resources.
+   */
   dispose(): void {
     this.stop()
     for (const node of this.nodes) {

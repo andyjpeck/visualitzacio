@@ -2,6 +2,11 @@ import * as THREE from 'three'
 import type { FrameContext } from '../contracts/frame-context'
 import type { RendererLike, VisualNode } from '../contracts/renderer-like'
 
+/**
+ * 3D visual testbed node featuring an audio-reactive cyberpunk faceted crystal,
+ * outer wireframe lattice, orbiting halo ring, and multi-point neon lighting.
+ * Implements the VisualNode contract.
+ */
 export class TestVisualNode implements VisualNode {
   readonly scene: THREE.Scene
   readonly camera: THREE.PerspectiveCamera
@@ -11,6 +16,9 @@ export class TestVisualNode implements VisualNode {
   private readonly haloRing: THREE.Mesh<THREE.TorusGeometry, THREE.MeshBasicMaterial>
   private renderer?: RendererLike
 
+  /**
+   * Constructs the 3D scene, perspective camera, faceted geometry, and neon lighting rig.
+   */
   constructor() {
     this.scene = new THREE.Scene()
     this.camera = new THREE.PerspectiveCamera(60, 16 / 9, 0.1, 100)
@@ -71,15 +79,31 @@ export class TestVisualNode implements VisualNode {
     this.scene.add(amberFillLight)
   }
 
+  /**
+   * Initializes the node with the active renderer context.
+   *
+   * @param renderer - Renderer instance implementing RendererLike.
+   */
   init(renderer: RendererLike): void {
     this.renderer = renderer
   }
 
+  /**
+   * Updates camera aspect ratio when viewport dimensions change.
+   *
+   * @param width - Viewport width in pixels.
+   * @param height - Viewport height in pixels.
+   */
   resize(width: number, height: number): void {
     this.camera.aspect = width / (height || 1)
     this.camera.updateProjectionMatrix()
   }
 
+  /**
+   * Animates rotation and modulates scale, emissive intensity, and halo rings based on FrameContext audio telemetry.
+   *
+   * @param ctx - Real-time FrameContext containing telemetry ($TIME, $BASS, $MID, $TREBLE, $BEAT, $RMS).
+   */
   update(ctx: FrameContext): void {
     // Rotation driven by $TIME (matches test contracts)
     this.mesh.rotation.x = ctx.$TIME * 0.4
@@ -113,6 +137,9 @@ export class TestVisualNode implements VisualNode {
     }
   }
 
+  /**
+   * Disposes 3D geometries and materials from GPU memory.
+   */
   dispose(): void {
     this.mesh.geometry.dispose()
     this.mesh.material.dispose()

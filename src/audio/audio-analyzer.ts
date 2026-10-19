@@ -25,6 +25,12 @@ export interface AudioAnalyzerOptions {
   rmsDecay?: number
 }
 
+/**
+ * Real-time Digital Signal Processing (DSP) analyzer.
+ * Extracts frequency energy bands ($BASS, $MID, $TREBLE), computes smoothed
+ * Root-Mean-Square (RMS) amplitude with asymmetric attack/decay, and detects
+ * percussive transients for instantaneous $BEAT and rolling $BPM calculation.
+ */
 export class AudioAnalyzer {
   private readonly fftSize: number
   private readonly beatCooldownMs: number
@@ -40,6 +46,11 @@ export class AudioAnalyzer {
   private byteFrequencyData: Uint8Array
   private floatTimeData: Float32Array
 
+  /**
+   * Initializes the DSP AudioAnalyzer with configurable FFT resolution, beat cooldown, and attack/decay filters.
+   *
+   * @param options - Configuration options for FFT sizing and smoothing filters.
+   */
   constructor(options: AudioAnalyzerOptions = {}) {
     this.fftSize = options.fftSize ?? 2048
     this.beatCooldownMs = options.beatCooldownMs ?? 120
@@ -194,6 +205,9 @@ export class AudioAnalyzer {
     this.processTimeData(this.floatTimeData, frameContext)
   }
 
+  /**
+   * Resets internal DSP filter states, history buffers, and tempo tracking to baseline.
+   */
   reset(): void {
     this.smoothedRms = 0
     this.lastBeatTimeMs = -1000
