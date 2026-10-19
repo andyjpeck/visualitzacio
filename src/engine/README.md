@@ -28,4 +28,10 @@ The `engine` directory contains the high-frequency WebGL rendering orchestrator 
 - [**`frame-buffer/`**](file:///C:/Users/andyj/Documents/visualitzacio/src/engine/frame-buffer/README.md):
   - Modular container and render-to-texture buffer architecture (`FrameBufferNode`).
   - Dual-FBO ping-pong feedback texture swapping with zero per-frame GC allocations.
-  - Hierarchical child component execution and layer transform modulation.
+  - Custom GLSL full-screen quad shader (`CompositingShader`) supporting the 6 standard blend modes (`replace`, `additive`, `maximum`, `minimum`, `subtractive`, `multiplicative`).
+  - Global `BufferPool` texture registry for named buffer routing (`@NAME`) and circular dependency detection.
+  - Curated catalog of built-in frame buffer templates (`FRAME_BUFFER_TEMPLATES`).
+
+- [**`nodes/`**](file:///C:/Users/andyj/Documents/visualitzacio/src/engine/nodes/README.md):
+  - Reusable 2D/3D visual scene components implementing `VisualNode`.
+  - `StaticImageNode`: Static image display with aspect-ratio preservation (`cover`, `contain`, `stretch`) and BufferPool export.

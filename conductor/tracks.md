@@ -14,9 +14,9 @@ This registry tracks the planned, active, and completed workstreams across Visua
   *Goal: `expr-eval` sandboxing, real-time `$VARIABLE` bindings, `#FUNCTION(...)` library with `#BEAT_FRAMES` decay curves, and live formula test input.*  
   *Link: [./tracks/track_2_expression_engine/index.md](./tracks/track_2_expression_engine/index.md)* (Completed)
 
-- [ ] **Track 3: Modular Frame Buffer, Ping-Pong Feedback & Named Buffers**
+- [x] **Track 3: Modular Frame Buffer, Ping-Pong Feedback & Named Buffers**
   *Goal: Master Frame Buffer root lifecycle, dual-FBO ping-pong feedback motion trails, 6 GLSL blend modes, `@NAME` buffer pool, Built-in Frame Buffer Preset Selector, and Static Image component.*  
-  *Link: [./tracks/track_3_frame_buffer_pingpong_feedback/index.md](./tracks/track_3_frame_buffer_pingpong_feedback/index.md)* (Active)
+  *Link: [./tracks/track_3_frame_buffer_pingpong_feedback/index.md](./tracks/track_3_frame_buffer_pingpong_feedback/index.md)* (Completed)
 
 - [ ] **Track 4: Visual Studio Shell, Node Graph & Preset Import/Export**
   *Goal: Split-view UI, `@xyflow/react` node graph with auto-layout, universal `f(x)` inspector with inline autocomplete dropdown, component preset selector with overwrite confirmation dialog, 100-step Undo/Redo JSON history buffer, and JSON preset serializer.*  
