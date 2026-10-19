@@ -1,8 +1,6 @@
 import React, { useState } from 'react'
-import { GripHorizontal, X } from 'lucide-react'
 import { useAppStore } from '../store/app-store'
-import { useDraggableDialog } from '../hooks/use-draggable-dialog'
-import { useEscapeKey } from '../hooks/use-escape-key'
+import { BaseModalDialog } from '../dialogs/base-modal-dialog'
 import {
   FRAME_BUFFER_TEMPLATES,
   type FrameBufferTemplate,
@@ -13,27 +11,13 @@ import {
  * Features dirty-state confirmation guarding user-tuned parameters from accidental overwrite.
  */
 export function FrameBufferTemplateSelector(): React.ReactElement | null {
-  const isOpen = useAppStore((state) => state.isTemplateSelectorOpen)
-  const setIsOpen = useAppStore((state) => state.setIsTemplateSelectorOpen)
   const selectedTemplateId = useAppStore((state) => state.selectedTemplateId)
   const isCustomConfig = useAppStore((state) => state.isCustomFeedbackConfig)
   const applyTemplate = useAppStore((state) => state.applyFrameBufferTemplate)
 
   const [pendingTemplate, setPendingTemplate] = useState<FrameBufferTemplate | null>(null)
 
-  const {
-    dialogRef,
-    position,
-    isDragging,
-    handlePointerDown,
-    handlePointerMove,
-    handlePointerUp,
-  } = useDraggableDialog()
 
-  // Escape key closes modal
-  useEscapeKey(isOpen, () => setIsOpen(false))
-
-  if (!isOpen) return null
 
   const handleSelectTemplate = (template: FrameBufferTemplate) => {
     if (template.id === selectedTemplateId && !isCustomConfig) {
@@ -72,46 +56,18 @@ export function FrameBufferTemplateSelector(): React.ReactElement | null {
   }
 
   return (
-    <div
-      ref={dialogRef}
-      style={{
-        position: 'fixed',
-        left: `${position.x}px`,
-        top: `${position.y}px`,
-      }}
-      className="fixed z-50 w-[92vw] max-w-2xl max-h-[85vh] bg-slate-900/95 border border-cyan-500/40 rounded-xl shadow-2xl overflow-hidden flex flex-col backdrop-blur-md animate-in fade-in"
-      role="dialog"
-      aria-modal="false"
-      aria-labelledby="template-selector-title"
+    <BaseModalDialog
+      dialogId="template-selector"
+      title="Frame Buffer Templates"
+      icon={<div className="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-pulse shadow-glow" />}
+      headerTestId="template-selector-header"
+      closeAriaLabel="Close template selector"
+      dragTooltip="Drag to move template dialog around screen"
+      maxWidthClass="max-w-2xl"
+      maxHeightClass="max-h-[85vh]"
+      paddingClass="p-0 overflow-hidden"
+      headerClassName="px-6 py-4 border-cyan-500/20 bg-slate-950/50"
     >
-      {/* Header (Draggable Handle) */}
-      <div
-        onPointerDown={handlePointerDown}
-        onPointerMove={handlePointerMove}
-        onPointerUp={handlePointerUp}
-        onPointerCancel={handlePointerUp}
-        title="Drag to move template dialog around screen"
-        className={`flex items-center justify-between px-6 py-4 border-b border-cyan-500/20 bg-slate-950/50 select-none ${
-          isDragging ? 'cursor-grabbing' : 'cursor-grab'
-        }`}
-        data-testid="template-selector-header"
-      >
-        <div className="flex items-center space-x-3 pointer-events-none">
-          <GripHorizontal className="w-5 h-5 text-slate-400" />
-          <div className="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-pulse shadow-glow" />
-          <h2 id="template-selector-title" className="text-base font-semibold tracking-wide text-cyan-300 uppercase">
-            Frame Buffer Templates
-          </h2>
-        </div>
-        <button
-          type="button"
-          onClick={() => setIsOpen(false)}
-          aria-label="Close template selector"
-          className="text-slate-400 hover:text-cyan-400 transition-colors p-1 rounded hover:bg-slate-800 pointer-events-auto cursor-pointer"
-        >
-          <X className="w-5 h-5" />
-        </button>
-      </div>
 
         {/* Content list */}
         <div className="p-6 overflow-y-auto space-y-3 flex-1 custom-scrollbar">
@@ -206,6 +162,6 @@ export function FrameBufferTemplateSelector(): React.ReactElement | null {
             </div>
           </div>
         )}
-      </div>
+    </BaseModalDialog>
   )
 }

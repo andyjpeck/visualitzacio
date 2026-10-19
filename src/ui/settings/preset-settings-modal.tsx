@@ -1,9 +1,9 @@
 import React from 'react'
-import { GripHorizontal, Settings, X } from 'lucide-react'
+import { Settings } from 'lucide-react'
 import type { ResolutionScale } from '../../contracts/preset-settings'
 import { useAppStore } from '../store/app-store'
-import { useDraggableDialog } from '../hooks/use-draggable-dialog'
-import { useEscapeKey } from '../hooks/use-escape-key'
+import { BaseModalDialog } from '../dialogs/base-modal-dialog'
+
 import { FrequencyBandRow } from './frequency-band-row'
 import { getTemplateById } from '../../engine/frame-buffer/frame-buffer-templates'
 
@@ -21,7 +21,6 @@ const FPS_OPTIONS: number[] = [30, 60, 120]
  * and audio DSP frequency band boundaries ($BASS, $MID, $TREBLE).
  */
 export function PresetSettingsModal(): React.ReactElement | null {
-  const isOpen = useAppStore((state) => state.isPresetSettingsOpen)
   const setIsOpen = useAppStore((state) => state.setIsPresetSettingsOpen)
   const targetFps = useAppStore((state) => state.targetFps)
   const setTargetFps = useAppStore((state) => state.setTargetFps)
@@ -42,61 +41,16 @@ export function PresetSettingsModal(): React.ReactElement | null {
   const setFeedbackScale = useAppStore((state) => state.setFeedbackScale)
   const setIsTemplateSelectorOpen = useAppStore((state) => state.setIsTemplateSelectorOpen)
 
-  const {
-    dialogRef,
-    position,
-    isDragging,
-    handlePointerDown,
-    handlePointerMove,
-    handlePointerUp,
-  } = useDraggableDialog()
-
-  // Escape key closes modal
-  useEscapeKey(isOpen, () => setIsOpen(false))
-
-  if (!isOpen) return null
-
   return (
-    <div
-      ref={dialogRef}
-      style={{
-        position: 'fixed',
-        left: `${position.x}px`,
-        top: `${position.y}px`,
-      }}
-      className="fixed z-50 w-[92vw] max-w-lg max-h-[90vh] flex flex-col p-6 rounded-xl border border-cyber-cyan/40 bg-cyber-panel/95 backdrop-blur-md text-slate-100 shadow-2xl shadow-cyber-cyan/20 animate-in fade-in"
-      role="dialog"
-      aria-modal="false"
-      aria-labelledby="preset-settings-title"
+    <BaseModalDialog
+      dialogId="preset-settings"
+      title="Preset Performance & DSP Settings"
+      icon={<Settings className="w-5 h-5" />}
+      headerTestId="preset-settings-header"
+      closeAriaLabel="Close settings"
+      maxWidthClass="max-w-lg"
+      maxHeightClass="max-h-[90vh]"
     >
-      {/* Header (Draggable Handle) */}
-      <div
-        onPointerDown={handlePointerDown}
-        onPointerMove={handlePointerMove}
-        onPointerUp={handlePointerUp}
-        onPointerCancel={handlePointerUp}
-        title="Drag to move settings dialog around screen"
-        className={`flex items-center justify-between pb-4 border-b border-white/10 shrink-0 select-none ${
-          isDragging ? 'cursor-grabbing' : 'cursor-grab'
-        }`}
-        data-testid="preset-settings-header"
-      >
-        <div className="flex items-center gap-2 text-cyber-cyan pointer-events-none">
-          <GripHorizontal className="w-5 h-5 text-slate-400" />
-          <Settings className="w-5 h-5" />
-          <h2 id="preset-settings-title" className="text-base font-bold tracking-wide">
-            Preset Performance & DSP Settings
-          </h2>
-        </div>
-        <button
-          type="button"
-          onClick={() => setIsOpen(false)}
-          className="p-1 rounded-md text-slate-400 hover:text-white hover:bg-white/10 transition-colors pointer-events-auto cursor-pointer"
-          aria-label="Close settings"
-        >
-          <X className="w-5 h-5" />
-        </button>
-      </div>
 
         {/* Scrollable Content */}
         <div className="mt-5 space-y-6 overflow-y-auto pr-1">
@@ -335,6 +289,6 @@ export function PresetSettingsModal(): React.ReactElement | null {
             Done
           </button>
         </div>
-      </div>
+    </BaseModalDialog>
   )
 }
