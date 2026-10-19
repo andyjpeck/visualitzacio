@@ -18,6 +18,9 @@
 - [Duperscope Proposal](../component_proposals/duperscope.md)
 - [Frame Buffer Proposal](../component_proposals/frame_buffer.md)
 - [Static Image Proposal](../component_proposals/static_image.md)
+- [Colormap Proposal](../component_proposals/colormap.md)
+- [Light Source Proposal](../component_proposals/light_source.md)
+- [3D Mesh Proposal](../component_proposals/3d_mesh.md)
 
 ## Tracks
 

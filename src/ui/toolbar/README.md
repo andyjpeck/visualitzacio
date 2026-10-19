@@ -4,12 +4,7 @@ This directory contains the main interactive control header of Visualització.
 
 ## Components
 
-- [**`toolbar.tsx`**](file:///C:/Users/andyj/Documents/visualitzacio/src/ui/toolbar/toolbar.tsx):
-  - Top-right floating glassmorphic toolbar with cyberpunk aesthetics.
-  - **Transport Play / Pause Button**: Starts/pauses procedural drums or custom audio files; automatically disabled when microphone capture is active.
-  - **Source Toggle Buttons**: Ordered as **Sample → File → Mic**. Clicking opens file pickers or requests microphone permissions as appropriate.
-  - **Progress & Seek Bar**: Dynamically appears when **File** is active, showing current elapsed time, total duration, and a draggable scrubber slider operating on 60 FPS RAF with zero React re-renders.
-  - **Master Volume Control**: Interactive range slider adjusting output gain.
-  - **Dynamic Expression Button f(x)**: Opens the interactive Formula Testbed HUD modal for live mathematical parameter modulation.
-  - **HUD Toggle & Settings Gear**: Toggles FPS overlay and opens the Preset Performance Settings modal.
-  - **Error Toast Banner**: Displays graceful error notifications if microphone permissions are denied or file decoding fails.
+- **`toolbar.tsx`**: Top-right floating glassmorphic toolbar with cyberpunk aesthetics, integrating transport play/pause, source toggles, volume slider, FPS overlay toggle, preset settings modal, and expression testbed f(x) launcher.
+- **`audio-progress-scrubber.tsx`**: Audio file loading progress bar with stage messaging, and interactive track seek scrubber with 60 FPS direct-DOM time display.
+- **`audio-error-toast.tsx`**: Floating accessible alert toast for microphone permission denials and audio file decoding failures.
+- **`toolbar.test.tsx`**: Vitest unit tests verifying play/pause transitions, source switching (Sample → File → Mic), seeking, volume adjustments, loading states, and error dismissing.

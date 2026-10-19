@@ -1,4 +1,5 @@
 import { createProceduralBeatBuffer } from './procedural-beat'
+import { loadAndDecodeAudioFile } from './audio-file-loader'
 
 export type AudioSourceType = 'sample' | 'mic' | 'file' | 'none'
 
@@ -99,6 +100,43 @@ export class AudioManager {
   }
 
   /**
+   * Stops and disconnects the active AudioBufferSourceNode.
+   *
+   * @param saveOffset - When true and currently playing a custom file, saves the playback offset.
+   */
+  private stopCurrentBuffer(saveOffset = false): void {
+    if (this.currentSourceNode) {
+      if (saveOffset && this.sourceType === 'file') {
+        this.pausedOffset = this.getCurrentTime()
+      }
+      try {
+        this.currentSourceNode.stop()
+      } catch {
+        // Node may already be stopped
+      }
+      this.currentSourceNode.disconnect()
+      this.currentSourceNode = null
+    }
+  }
+
+  /**
+   * Instantiates, connects, and starts an AudioBufferSourceNode.
+   */
+  private startBufferPlayback(
+    buffer: AudioBuffer,
+    offset = 0,
+    loop = true,
+  ): AudioBufferSourceNode {
+    const ctx = this.ensureActiveGraph()
+    const source = ctx.createBufferSource()
+    source.buffer = buffer
+    source.loop = loop
+    source.connect(this.masterGain!)
+    source.start(0, offset)
+    return source
+  }
+
+  /**
    * Unlocks AudioContext on user gesture.
    */
   async resume(): Promise<void> {
@@ -118,6 +156,9 @@ export class AudioManager {
     if (this.sourceType === 'mic') {
       this.disableMicrophone()
     }
+    if (this.sourceType === 'file') {
+      this.pauseCustomFile()
+    }
 
     if (this.playing && this.currentSourceNode) {
       return
@@ -127,13 +168,7 @@ export class AudioManager {
       this.sampleBuffer = createProceduralBeatBuffer(ctx, 120, 2)
     }
 
-    const source = ctx.createBufferSource()
-    source.buffer = this.sampleBuffer
-    source.loop = true
-    source.connect(this.masterGain!)
-
-    source.start(0)
-    this.currentSourceNode = source
+    this.currentSourceNode = this.startBufferPlayback(this.sampleBuffer, 0, true)
     this.playing = true
     this.sourceType = 'sample'
     this.lastError = null
@@ -143,17 +178,9 @@ export class AudioManager {
    * Pauses the sample player.
    */
   pauseSample(): void {
-    if (this.currentSourceNode) {
-      try {
-        this.currentSourceNode.stop()
-      } catch {
-        // Node may already be stopped
-      }
-      this.currentSourceNode.disconnect()
-      this.currentSourceNode = null
-    }
-    this.playing = false
     if (this.sourceType === 'sample') {
+      this.stopCurrentBuffer(false)
+      this.playing = false
       this.sourceType = 'none'
     }
   }
@@ -173,43 +200,14 @@ export class AudioManager {
     const ctx = this.ensureActiveGraph()
     await this.resume()
 
-    const sizeMb = (file.size / (1024 * 1024)).toFixed(1)
-    onProgress?.(10, `Reading file (${sizeMb} MB)...`)
-
-    let arrayBuffer: ArrayBuffer
-    if (typeof file.arrayBuffer === 'function') {
-      arrayBuffer = await file.arrayBuffer()
-      onProgress?.(50, 'Decoding audio buffer...')
-    } else {
-      arrayBuffer = await new Promise<ArrayBuffer>((resolve, reject) => {
-        const reader = new FileReader()
-        reader.onprogress = (e) => {
-          if (e.lengthComputable && e.total > 0) {
-            const p = Math.round(10 + (e.loaded / e.total) * 40)
-            onProgress?.(p, `Reading file (${(e.loaded / (1024 * 1024)).toFixed(1)} / ${sizeMb} MB)...`)
-          }
-        }
-        reader.onload = () => {
-          onProgress?.(50, 'Decoding audio buffer...')
-          resolve(reader.result as ArrayBuffer)
-        }
-        reader.onerror = () => reject(reader.error)
-        reader.readAsArrayBuffer(file)
-      })
-    }
-
-    onProgress?.(70, 'Decoding audio buffer...')
-    const decoded = await ctx.decodeAudioData(arrayBuffer)
-    onProgress?.(95, 'Finalizing audio buffer...')
-
-    this.customBuffer = decoded
-    this.customFileName = file.name
+    const { buffer, fileName } = await loadAndDecodeAudioFile(ctx, file, onProgress)
+    this.customBuffer = buffer
+    this.customFileName = fileName
     this.pausedOffset = 0
     this.playbackStartTime = 0
     this.playbackStartOffset = 0
 
-    onProgress?.(100, 'Audio ready!')
-    return file.name
+    return fileName
   }
 
   /**
@@ -260,20 +258,8 @@ export class AudioManager {
     this.pausedOffset = clamped
 
     if (this.playing && this.sourceType === 'file' && this.currentSourceNode && this.audioContext) {
-      try {
-        this.currentSourceNode.stop()
-      } catch {
-        // Already stopped
-      }
-      this.currentSourceNode.disconnect()
-      this.currentSourceNode = null
-
-      const source = this.audioContext.createBufferSource()
-      source.buffer = this.customBuffer
-      source.loop = true
-      source.connect(this.masterGain!)
-      source.start(0, clamped % duration)
-
+      this.stopCurrentBuffer(false)
+      const source = this.startBufferPlayback(this.customBuffer, clamped % duration, true)
       this.currentSourceNode = source
       this.playbackStartTime = this.audioContext.currentTime
       this.playbackStartOffset = clamped
@@ -305,13 +291,7 @@ export class AudioManager {
     const duration = this.customBuffer.duration
     const offset = duration > 0 ? this.pausedOffset % duration : 0
 
-    const source = ctx.createBufferSource()
-    source.buffer = this.customBuffer
-    source.loop = true
-    source.connect(this.masterGain!)
-
-    source.start(0, offset)
-    this.currentSourceNode = source
+    this.currentSourceNode = this.startBufferPlayback(this.customBuffer, offset, true)
     this.playbackStartTime = ctx.currentTime
     this.playbackStartOffset = offset
     this.playing = true
@@ -323,18 +303,9 @@ export class AudioManager {
    * Pauses the user-loaded audio file.
    */
   pauseCustomFile(): void {
-    if (this.currentSourceNode) {
-      this.pausedOffset = this.getCurrentTime()
-      try {
-        this.currentSourceNode.stop()
-      } catch {
-        // Node may already be stopped
-      }
-      this.currentSourceNode.disconnect()
-      this.currentSourceNode = null
-    }
-    this.playing = false
     if (this.sourceType === 'file') {
+      this.stopCurrentBuffer(true)
+      this.playing = false
       this.sourceType = 'none'
     }
   }
@@ -347,7 +318,11 @@ export class AudioManager {
     await this.resume()
 
     if (this.playing) {
-      this.pauseSample()
+      if (this.sourceType === 'file') {
+        this.pauseCustomFile()
+      } else {
+        this.pauseSample()
+      }
     }
 
     try {
@@ -472,6 +447,7 @@ export class AudioManager {
    * Disposes the Web Audio pipeline, closes AudioContext, and frees system hardware resources.
    */
   dispose(): void {
+    this.pauseCustomFile()
     this.pauseSample()
     this.disableMicrophone()
 

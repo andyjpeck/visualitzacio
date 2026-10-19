@@ -1,8 +1,8 @@
 # System Functions Reference (#FUNCTION)
 
-This document defines the built-in Digital Signal Processing (DSP) and envelope functions available within Visualització's Dynamic Expression Engine and scriptable components (e.g., Duperscope).
+This document defines the built-in Digital Signal Processing (DSP), waveform oscillator, and envelope functions available within Visualització's Dynamic Expression Engine and scriptable components (e.g., Duperscope).
 
-All system functions use an uppercase name prefixed with a hash/pound sign (`#`) and **always require parentheses** `()`.
+All system functions use an uppercase name prefixed with a hash/pound sign (`#`) and **always require parentheses** `()`. Additional standard mathematical helper functions (`clamp`, `lerp`, `smoothstep`) are also provided globally in expression scope.
 
 ---
 
@@ -14,15 +14,12 @@ Calculates the normalized frequency energy of a custom frequency window from the
 - **Arguments:**
   - `lower_band` (`float`, range `0.0` to `1.0`): The normalized start frequency. Mapped logarithmically across the human audible spectrum ($20\text{ Hz}$ to $20,000\text{ Hz}$) using $f = 20 \times 10^{3x}$.
   - `band_width` (`float`, optional, default `0.02`, range `0.0` to `1.0`): The width of the frequency window to average (clamped so `lower_band + band_width <= 1.0`). When omitted, samples a narrow localized frequency slice (`0.02`).
-  - `channel` (`int`, optional, default `0`): Stereo channel selection:
-    - `0`: Center / Mono mixdown ($(Left + Right) / 2$)
-    - `1`: Left audio channel only
-    - `2`: Right audio channel only
+  - `channel` (`int`, optional, default `0`): Channel selection (`0` = center/mono mixdown; channel `1` and `2` reserved for future stereo splitter feature).
 - **Returns:** `float` in range `0.0` to `1.0`.
 - **Examples:**
   - `#FFT(i)`: Samples the frequency magnitude at normalized position `i` using the default `0.02` window width on the mono channel.
-  - `#FFT(0.0, 0.25, 0)`: Evaluates sub-bass and bass energy on the mono channel.
-  - `#FFT(0.8, 0.2, 1)`: Evaluates high treble sparkle on the left channel only.
+  - `#FFT(0.0, 0.25)`: Evaluates sub-bass and bass energy.
+  - `#FFT(0.8, 0.2)`: Evaluates high treble sparkle.
 
 ---
 
@@ -31,13 +28,10 @@ Samples instantaneous time-domain audio waveform amplitude at a specific normali
 
 - **Arguments:**
   - `position` (`float`, range `0.0` to `1.0`): Normalized index along the current audio buffer window ($0.0$ is the start of the buffer, $1.0$ is the end).
-  - `channel` (`int`, optional, default `0`):
-    - `0`: Center / Mono mixdown ($(Left + Right) / 2$)
-    - `1`: Left audio channel only
-    - `2`: Right audio channel only
+  - `channel` (`int`, optional, default `0`): Channel selection (`0` = center/mono mixdown; channel `1` and `2` reserved for future stereo splitter feature).
 - **Returns:** `float` in range `-1.0` to `1.0`.
 - **Example:**
-  - `#WAVEFORM(0.5, 0)`: Samples the center sample of the active audio waveform.
+  - `#WAVEFORM(0.5)`: Samples the center sample of the active audio waveform.
 
 ---
 
@@ -48,7 +42,7 @@ Generates a transient beat attack pulse with a smooth exponential decay calculat
   - `decay_seconds` (`float`, optional, default `0.2`): The duration in seconds over which the pulse decays toward `0.0`.
 - **Behavior & Stateless Evaluation:**
   - The audio/render engine maintains a single per-frame counter `secondsSinceLastBeat` in `FrameContext` (resetting to `0.0` whenever `$BEAT == 1.0`, and advancing by `$DT` otherwise).
-  - Each call to `#BEAT(d)` is evaluated as a pure, stateless function of `secondsSinceLastBeat` and `d` (e.g., $e^{-3 \cdot \text{secondsSinceLastBeat} / d}$ clamped to `0.0` when `secondsSinceLastBeat >= d`), allowing multiple calls with different decay durations in the same expression without per-call state allocation.
+  - Each call to `#BEAT(d)` is evaluated as a pure, stateless function of `secondsSinceLastBeat` and `d` ($e^{-3 \cdot \text{secondsSinceLastBeat} / d}$ clamped to `0.0` when `secondsSinceLastBeat >= d`), allowing multiple calls with different decay durations in the same expression without per-call state allocation.
 - **Returns:** `float` in range `0.0` to `1.0`.
 - **Example:**
   - `1.0 + #BEAT(0.15) * 0.4`: Causes an element to punch up in scale on each beat and smoothly return to baseline over 150 milliseconds.
@@ -72,3 +66,49 @@ Generates a transient beat attack pulse that decays toward `0.0` over a specifie
   - `#BEAT_FRAMES(12)`: Decays exponentially over 12 frames (~200ms at 60 FPS).
   - `#BEAT_FRAMES(24, "linear")`: Decays linearly over 24 frames (~400ms at 60 FPS).
   - `#BEAT_FRAMES(8, "logarithmic")`: Drops sharply over 8 frames with a logarithmic tail.
+
+---
+
+### 5. `#TRI(phase)`
+Evaluates a periodic triangle wave oscillator ranging from `-1.0` to `1.0`.
+
+- **Arguments:**
+  - `phase` (`float`): Cycle phase in radians (period = $2\pi$).
+- **Returns:** `float` in range `-1.0` to `1.0`.
+- **Example:**
+  - `#TRI($TIME * 2)`
+
+---
+
+### 6. `#SAW(phase)`
+Evaluates a periodic sawtooth wave oscillator ramping linearly from `-1.0` up to `1.0`.
+
+- **Arguments:**
+  - `phase` (`float`): Cycle phase in radians (period = $2\pi$).
+- **Returns:** `float` in range `-1.0` to `1.0`.
+- **Example:**
+  - `#SAW($TIME * 4)`
+
+---
+
+### 7. `#SQR(phase, [duty = 0.5])`
+Evaluates a periodic square / pulse wave oscillator alternating between `1.0` and `-1.0`.
+
+- **Arguments:**
+  - `phase` (`float`): Cycle phase in radians (period = $2\pi$).
+  - `duty` (`float`, optional, default `0.5`, range `0.0` to `1.0`): Pulse duty cycle ratio.
+- **Returns:** `float`: `1.0` or `-1.0`.
+- **Example:**
+  - `#SQR($TIME * 3, 0.25)`
+
+---
+
+## Math Helpers Catalog
+
+The expression engine also exposes built-in mathematical functions:
+
+| Function | Signature | Description |
+| :--- | :--- | :--- |
+| **`clamp`** | `clamp(value, min, max)` | Restricts `value` to the inclusive numeric interval `[min, max]`. |
+| **`lerp`** | `lerp(a, b, t)` | Linear interpolation between `a` and `b` by fraction `t` ($a + (b - a) \cdot t$). |
+| **`smoothstep`** | `smoothstep(edge0, edge1, x)` | Hermite smoothstep interpolation between `edge0` and `edge1` ($3t^2 - 2t^3$). |

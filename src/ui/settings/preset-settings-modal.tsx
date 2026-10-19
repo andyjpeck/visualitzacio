@@ -1,7 +1,9 @@
-import React, { useEffect } from 'react'
+import React from 'react'
 import { Settings, X } from 'lucide-react'
 import type { ResolutionScale } from '../../contracts/preset-settings'
 import { useAppStore } from '../store/app-store'
+import { useEscapeKey } from '../hooks/use-escape-key'
+import { FrequencyBandRow } from './frequency-band-row'
 
 const RESOLUTION_OPTIONS: Array<{ label: string; value: ResolutionScale }> = [
   { label: '1.0x (Native)', value: 1.0 },
@@ -12,6 +14,10 @@ const RESOLUTION_OPTIONS: Array<{ label: string; value: ResolutionScale }> = [
 
 const FPS_OPTIONS: number[] = [30, 60, 120]
 
+/**
+ * Modal dialog for configuring preset performance (FPS target, resolution scale)
+ * and audio DSP frequency band boundaries ($BASS, $MID, $TREBLE).
+ */
 export function PresetSettingsModal(): React.ReactElement | null {
   const isOpen = useAppStore((state) => state.isPresetSettingsOpen)
   const setIsOpen = useAppStore((state) => state.setIsPresetSettingsOpen)
@@ -24,16 +30,7 @@ export function PresetSettingsModal(): React.ReactElement | null {
   const resetAudioBands = useAppStore((state) => state.resetAudioBands)
 
   // Escape key closes modal
-  useEffect(() => {
-    if (!isOpen) return
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        setIsOpen(false)
-      }
-    }
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [isOpen, setIsOpen])
+  useEscapeKey(isOpen, () => setIsOpen(false))
 
   if (!isOpen) return null
 
@@ -60,7 +57,7 @@ export function PresetSettingsModal(): React.ReactElement | null {
           <button
             type="button"
             onClick={() => setIsOpen(false)}
-            className="p-1 rounded-md text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+            className="p-1 rounded-md text-slate-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
             aria-label="Close settings"
           >
             <X className="w-5 h-5" />
@@ -82,7 +79,7 @@ export function PresetSettingsModal(): React.ReactElement | null {
                     key={fps}
                     type="button"
                     onClick={() => setTargetFps(fps)}
-                    className={`py-2 px-3 rounded-lg font-mono text-sm font-semibold transition-all border ${
+                    className={`py-2 px-3 rounded-lg font-mono text-sm font-semibold transition-all border cursor-pointer ${
                       isSelected
                         ? 'bg-cyber-cyan/20 border-cyber-cyan text-cyber-cyan shadow-md shadow-cyber-cyan/20'
                         : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10 hover:border-white/20'
@@ -111,7 +108,7 @@ export function PresetSettingsModal(): React.ReactElement | null {
                     key={opt.value}
                     type="button"
                     onClick={() => setResolutionScale(opt.value)}
-                    className={`py-2 px-3 rounded-lg text-left text-xs font-mono transition-all border ${
+                    className={`py-2 px-3 rounded-lg text-left text-xs font-mono transition-all border cursor-pointer ${
                       isSelected
                         ? 'bg-cyber-magenta/20 border-cyber-magenta text-cyber-magenta shadow-md shadow-cyber-magenta/20'
                         : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10 hover:border-white/20'
@@ -144,154 +141,55 @@ export function PresetSettingsModal(): React.ReactElement | null {
 
             <div className="space-y-3">
               {/* Bass Band */}
-              <div className="p-2.5 rounded-lg bg-white/5 border border-white/5">
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-xs font-mono font-bold text-cyber-cyan">
-                    $BASS
-                  </span>
-                  <span className="text-[11px] font-mono text-slate-400">
-                    {audioBands.bassMin} Hz – {audioBands.bassMax} Hz
-                  </span>
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <span className="text-[10px] font-mono text-slate-500 block mb-0.5">Min (Hz)</span>
-                    <input
-                      type="number"
-                      aria-label="Bass minimum frequency"
-                      min={20}
-                      max={audioBands.bassMax - 10}
-                      step={5}
-                      value={audioBands.bassMin}
-                      onChange={(e) => {
-                        const val = Math.max(20, Math.min(audioBands.bassMax - 10, Number(e.target.value) || 20))
-                        setAudioBands({ bassMin: val })
-                      }}
-                      className="w-full px-2 py-1 text-xs font-mono bg-black/40 border border-white/10 rounded focus:border-cyber-cyan focus:outline-none text-white"
-                    />
-                  </div>
-                  <div>
-                    <span className="text-[10px] font-mono text-slate-500 block mb-0.5">Max (Hz)</span>
-                    <input
-                      type="number"
-                      aria-label="Bass maximum frequency"
-                      min={audioBands.bassMin + 10}
-                      max={audioBands.midMax - 10}
-                      step={10}
-                      value={audioBands.bassMax}
-                      onChange={(e) => {
-                        const val = Math.max(audioBands.bassMin + 10, Number(e.target.value) || 250)
-                        setAudioBands({ bassMax: val, midMin: val })
-                      }}
-                      className="w-full px-2 py-1 text-xs font-mono bg-black/40 border border-white/10 rounded focus:border-cyber-cyan focus:outline-none text-white"
-                    />
-                  </div>
-                </div>
-              </div>
+              <FrequencyBandRow
+                bandName="$BASS"
+                colorClass="text-cyber-cyan"
+                focusBorderClass="focus:border-cyber-cyan"
+                minLabel="Bass minimum frequency"
+                maxLabel="Bass maximum frequency"
+                minValue={audioBands.bassMin}
+                maxValue={audioBands.bassMax}
+                minStep={5}
+                maxStep={10}
+                minLimit={20}
+                maxLimit={audioBands.midMax - 10}
+                onMinChange={(val) => setAudioBands({ bassMin: val })}
+                onMaxChange={(val) => setAudioBands({ bassMax: val, midMin: val })}
+              />
 
               {/* Mid Band */}
-              <div className="p-2.5 rounded-lg bg-white/5 border border-white/5">
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-xs font-mono font-bold text-cyber-amber">
-                    $MID
-                  </span>
-                  <span className="text-[11px] font-mono text-slate-400">
-                    {audioBands.midMin} Hz – {audioBands.midMax} Hz
-                  </span>
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <span className="text-[10px] font-mono text-slate-500 block mb-0.5">Min (Hz)</span>
-                    <input
-                      type="number"
-                      aria-label="Mid minimum frequency"
-                      min={audioBands.bassMin + 10}
-                      max={audioBands.midMax - 50}
-                      step={25}
-                      value={audioBands.midMin}
-                      onChange={(e) => {
-                        const val = Math.max(
-                          audioBands.bassMin + 10,
-                          Math.min(audioBands.midMax - 50, Number(e.target.value) || 250),
-                        )
-                        setAudioBands({ midMin: val, bassMax: val })
-                      }}
-                      className="w-full px-2 py-1 text-xs font-mono bg-black/40 border border-white/10 rounded focus:border-cyber-amber focus:outline-none text-white"
-                    />
-                  </div>
-                  <div>
-                    <span className="text-[10px] font-mono text-slate-500 block mb-0.5">Max (Hz)</span>
-                    <input
-                      type="number"
-                      aria-label="Mid maximum frequency"
-                      min={audioBands.midMin + 50}
-                      max={audioBands.trebleMax - 50}
-                      step={50}
-                      value={audioBands.midMax}
-                      onChange={(e) => {
-                        const val = Math.max(
-                          audioBands.midMin + 50,
-                          Number(e.target.value) || 4000,
-                        )
-                        setAudioBands({ midMax: val, trebleMin: val })
-                      }}
-                      className="w-full px-2 py-1 text-xs font-mono bg-black/40 border border-white/10 rounded focus:border-cyber-amber focus:outline-none text-white"
-                    />
-                  </div>
-                </div>
-              </div>
+              <FrequencyBandRow
+                bandName="$MID"
+                colorClass="text-cyber-amber"
+                focusBorderClass="focus:border-cyber-amber"
+                minLabel="Mid minimum frequency"
+                maxLabel="Mid maximum frequency"
+                minValue={audioBands.midMin}
+                maxValue={audioBands.midMax}
+                minStep={25}
+                maxStep={50}
+                minLimit={audioBands.bassMin + 10}
+                maxLimit={audioBands.trebleMax - 50}
+                onMinChange={(val) => setAudioBands({ midMin: val, bassMax: val })}
+                onMaxChange={(val) => setAudioBands({ midMax: val, trebleMin: val })}
+              />
 
               {/* Treble Band */}
-              <div className="p-2.5 rounded-lg bg-white/5 border border-white/5">
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-xs font-mono font-bold text-cyber-magenta">
-                    $TREBLE
-                  </span>
-                  <span className="text-[11px] font-mono text-slate-400">
-                    {audioBands.trebleMin} Hz – {audioBands.trebleMax} Hz
-                  </span>
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <span className="text-[10px] font-mono text-slate-500 block mb-0.5">Min (Hz)</span>
-                    <input
-                      type="number"
-                      aria-label="Treble minimum frequency"
-                      min={audioBands.midMin + 50}
-                      max={audioBands.trebleMax - 100}
-                      step={100}
-                      value={audioBands.trebleMin}
-                      onChange={(e) => {
-                        const val = Math.max(
-                          audioBands.midMin + 50,
-                          Math.min(audioBands.trebleMax - 100, Number(e.target.value) || 4000),
-                        )
-                        setAudioBands({ trebleMin: val, midMax: val })
-                      }}
-                      className="w-full px-2 py-1 text-xs font-mono bg-black/40 border border-white/10 rounded focus:border-cyber-magenta focus:outline-none text-white"
-                    />
-                  </div>
-                  <div>
-                    <span className="text-[10px] font-mono text-slate-500 block mb-0.5">Max (Hz)</span>
-                    <input
-                      type="number"
-                      aria-label="Treble maximum frequency"
-                      min={audioBands.trebleMin + 100}
-                      max={20000}
-                      step={500}
-                      value={audioBands.trebleMax}
-                      onChange={(e) => {
-                        const val = Math.max(
-                          audioBands.trebleMin + 100,
-                          Math.min(20000, Number(e.target.value) || 16000),
-                        )
-                        setAudioBands({ trebleMax: val })
-                      }}
-                      className="w-full px-2 py-1 text-xs font-mono bg-black/40 border border-white/10 rounded focus:border-cyber-magenta focus:outline-none text-white"
-                    />
-                  </div>
-                </div>
-              </div>
+              <FrequencyBandRow
+                bandName="$TREBLE"
+                colorClass="text-cyber-magenta"
+                focusBorderClass="focus:border-cyber-magenta"
+                minLabel="Treble minimum frequency"
+                maxLabel="Treble maximum frequency"
+                minValue={audioBands.trebleMin}
+                maxValue={audioBands.trebleMax}
+                minStep={100}
+                maxStep={500}
+                minLimit={audioBands.midMin + 50}
+                maxLimit={20000}
+                onMinChange={(val) => setAudioBands({ trebleMin: val, midMax: val })}
+                onMaxChange={(val) => setAudioBands({ trebleMax: val })}
+              />
             </div>
           </div>
         </div>

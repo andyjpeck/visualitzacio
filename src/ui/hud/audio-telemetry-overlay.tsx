@@ -5,6 +5,10 @@ export interface AudioTelemetryOverlayProps {
   engine: RenderEngine | null
 }
 
+/**
+ * 60 FPS floating heads-up display showing real-time audio DSP frequency bands
+ * ($BASS, $MID, $TREBLE, $RMS, $BEAT, $BPM, $TIME, $FRAME) without React re-renders.
+ */
 export function AudioTelemetryOverlay({
   engine,
 }: AudioTelemetryOverlayProps): React.ReactElement | null {
@@ -54,35 +58,15 @@ export function AudioTelemetryOverlay({
       if (frameRef.current) {
         frameRef.current.textContent = String(ctx.$FRAME)
       }
-
-      rafId = requestAnimationFrame(updateDOM)
     }
 
-    // Initial sync
-    const initialCtx = engine.getFrameContext()
-    if (bpmRef.current) {
-      bpmRef.current.textContent = `${initialCtx.$BPM.toFixed(1)} BPM`
-    }
-    if (timeRef.current) {
-      timeRef.current.textContent = `${initialCtx.$TIME.toFixed(1)}s`
-    }
-    if (frameRef.current) {
-      frameRef.current.textContent = String(initialCtx.$FRAME)
-    }
-    if (bassBarRef.current) {
-      bassBarRef.current.style.width = `${Math.min(100, Math.max(0, initialCtx.$BASS * 100))}%`
-    }
-    if (midBarRef.current) {
-      midBarRef.current.style.width = `${Math.min(100, Math.max(0, initialCtx.$MID * 100))}%`
-    }
-    if (trebleBarRef.current) {
-      trebleBarRef.current.style.width = `${Math.min(100, Math.max(0, initialCtx.$TREBLE * 100))}%`
-    }
-    if (rmsBarRef.current) {
-      rmsBarRef.current.style.width = `${Math.min(100, Math.max(0, initialCtx.$RMS * 100))}%`
+    const loop = () => {
+      updateDOM()
+      rafId = requestAnimationFrame(loop)
     }
 
-    rafId = requestAnimationFrame(updateDOM)
+    // Initial sync and start 60 FPS animation loop
+    loop()
 
     return () => {
       cancelAnimationFrame(rafId)

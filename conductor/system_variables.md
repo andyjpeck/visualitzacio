@@ -18,6 +18,12 @@ All system variables use an uppercase name prefixed with a dollar sign (`$`). Th
 | **`$BEAT`** | `float` | `0.0` or `1.0` | Discrete binary beat flag. Evaluates strictly to `1.0` on frames where an instantaneous audio beat transient is detected; evaluates to `0.0` on all other frames. (For smoothly decaying beat pulses, see `#BEAT()` in System Functions). |
 | **`$TIME`** | `float` | $\ge 0.0$ | Elapsed playback/running time in fractional seconds since the engine started. Increases continuously. |
 | **`$FRAME`** | `int` | $\ge 0$ | Monotonically increasing frame counter integer since engine start (0, 1, 2, ...). Useful for discrete step cycles. |
+| **`$DT`** | `float` | $\ge 0.0$ | Elapsed delta time since the previous render frame in fractional seconds (e.g., ~0.0166s at 60 FPS). Useful for frame-rate-independent physics integration. |
+| **`$FPS`** | `float` | $\ge 0.0$ | Instantaneous rendered frames per second. Reflects active display refresh rate and performance throttling. |
+| **`$WIDTH`** | `float` | $> 0.0$ | Render canvas buffer width in physical pixels. |
+| **`$HEIGHT`** | `float` | $> 0.0$ | Render canvas buffer height in physical pixels. |
+| **`$ASPECT`** | `float` | $> 0.0$ | Viewport aspect ratio ($WIDTH / $HEIGHT, e.g. 1.777 for 16:9). Ideal for maintaining proportional shapes. |
+| **`$PIXEL_RATIO`** | `float` | $> 0.0$ | Active device pixel ratio scaled by current resolution multiplier (e.g. 1.0, 1.5, 2.0). |
 
 ---
 
@@ -27,5 +33,9 @@ All system variables use an uppercase name prefixed with a dollar sign (`$`). Th
   `1.0 + $BASS * 0.3`
 - **Continuous rotation over time:**
   `$TIME * 0.5`
+- **Frame-rate-independent velocity integration:**
+  `position + velocity * $DT`
+- **Aspect-ratio-corrected coordinate scaling:**
+  `x * $ASPECT`
 - **High-frequency sparkle opacity:**
   `0.2 + $TREBLE * 0.8`

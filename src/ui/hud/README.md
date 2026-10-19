@@ -4,20 +4,9 @@ This directory contains Head-Up Display (HUD) overlay elements floating above th
 
 ## Components
 
-- [**`audio-telemetry-overlay.tsx`**](file:///C:/Users/andyj/Documents/visualitzacio/src/ui/hud/audio-telemetry-overlay.tsx):
-  - Bottom-left floating glassmorphic telemetry dashboard.
-  - Displays instant 60 FPS meter bars for Bass, Mid, Treble, and RMS energy.
-  - Features an animated percussive Beat pill indicator and rolling BPM tempo counter.
-  - Employs direct DOM ref manipulation in a `requestAnimationFrame` loop, producing **zero React re-renders** during audio playback.
-
-- [**`fps-badge.tsx`**](file:///C:/Users/andyj/Documents/visualitzacio/src/ui/hud/fps-badge.tsx):
-  - Top-left floating FPS badge displaying current vs target frames per second.
-  - Color-codes performance dynamically: cyan for nominal performance, amber when throttling below target, and red when dropping below 80% target FPS.
-
-- [**`formula-testbed.tsx`**](file:///C:/Users/andyj/Documents/visualitzacio/src/ui/hud/formula-testbed.tsx):
-  - Interactive formula testbed modal/HUD for testing mathematical expressions ($VARIABLE, #FUNCTION).
-  - Real-time syntax validation badge (valid checkmark vs error alert).
-  - 60 FPS live numerical evaluation readout with zero React re-renders.
-  - Real-time telemetry ticker ($BASS, $BEAT, $TIME).
-  - Quick-preset example chips (Bass Pulsar, Beat Shockwave, Harmonic Sine, Triangle LFO, Sub-Bass Slice, Linear Beat Fade).
-  - Direct scene binding toggle to drive the 3D crystal scale via the active formula.
+- **`audio-telemetry-overlay.tsx`**: Bottom-left floating glassmorphic telemetry dashboard displaying 60 FPS meter bars for Bass, Mid, Treble, RMS, an animated Beat pill indicator, rolling BPM tempo counter, and real-time $TIME and $FRAME tickers via direct DOM manipulation with zero React re-renders.
+- **`fps-badge.tsx`**: Top-left floating FPS badge displaying current vs target frames per second, color-coded for nominal vs throttled performance.
+- **`formula-testbed.tsx`**: Interactive floating testbed dialog for testing mathematical expressions ($VARIABLE, #FUNCTION). Integrates draggable header, collapsible reference accordion, preset formula chips, syntax validation input, 60 FPS canvas sparkline, and crystal scale binding toggle. Composes subcomponents from `src/ui/expressions/` and `src/ui/hooks/`.
+- **`formula-testbed.test.tsx`**: Vitest unit and integration tests covering dialog open/close, dragging, preset formulas, expression validation, DOM readout, canvas sparkline buffer management, and scene crystal binding.
+- **`audio-telemetry-overlay.test.tsx`**: Vitest tests verifying DOM element mounting, RAF loop lifecycle, and telemetry tickers.
+- **`fps-badge.test.tsx`**: Vitest tests verifying FPS display, throttling colors, and toggle behavior.

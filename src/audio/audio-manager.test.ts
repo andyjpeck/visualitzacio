@@ -194,4 +194,49 @@ describe('AudioManager', () => {
     manager.pauseCustomFile()
     expect(manager.getCurrentTime()).toBe(90)
   })
+
+  it('stops custom file playback when switching to microphone', async () => {
+    const mockAudioBuffer = {
+      duration: 180,
+      length: 44100 * 180,
+      numberOfChannels: 2,
+      sampleRate: 44100,
+      getChannelData: () => new Float32Array(1024),
+    } as unknown as AudioBuffer
+
+    mockContextObj.audioContext.decodeAudioData = vi.fn().mockResolvedValue(mockAudioBuffer)
+    const mockFile = new File(['mock'], 'track.mp3', { type: 'audio/mp3' })
+    mockFile.arrayBuffer = vi.fn().mockResolvedValue(new ArrayBuffer(1024))
+    await manager.loadAudioFile(mockFile)
+
+    const mockSourceNode = {
+      buffer: null,
+      loop: false,
+      connect: vi.fn(),
+      disconnect: vi.fn(),
+      start: vi.fn(),
+      stop: vi.fn(),
+    }
+    mockContextObj.audioContext.createBufferSource = vi.fn(() => mockSourceNode as unknown as AudioBufferSourceNode)
+
+    await manager.playCustomFile()
+    expect(manager.isPlaying()).toBe(true)
+    expect(manager.getSourceType()).toBe('file')
+
+    const mockTrack = { stop: vi.fn() }
+    const mockStream = { getTracks: vi.fn(() => [mockTrack]) }
+    vi.stubGlobal('navigator', {
+      mediaDevices: {
+        getUserMedia: vi.fn().mockResolvedValue(mockStream),
+      },
+    })
+
+    const ok = await manager.enableMicrophone()
+    expect(ok).toBe(true)
+    expect(mockSourceNode.stop).toHaveBeenCalled()
+    expect(manager.getSourceType()).toBe('mic')
+
+    vi.unstubAllGlobals()
+  })
 })
+
