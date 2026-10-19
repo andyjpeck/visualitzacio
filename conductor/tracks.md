@@ -6,9 +6,9 @@ This registry tracks the planned, active, and completed workstreams across Visua
 
 ## MVP Milestones: Foundation & Visual Studio (Tracks 1 – 4)
 
-- [ ] **Track 1: Minimal Reactive Canvas & Audio Testbed**
+- [x] **Track 1: Minimal Reactive Canvas & Audio Testbed**
   *Goal: Two-Plane architecture, Web Audio analyzer, live preview canvas, clickable FPS overlay with preset performance settings (`target_fps`, `resolution_scale`), and day-1 reactive audio visuals.*  
-  *Link: [./tracks/track_1_reactive_canvas_audio_testbed/index.md](./tracks/track_1_reactive_canvas_audio_testbed/index.md)*
+  *Link: [./tracks/track_1_reactive_canvas_audio_testbed/index.md](./tracks/track_1_reactive_canvas_audio_testbed/index.md)* (Completed)
 
 - [ ] **Track 2: Dynamic Expression Engine & Parameter Binding**
   *Goal: `expr-eval` sandboxing, real-time `$VARIABLE` bindings, `#FUNCTION(...)` library with `#BEAT_FRAMES` decay curves, and live formula test input.*  
