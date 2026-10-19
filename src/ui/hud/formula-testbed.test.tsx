@@ -1,5 +1,5 @@
-import { fireEvent, render, screen } from '@testing-library/react'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { act, fireEvent, render, screen } from '@testing-library/react'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createDefaultFrameContext } from '../../contracts/frame-context'
 import type { RenderEngine } from '../../engine/render-engine'
 import { useAppStore } from '../store/app-store'
@@ -23,6 +23,17 @@ describe('FormulaTestbed Component', () => {
       getFrameContext: () => ctx,
       getNodes: () => [],
     } as unknown as RenderEngine
+
+    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation((() => ({
+      clearRect: vi.fn(),
+      beginPath: vi.fn(),
+      moveTo: vi.fn(),
+      lineTo: vi.fn(),
+      stroke: vi.fn(),
+      closePath: vi.fn(),
+      fill: vi.fn(),
+      createLinearGradient: vi.fn().mockReturnValue({ addColorStop: vi.fn() }),
+    })) as any)
   })
 
   it('renders formula input, validation status, and presets when open', () => {
@@ -184,5 +195,44 @@ describe('FormulaTestbed Component', () => {
 
     // refToggle should appear before presetsToggle in DOM order
     expect(refToggle.compareDocumentPosition(presetsToggle) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  })
+
+  it('clears line chart history buffer when panel is closed to prevent memory leaks', () => {
+    let currentRafCallback: FrameRequestCallback | null = null
+    const originalRaf = window.requestAnimationFrame
+    window.requestAnimationFrame = (cb: FrameRequestCallback) => {
+      currentRafCallback = cb
+      return 123
+    }
+
+    try {
+      const historyLengthRef = { current: 0 }
+      const { unmount } = render(
+        <FormulaTestbed engine={mockEngine} historyLengthRef={historyLengthRef} />
+      )
+
+      // Simulate animation frame ticks
+      if (currentRafCallback) {
+        ;(currentRafCallback as (time: number) => void)(16)
+      }
+      expect(historyLengthRef.current).toBe(1)
+
+      if (currentRafCallback) {
+        ;(currentRafCallback as (time: number) => void)(32)
+      }
+      expect(historyLengthRef.current).toBe(2)
+
+      // When panel is closed, history buffer is cleared and tracking stops
+      act(() => {
+        useAppStore.setState({ isFormulaTestbedOpen: false })
+      })
+      expect(historyLengthRef.current).toBe(0)
+
+      // Unmounting also cleans up
+      unmount()
+      expect(historyLengthRef.current).toBe(0)
+    } finally {
+      window.requestAnimationFrame = originalRaf
+    }
   })
 })

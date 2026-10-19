@@ -17,6 +17,8 @@ import { useAppStore } from '../store/app-store'
 
 export interface FormulaTestbedProps {
   engine: RenderEngine | null
+  /** Optional ref to inspect active history buffer length for testing/memory auditing */
+  historyLengthRef?: React.MutableRefObject<number>
 }
 
 interface FormulaPreset {
@@ -190,7 +192,7 @@ const QUICK_REF_FUNCS: QuickRefItem[] = [
   },
 ]
 
-export function FormulaTestbed({ engine }: FormulaTestbedProps): React.ReactElement | null {
+export function FormulaTestbed({ engine, historyLengthRef }: FormulaTestbedProps): React.ReactElement | null {
   const isOpen = useAppStore((state) => state.isFormulaTestbedOpen)
   const setIsOpen = useAppStore((state) => state.setIsFormulaTestbedOpen)
   const activeFormula = useAppStore((state) => state.activeFormula)
@@ -220,7 +222,7 @@ export function FormulaTestbed({ engine }: FormulaTestbedProps): React.ReactElem
   const valueDisplayRef = useRef<HTMLDivElement>(null)
   const chartCanvasRef = useRef<HTMLCanvasElement>(null)
   const chartPeakRef = useRef<HTMLSpanElement>(null)
-  const historyRef = useRef<number[]>(new Array(180).fill(0))
+  const historyRef = useRef<number[]>([])
 
   const expressionEngine = useMemo(() => getDefaultExpressionEngine(), [])
 
@@ -333,9 +335,19 @@ export function FormulaTestbed({ engine }: FormulaTestbedProps): React.ReactElem
     }
   }
 
-  // 60 FPS live readout loop updating DOM and Canvas chart directly without React re-renders
+  // 60 FPS live readout loop updating DOM and Canvas chart directly without React re-renders.
+  // History is only tracked for the open panel's active expression and is cleared when closed.
   useEffect(() => {
-    if (!isOpen || !engine) return
+    if (!isOpen || !engine) {
+      // Free memory immediately when panel is closed or engine is inactive
+      historyRef.current = []
+      if (historyLengthRef) historyLengthRef.current = 0
+      return
+    }
+
+    // Reset history when opening or changing formula so data is only stored for the current expression
+    historyRef.current = []
+    if (historyLengthRef) historyLengthRef.current = 0
 
     let rafId: number
     const tick = () => {
@@ -356,10 +368,18 @@ export function FormulaTestbed({ engine }: FormulaTestbedProps): React.ReactElem
       if (history.length > 180) {
         history.shift()
       }
+      if (historyLengthRef) {
+        historyLengthRef.current = history.length
+      }
 
       const canvas = chartCanvasRef.current
       if (canvas && typeof canvas.getContext === 'function') {
-        const ctx2d = canvas.getContext('2d')
+        let ctx2d: CanvasRenderingContext2D | null = null
+        try {
+          ctx2d = canvas.getContext('2d')
+        } catch {
+          ctx2d = null
+        }
         if (ctx2d) {
           const w = canvas.width
           const h = canvas.height
@@ -403,14 +423,21 @@ export function FormulaTestbed({ engine }: FormulaTestbedProps): React.ReactElem
           // Plot line
           ctx2d.beginPath()
           const len = history.length
-          for (let i = 0; i < len; i++) {
-            const x = (i / (len - 1)) * w
-            const norm = (history[i] - paddedMin) / paddedRange
+          if (len === 1) {
+            const norm = (history[0] - paddedMin) / paddedRange
             const y = Math.max(1, Math.min(h - 1, h - norm * h))
-            if (i === 0) {
-              ctx2d.moveTo(x, y)
-            } else {
-              ctx2d.lineTo(x, y)
+            ctx2d.moveTo(0, y)
+            ctx2d.lineTo(w, y)
+          } else {
+            for (let i = 0; i < len; i++) {
+              const x = (i / (len - 1)) * w
+              const norm = (history[i] - paddedMin) / paddedRange
+              const y = Math.max(1, Math.min(h - 1, h - norm * h))
+              if (i === 0) {
+                ctx2d.moveTo(x, y)
+              } else {
+                ctx2d.lineTo(x, y)
+              }
             }
           }
 
@@ -434,8 +461,13 @@ export function FormulaTestbed({ engine }: FormulaTestbedProps): React.ReactElem
     }
 
     rafId = requestAnimationFrame(tick)
-    return () => cancelAnimationFrame(rafId)
-  }, [isOpen, engine, activeFormula, validation.isValid, expressionEngine])
+    return () => {
+      cancelAnimationFrame(rafId)
+      // When the panel is closed or unmounted, clear the history buffer to prevent memory retention
+      historyRef.current = []
+      if (historyLengthRef) historyLengthRef.current = 0
+    }
+  }, [isOpen, engine, activeFormula, validation.isValid, expressionEngine, historyLengthRef])
 
   if (!isOpen) return null
 
