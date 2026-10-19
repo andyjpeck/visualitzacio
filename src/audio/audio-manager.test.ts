@@ -145,4 +145,48 @@ describe('AudioManager', () => {
     manager.pauseCustomFile()
     expect(manager.isPlaying()).toBe(false)
   })
+
+  it('tracks duration, current time, and supports seeking in custom audio files', async () => {
+    const mockAudioBuffer = {
+      duration: 180,
+      length: 44100 * 180,
+      numberOfChannels: 2,
+      sampleRate: 44100,
+      getChannelData: () => new Float32Array(1024),
+    } as unknown as AudioBuffer
+
+    mockContextObj.audioContext.decodeAudioData = vi.fn().mockResolvedValue(mockAudioBuffer)
+    const mockFile = new File(['mock'], 'track.mp3', { type: 'audio/mp3' })
+    mockFile.arrayBuffer = vi.fn().mockResolvedValue(new ArrayBuffer(1024))
+
+    await manager.loadAudioFile(mockFile)
+    expect(manager.getDuration()).toBe(180)
+    expect(manager.getCurrentTime()).toBe(0)
+
+    const mockSourceNode = {
+      buffer: null,
+      loop: false,
+      connect: vi.fn(),
+      disconnect: vi.fn(),
+      start: vi.fn(),
+      stop: vi.fn(),
+    }
+    mockContextObj.audioContext.createBufferSource = vi.fn(() => mockSourceNode as unknown as AudioBufferSourceNode)
+
+    // Seek while paused
+    manager.seek(45)
+    expect(manager.getCurrentTime()).toBe(45)
+
+    // Play starts from seeked offset
+    await manager.playCustomFile()
+    expect(mockSourceNode.start).toHaveBeenCalledWith(0, 45)
+
+    // Seek while playing
+    manager.seek(90)
+    expect(mockSourceNode.stop).toHaveBeenCalled()
+    expect(manager.getCurrentTime()).toBe(90)
+
+    manager.pauseCustomFile()
+    expect(manager.getCurrentTime()).toBe(90)
+  })
 })

@@ -1,4 +1,4 @@
-import React, { useRef } from 'react'
+import React, { useEffect, useRef } from 'react'
 import {
   Play,
   Pause,
@@ -15,12 +15,23 @@ import {
 import { useAppStore } from '../store/app-store'
 import type { AudioManager } from '../../audio/audio-manager'
 
+function formatTime(seconds: number): string {
+  if (!Number.isFinite(seconds) || seconds < 0) return '0:00'
+  const mins = Math.floor(seconds / 60)
+  const secs = Math.floor(seconds % 60)
+  return `${mins}:${secs.toString().padStart(2, '0')}`
+}
+
 export interface ToolbarProps {
   audioManager: AudioManager | null
 }
 
 export function Toolbar({ audioManager }: ToolbarProps): React.ReactElement {
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const progressSliderRef = useRef<HTMLInputElement>(null)
+  const currentTimeRef = useRef<HTMLSpanElement>(null)
+  const durationTimeRef = useRef<HTMLSpanElement>(null)
+  const isDraggingRef = useRef<boolean>(false)
 
   const isPlaying = useAppStore((state) => state.isPlaying)
   const setIsPlaying = useAppStore((state) => state.setIsPlaying)
@@ -139,6 +150,34 @@ export function Toolbar({ audioManager }: ToolbarProps): React.ReactElement {
     }
   }
 
+  // Continuous 60 FPS track progress loop without React re-renders
+  useEffect(() => {
+    if (sourceType !== 'file' || !audioManager) return
+
+    let rafId: number
+    const updateProgress = () => {
+      if (!isDraggingRef.current && audioManager.hasCustomFile()) {
+        const cur = audioManager.getCurrentTime()
+        const dur = audioManager.getDuration()
+
+        if (progressSliderRef.current) {
+          progressSliderRef.current.max = String(dur || 100)
+          progressSliderRef.current.value = String(cur)
+        }
+        if (currentTimeRef.current) {
+          currentTimeRef.current.textContent = formatTime(cur)
+        }
+        if (durationTimeRef.current) {
+          durationTimeRef.current.textContent = formatTime(dur)
+        }
+      }
+      rafId = requestAnimationFrame(updateProgress)
+    }
+
+    rafId = requestAnimationFrame(updateProgress)
+    return () => cancelAnimationFrame(rafId)
+  }, [sourceType, audioManager, isPlaying, audioFileName])
+
   return (
     <>
       {/* Hidden Audio File Input */}
@@ -181,7 +220,7 @@ export function Toolbar({ audioManager }: ToolbarProps): React.ReactElement {
           )}
         </button>
 
-        {/* Source Toggle: Sample vs Mic vs File */}
+        {/* Source Toggle: Sample -> File -> Mic */}
         <div className="flex items-center rounded-lg bg-white/5 p-0.5 border border-white/5">
           <button
             type="button"
@@ -196,20 +235,6 @@ export function Toolbar({ audioManager }: ToolbarProps): React.ReactElement {
           >
             <Disc className="w-3.5 h-3.5" />
             <span>Sample</span>
-          </button>
-          <button
-            type="button"
-            onClick={handleSelectMic}
-            aria-label="Use Microphone"
-            title="Live Microphone Capture (Uncompressed)"
-            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-mono font-medium transition-colors cursor-pointer ${
-              sourceType === 'mic'
-                ? 'bg-cyber-magenta/20 text-cyber-magenta border border-cyber-magenta/30'
-                : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            <Mic className="w-3.5 h-3.5" />
-            <span>Mic</span>
           </button>
           <button
             type="button"
@@ -231,7 +256,75 @@ export function Toolbar({ audioManager }: ToolbarProps): React.ReactElement {
               {audioFileName || 'File'}
             </span>
           </button>
+          <button
+            type="button"
+            onClick={handleSelectMic}
+            aria-label="Use Microphone"
+            title="Live Microphone Capture (Uncompressed)"
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-mono font-medium transition-colors cursor-pointer ${
+              sourceType === 'mic'
+                ? 'bg-cyber-magenta/20 text-cyber-magenta border border-cyber-magenta/30'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <Mic className="w-3.5 h-3.5" />
+            <span>Mic</span>
+          </button>
         </div>
+
+        {/* Progress & Seek Bar (Visible when audio file is loaded/active) */}
+        {sourceType === 'file' && audioFileName && (
+          <div
+            data-testid="audio-progress-bar"
+            className="flex items-center gap-2 px-2.5 py-1 bg-white/5 rounded-lg border border-white/5 text-xs font-mono"
+          >
+            <span
+              ref={currentTimeRef}
+              data-testid="audio-current-time"
+              className="text-slate-400 min-w-[28px] text-right tabular-nums text-[11px]"
+            >
+              0:00
+            </span>
+            <input
+              ref={progressSliderRef}
+              type="range"
+              min="0"
+              max="100"
+              step="0.1"
+              defaultValue="0"
+              aria-label="Track progress slider"
+              onPointerDown={() => {
+                isDraggingRef.current = true
+              }}
+              onPointerUp={(e) => {
+                isDraggingRef.current = false
+                const targetVal = parseFloat((e.target as HTMLInputElement).value)
+                audioManager?.seek(targetVal)
+              }}
+              onChange={(e) => {
+                const targetVal = parseFloat(e.target.value)
+                if (currentTimeRef.current) {
+                  currentTimeRef.current.textContent = formatTime(targetVal)
+                }
+                audioManager?.seek(targetVal)
+              }}
+              onInput={(e) => {
+                const targetVal = parseFloat((e.target as HTMLInputElement).value)
+                if (currentTimeRef.current) {
+                  currentTimeRef.current.textContent = formatTime(targetVal)
+                }
+              }}
+              className="w-24 sm:w-36 h-1 bg-white/20 rounded-lg appearance-none cursor-pointer accent-cyber-amber"
+            />
+            <span
+              ref={durationTimeRef}
+              data-testid="audio-duration-time"
+              className="text-slate-400 min-w-[28px] tabular-nums text-[11px]"
+            >
+              0:00
+            </span>
+          </div>
+        )}
 
         {/* Volume Slider */}
         <div className="flex items-center gap-2 px-2 py-1 bg-white/5 rounded-lg border border-white/5">

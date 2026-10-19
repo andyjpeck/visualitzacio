@@ -24,6 +24,9 @@ export class AudioManager {
   private playing = false
   private volume = 1.0
   private lastError: string | null = null
+  private playbackStartTime = 0
+  private playbackStartOffset = 0
+  private pausedOffset = 0
 
   constructor(options: AudioManagerOptions = {}) {
     this.factory =
@@ -163,6 +166,9 @@ export class AudioManager {
     const decoded = await ctx.decodeAudioData(arrayBuffer)
     this.customBuffer = decoded
     this.customFileName = file.name
+    this.pausedOffset = 0
+    this.playbackStartTime = 0
+    this.playbackStartOffset = 0
     return file.name
   }
 
@@ -172,6 +178,60 @@ export class AudioManager {
 
   getCustomFileName(): string | null {
     return this.customFileName
+  }
+
+  /**
+   * Returns current playback time in seconds for the loaded custom file.
+   */
+  getCurrentTime(): number {
+    if (!this.customBuffer) return 0
+    const duration = this.customBuffer.duration
+    if (duration <= 0) return 0
+
+    if (this.playing && this.sourceType === 'file' && this.audioContext) {
+      const elapsed = Math.max(0, this.audioContext.currentTime - this.playbackStartTime)
+      return (this.playbackStartOffset + elapsed) % duration
+    }
+    return this.pausedOffset % duration
+  }
+
+  /**
+   * Returns total duration in seconds of the loaded custom file.
+   */
+  getDuration(): number {
+    return this.customBuffer ? this.customBuffer.duration : 0
+  }
+
+  /**
+   * Seeks to a specific timestamp in seconds within the loaded custom file.
+   */
+  seek(seconds: number): void {
+    if (!this.customBuffer) return
+    const duration = this.customBuffer.duration
+    if (duration <= 0) return
+
+    const clamped = Math.max(0, Math.min(seconds, duration))
+    this.pausedOffset = clamped
+
+    if (this.playing && this.sourceType === 'file' && this.currentSourceNode && this.audioContext) {
+      try {
+        this.currentSourceNode.stop()
+      } catch {
+        // Already stopped
+      }
+      this.currentSourceNode.disconnect()
+      this.currentSourceNode = null
+
+      const source = this.audioContext.createBufferSource()
+      source.buffer = this.customBuffer
+      source.loop = true
+      source.connect(this.masterGain!)
+      source.start(0, clamped % duration)
+
+      this.currentSourceNode = source
+      this.playbackStartTime = this.audioContext.currentTime
+      this.playbackStartOffset = clamped
+    }
   }
 
   /**
@@ -196,13 +256,18 @@ export class AudioManager {
       throw new Error('No custom audio file loaded')
     }
 
+    const duration = this.customBuffer.duration
+    const offset = duration > 0 ? this.pausedOffset % duration : 0
+
     const source = ctx.createBufferSource()
     source.buffer = this.customBuffer
     source.loop = true
     source.connect(this.masterGain!)
 
-    source.start(0)
+    source.start(0, offset)
     this.currentSourceNode = source
+    this.playbackStartTime = ctx.currentTime
+    this.playbackStartOffset = offset
     this.playing = true
     this.sourceType = 'file'
     this.lastError = null
@@ -213,6 +278,7 @@ export class AudioManager {
    */
   pauseCustomFile(): void {
     if (this.currentSourceNode) {
+      this.pausedOffset = this.getCurrentTime()
       try {
         this.currentSourceNode.stop()
       } catch {

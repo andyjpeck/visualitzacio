@@ -27,6 +27,9 @@ describe('Toolbar Component', () => {
       pauseCustomFile: vi.fn(),
       hasCustomFile: vi.fn().mockReturnValue(false),
       getCustomFileName: vi.fn().mockReturnValue(null),
+      getCurrentTime: vi.fn().mockReturnValue(0),
+      getDuration: vi.fn().mockReturnValue(0),
+      seek: vi.fn(),
       setVolume: vi.fn(),
       getLastError: vi.fn().mockReturnValue(null),
     } as unknown as AudioManager
@@ -147,5 +150,35 @@ describe('Toolbar Component', () => {
 
     expect(mockAudioManager.playCustomFile).toHaveBeenCalledTimes(1)
     expect(useAppStore.getState().isPlaying).toBe(true)
+  })
+
+  it('renders source toggle buttons in order: Sample -> File -> Mic', () => {
+    render(<Toolbar audioManager={mockAudioManager} />)
+    const sampleBtn = screen.getByRole('button', { name: /use sample player/i })
+    const fileBtn = screen.getByRole('button', { name: /use local audio file/i })
+    const micBtn = screen.getByRole('button', { name: /use microphone/i })
+
+    // Verify DOM order
+    expect(sampleBtn.compareDocumentPosition(fileBtn) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(fileBtn.compareDocumentPosition(micBtn) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  })
+
+  it('displays progress bar when file is loaded and allows seeking', async () => {
+    mockAudioManager.hasCustomFile = vi.fn().mockReturnValue(true)
+    mockAudioManager.getDuration = vi.fn().mockReturnValue(180)
+    mockAudioManager.getCurrentTime = vi.fn().mockReturnValue(30)
+    mockAudioManager.seek = vi.fn()
+
+    useAppStore.setState({ sourceType: 'file', audioFileName: 'track.mp3' })
+
+    render(<Toolbar audioManager={mockAudioManager} />)
+
+    const progressBar = screen.getByTestId('audio-progress-bar')
+    expect(progressBar).toBeInTheDocument()
+
+    const slider = screen.getByLabelText(/track progress slider/i)
+    fireEvent.change(slider, { target: { value: '60' } })
+
+    expect(mockAudioManager.seek).toHaveBeenCalledWith(60)
   })
 })
