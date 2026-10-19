@@ -24,20 +24,24 @@ This registry tracks the planned, active, and completed workstreams across Visua
 
 ---
 
-## Advanced Creative Capabilities (Tracks 5 – 8)
+## Advanced Creative Capabilities (Tracks 5 – 9)
 
 - [ ] **Track 5: Generative Visual Synthesis & Duperscope**
-  *Goal: JIT-compiled procedural script runner (`init`, `frame`, `beat`, `point`), 3 draw modes, and Built-in Duperscope Preset Selector with classic generative curve templates.*  
+  *Goal: JIT-compiled procedural script runner (`init`, `frame`, `beat`, `point`), 3 draw modes, and Built-in Duperscope Preset Selector with classic generative curve templates. Completes the foundational component set (Frame Buffer, Static Image, Duperscope).*  
   *Status: Planned*
 
-- [ ] **Track 6: Custom GLSL Shader Passes & Post-Processing Pipeline**
+- [ ] **Track 6: Next-Generation Component Suite (Colormap, LightSource, 3dMesh)**
+  *Goal: Detail full technical specifications and implement the second-generation component suite: Colormap (AVS-inspired visual gradient stop bar & palette cycling), LightSource (2D/2.5D specular & audio-reactive lighting projections), and 3dMesh (3D polygonal primitives, GLTF model loader, and vertex displacement).*  
+  *Status: Planned (Detailed specifications to be drafted following completion of defined components in Track 5)*
+
+- [ ] **Track 7: Custom GLSL Shader Passes & Post-Processing Pipeline**
   *Goal: Arbitrary vertex/fragment shader component, audio uniform injection, in-browser Monaco/CodeMirror editor, and post-processing presets.*  
   *Status: Planned*
 
-- [ ] **Track 7: Web MIDI Hardware Integration & Live Performance Mode**
+- [ ] **Track 8: Web MIDI Hardware Integration & Live Performance Mode**
   *Goal: Web MIDI API, interactive MIDI Learn, parameter smoothing (lerp), and distraction-free borderless fullscreen performance mode.*  
   *Status: Planned*
 
-- [ ] **Track 8: Preset Library, Community Sharing & Detached Display Output**
+- [ ] **Track 9: Preset Library, Community Sharing & Detached Display Output**
   *Goal: IndexedDB local preset library, portable preset bundles, and dual-window detached projector output for live stage productions.*  
   *Status: Planned*
