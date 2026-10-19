@@ -2,11 +2,11 @@
 
 ## Phase 1: Project Scaffolding, Tooling & Two-Plane Render Loop
 
-- [ ] Task: Project Scaffolding with Vite, React 19, TypeScript, and Tailwind CSS
-  - [ ] Initialize Vite React TypeScript project with Tailwind CSS configuration and Track 1 dependencies (`three`, `zustand`, `lucide-react`)
-  - [ ] Configure Vitest and React Testing Library setup with lightweight `RendererLike`, `Scheduler`, and `createAudioContext` dependency-injection test fixtures
-  - [ ] Configure ESLint and Prettier per `code_styleguides/typescript.md`
-  - [ ] Configure `vite.config.ts` (`base: '/visualitzacio/'`) and GitHub Actions workflow (`.github/workflows/deploy.yml`) for automated GitHub Pages deployment
+- [x] Task: Project Scaffolding with Vite, React 19, TypeScript, and Tailwind CSS (6e36881)
+  - [x] Initialize Vite React TypeScript project with Tailwind CSS configuration and Track 1 dependencies (`three`, `zustand`, `lucide-react`)
+  - [x] Configure Vitest and React Testing Library setup with lightweight `RendererLike`, `Scheduler`, and `createAudioContext` dependency-injection test fixtures
+  - [x] Configure ESLint and Prettier per `code_styleguides/typescript.md`
+  - [x] Configure `vite.config.ts` (`base: '/visualitzacio/'`) and GitHub Actions workflow (`.github/workflows/deploy.yml`) for automated GitHub Pages deployment
 - [ ] Task: Two-Plane Architecture Skeleton, `FrameContext` & `RenderEngine` (TDD)
   - [ ] Write unit tests for pre-allocated `FrameContext` mutation (`$TIME`, `$DT` clamped $\le 0.1$, `$FRAME`, `$FPS`, `$WIDTH`, `$HEIGHT`, `$ASPECT`, `$PIXEL_RATIO`), `VisualNode` pass lifecycle, and `RenderEngine` loop pacing against `targetFps` and `resolutionScale`
   - [ ] Implement `RenderEngine` core class managing `requestAnimationFrame`, throttled FPS telemetry subscriber (250–500ms), 150ms debounced resize with clamped DPR ($\le 2$) scaled by `resolutionScale`, and `webglcontextlost` / `webglcontextrestored` listeners
