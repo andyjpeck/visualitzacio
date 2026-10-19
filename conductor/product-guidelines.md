@@ -64,9 +64,6 @@ To maintain a unified, predictable visual language across all components when ex
     - Sliding-window history buffers and canvas redraw loops **must only be maintained for the actively open / expanded expression control or dialog**.
     - Whenever an expression control, popover, or testbed is closed, collapsed, or switches to a different formula, all history arrays **must be immediately cleared** (`length = 0` / released) and animation frame callbacks stopped.
     - Background components evaluate AST expressions statelessly with zero historical memory buffering.
-  - **Draggable Dialogs & Viewport Clamping:**
-    - Floating expression testbeds and detailed formula dialogs support mouse/touch dragging via header handles with pointer capture (`setPointerCapture` / `releasePointerCapture`) for smooth movement across rapid gestures.
-    - Dialog positions automatically clamp to viewport boundaries during dragging and on browser window resize events.
   - **Interactive Token Discovery & Quick Reference:**
     - Expandable / collapsible Quick Reference section positioned prominently above example presets, persisting user open/closed state across sessions.
     - Interactive chips with informative hover tooltips detailing parameter descriptions, audio characteristics, and expected output ranges.
