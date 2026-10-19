@@ -178,9 +178,10 @@ describe('FormulaTestbed Component', () => {
     expect(useAppStore.getState().activeFormula).toBe('1.0 + $BASS * 0.8 + $BASS')
   })
 
-  it('renders real-time line chart canvas and peak scale readout instead of telemetry ticker', () => {
+  it('renders real-time line chart canvas, min and peak scale readouts instead of telemetry ticker', () => {
     render(<FormulaTestbed engine={mockEngine} />)
     expect(screen.getByTestId('formula-line-chart')).toBeInTheDocument()
+    expect(screen.getByTestId('formula-chart-min')).toBeInTheDocument()
     expect(screen.getByTestId('formula-chart-peak')).toBeInTheDocument()
     expect(screen.getByText(/Real-Time Plot/i)).toBeInTheDocument()
 

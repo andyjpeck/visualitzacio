@@ -221,6 +221,7 @@ export function FormulaTestbed({ engine, historyLengthRef }: FormulaTestbedProps
 
   const valueDisplayRef = useRef<HTMLDivElement>(null)
   const chartCanvasRef = useRef<HTMLCanvasElement>(null)
+  const chartMinRef = useRef<HTMLSpanElement>(null)
   const chartPeakRef = useRef<HTMLSpanElement>(null)
   const historyRef = useRef<number[]>([])
 
@@ -403,6 +404,9 @@ export function FormulaTestbed({ engine, historyLengthRef }: FormulaTestbedProps
             maxVal = minVal + 1.0
           }
 
+          if (chartMinRef.current) {
+            chartMinRef.current.textContent = `min: ${minVal.toFixed(2)}`
+          }
           if (chartPeakRef.current) {
             chartPeakRef.current.textContent = `max: ${maxVal.toFixed(2)}`
           }
@@ -577,13 +581,22 @@ export function FormulaTestbed({ engine, historyLengthRef }: FormulaTestbedProps
             <div className="flex flex-col items-end">
               <div className="flex items-center justify-between w-full text-[9px] font-mono text-slate-400 mb-1">
                 <span className="text-slate-500 uppercase tracking-wider text-[8px]">Real-Time Plot</span>
-                <span
-                  ref={chartPeakRef}
-                  data-testid="formula-chart-peak"
-                  className="text-cyber-cyan font-semibold tabular-nums text-[9px]"
-                >
-                  max: 0.00
-                </span>
+                <div className="flex items-center gap-2">
+                  <span
+                    ref={chartMinRef}
+                    data-testid="formula-chart-min"
+                    className="text-slate-400 tabular-nums text-[9px]"
+                  >
+                    min: 0.00
+                  </span>
+                  <span
+                    ref={chartPeakRef}
+                    data-testid="formula-chart-peak"
+                    className="text-cyber-cyan font-semibold tabular-nums text-[9px]"
+                  >
+                    max: 0.00
+                  </span>
+                </div>
               </div>
               <canvas
                 ref={chartCanvasRef}
