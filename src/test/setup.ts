@@ -20,3 +20,14 @@ globalThis.ResizeObserver = MockResizeObserver as unknown as typeof ResizeObserv
 import { createMockAudioContext } from './fixtures/audio-context-mock'
 globalThis.AudioContext = vi.fn().mockImplementation(() => createMockAudioContext().audioContext) as unknown as typeof AudioContext
 
+// Polyfill PointerEvent for jsdom
+if (typeof globalThis.PointerEvent === 'undefined') {
+  globalThis.PointerEvent = class PointerEvent extends MouseEvent {
+    pointerId: number
+    constructor(type: string, params: PointerEventInit = {}) {
+      super(type, params)
+      this.pointerId = params.pointerId ?? 0
+    }
+  } as unknown as typeof PointerEvent
+}
+

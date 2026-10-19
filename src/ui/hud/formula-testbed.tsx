@@ -1,5 +1,5 @@
-import React, { useEffect, useMemo, useRef } from 'react'
-import { CheckCircle2, Code2, Sparkles, X, XCircle } from 'lucide-react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
+import { CheckCircle2, Code2, GripHorizontal, Sparkles, X, XCircle } from 'lucide-react'
 import type { RenderEngine } from '../../engine/render-engine'
 import { TestVisualNode } from '../../engine/visual-node'
 import { getDefaultExpressionEngine } from '../../engine/expressions/expression-engine'
@@ -56,6 +56,17 @@ export function FormulaTestbed({ engine }: FormulaTestbedProps): React.ReactElem
   const bindFormulaToScene = useAppStore((state) => state.bindFormulaToScene)
   const setBindFormulaToScene = useAppStore((state) => state.setBindFormulaToScene)
 
+  const dialogRef = useRef<HTMLDivElement>(null)
+  const dragStartRef = useRef<{ mouseX: number; mouseY: number; startX: number; startY: number } | null>(null)
+  const [isDragging, setIsDragging] = useState(false)
+  const [position, setPosition] = useState<{ x: number; y: number }>(() => {
+    const defaultWidth = 576
+    const defaultHeight = 600
+    const x = typeof window !== 'undefined' ? Math.max(16, Math.floor((window.innerWidth - defaultWidth) / 2)) : 100
+    const y = typeof window !== 'undefined' ? Math.max(70, Math.floor((window.innerHeight - defaultHeight) / 2)) : 100
+    return { x, y }
+  })
+
   const valueDisplayRef = useRef<HTMLDivElement>(null)
   const bassValRef = useRef<HTMLSpanElement>(null)
   const beatValRef = useRef<HTMLSpanElement>(null)
@@ -108,6 +119,70 @@ export function FormulaTestbed({ engine }: FormulaTestbedProps): React.ReactElem
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [isOpen, setIsOpen])
 
+  // Keep position clamped within viewport on window resize
+  useEffect(() => {
+    const handleResize = () => {
+      const dialogWidth = dialogRef.current?.offsetWidth || 576
+      const dialogHeight = dialogRef.current?.offsetHeight || 500
+      const maxX = Math.max(0, window.innerWidth - dialogWidth)
+      const maxY = Math.max(0, window.innerHeight - dialogHeight)
+      setPosition((prev) => ({
+        x: Math.min(maxX, Math.max(0, prev.x)),
+        y: Math.min(maxY, Math.max(0, prev.y)),
+      }))
+    }
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
+
+  // Pointer drag event handlers for repositioning window
+  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.button !== 0) return
+    const target = e.target as HTMLElement
+    if (target.closest('button') || target.closest('input')) return
+
+    if (typeof e.currentTarget.setPointerCapture === 'function') {
+      e.currentTarget.setPointerCapture(e.pointerId)
+    }
+    setIsDragging(true)
+    dragStartRef.current = {
+      mouseX: e.clientX,
+      mouseY: e.clientY,
+      startX: position.x,
+      startY: position.y,
+    }
+  }
+
+  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!dragStartRef.current) return
+    const deltaX = e.clientX - dragStartRef.current.mouseX
+    const deltaY = e.clientY - dragStartRef.current.mouseY
+
+    const dialogWidth = dialogRef.current?.offsetWidth || 576
+    const dialogHeight = dialogRef.current?.offsetHeight || 500
+    const maxX = Math.max(0, window.innerWidth - dialogWidth)
+    const maxY = Math.max(0, window.innerHeight - dialogHeight)
+
+    const newX = Math.min(maxX, Math.max(0, dragStartRef.current.startX + deltaX))
+    const newY = Math.min(maxY, Math.max(0, dragStartRef.current.startY + deltaY))
+
+    setPosition({ x: newX, y: newY })
+  }
+
+  const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (dragStartRef.current) {
+      if (typeof e.currentTarget.releasePointerCapture === 'function') {
+        try {
+          e.currentTarget.releasePointerCapture(e.pointerId)
+        } catch {
+          // ignore
+        }
+      }
+      dragStartRef.current = null
+      setIsDragging(false)
+    }
+  }
+
   // 60 FPS live readout loop updating DOM directly without React re-renders
   useEffect(() => {
     if (!isOpen || !engine) return
@@ -150,33 +225,45 @@ export function FormulaTestbed({ engine }: FormulaTestbedProps): React.ReactElem
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+      ref={dialogRef}
+      style={{
+        position: 'fixed',
+        left: `${position.x}px`,
+        top: `${position.y}px`,
+      }}
+      className="fixed z-50 w-[92vw] max-w-xl max-h-[85vh] flex flex-col p-6 rounded-xl border border-cyber-cyan/40 bg-cyber-panel/95 backdrop-blur-md text-slate-100 shadow-2xl shadow-cyber-cyan/20 animate-in fade-in"
       role="dialog"
-      aria-modal="true"
+      aria-modal="false"
       aria-labelledby="formula-testbed-title"
-      onClick={() => setIsOpen(false)}
     >
+      {/* Header (Draggable Handle) */}
       <div
-        className="w-full max-w-xl max-h-[90vh] flex flex-col p-6 rounded-xl border border-cyber-cyan/40 bg-cyber-panel/95 text-slate-100 shadow-2xl shadow-cyber-cyan/10"
-        onClick={(e) => e.stopPropagation()}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerUp}
+        title="Drag to move dialog around screen"
+        className={`flex items-center justify-between pb-4 border-b border-white/10 shrink-0 select-none ${
+          isDragging ? 'cursor-grabbing' : 'cursor-grab'
+        }`}
+        data-testid="formula-dialog-header"
       >
-        {/* Header */}
-        <div className="flex items-center justify-between pb-4 border-b border-white/10 shrink-0">
-          <div className="flex items-center gap-2 text-cyber-cyan">
-            <Code2 className="w-5 h-5" />
-            <h2 id="formula-testbed-title" className="text-base font-bold tracking-wide">
-              Dynamic Expression Testbed <span className="font-mono text-xs opacity-75">f(x)</span>
-            </h2>
-          </div>
-          <button
-            type="button"
-            onClick={() => setIsOpen(false)}
-            className="p-1 rounded-md text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
-            aria-label="Close formula testbed"
-          >
-            <X className="w-5 h-5" />
-          </button>
+        <div className="flex items-center gap-2 text-cyber-cyan pointer-events-none">
+          <GripHorizontal className="w-5 h-5 text-slate-400" />
+          <Code2 className="w-5 h-5" />
+          <h2 id="formula-testbed-title" className="text-base font-bold tracking-wide">
+            Dynamic Expression Testbed <span className="font-mono text-xs opacity-75">f(x)</span>
+          </h2>
         </div>
+        <button
+          type="button"
+          onClick={() => setIsOpen(false)}
+          className="p-1 rounded-md text-slate-400 hover:text-white hover:bg-white/10 transition-colors pointer-events-auto cursor-pointer"
+          aria-label="Close formula testbed"
+        >
+          <X className="w-5 h-5" />
+        </button>
+      </div>
 
         {/* Scrollable Body */}
         <div className="mt-5 space-y-5 overflow-y-auto pr-1">
@@ -320,6 +407,5 @@ export function FormulaTestbed({ engine }: FormulaTestbedProps): React.ReactElem
           </div>
         </div>
       </div>
-    </div>
   )
 }

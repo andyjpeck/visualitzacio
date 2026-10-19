@@ -86,4 +86,25 @@ describe('FormulaTestbed Component', () => {
     const { container } = render(<FormulaTestbed engine={mockEngine} />)
     expect(container.firstChild).toBeNull()
   })
+
+  it('allows dragging the dialog by its header', () => {
+    render(<FormulaTestbed engine={mockEngine} />)
+    const header = screen.getByTestId('formula-dialog-header')
+    const dialog = screen.getByRole('dialog')
+
+    expect(dialog).toHaveStyle({ position: 'fixed' })
+    const initialLeft = parseInt(dialog.style.left, 10)
+    const initialTop = parseInt(dialog.style.top, 10)
+
+    // Simulate dragging
+    fireEvent.pointerDown(header, { button: 0, clientX: 100, clientY: 100, pointerId: 1 })
+    fireEvent.pointerMove(header, { clientX: 180, clientY: 150, pointerId: 1 })
+    fireEvent.pointerUp(header, { pointerId: 1 })
+
+    const newLeft = parseInt(dialog.style.left, 10)
+    const newTop = parseInt(dialog.style.top, 10)
+
+    expect(newLeft).toBe(initialLeft + 80)
+    expect(newTop).toBe(initialTop + 50)
+  })
 })
