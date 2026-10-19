@@ -109,7 +109,7 @@ export function AudioTelemetryOverlay({
           <div className="flex-1 h-2 bg-white/10 rounded overflow-hidden">
             <div
               ref={bassBarRef}
-              className="h-full bg-cyber-cyan transition-all duration-75 shadow-sm shadow-cyber-cyan/50"
+              className="h-full bg-cyber-cyan shadow-sm shadow-cyber-cyan/50"
               style={{ width: '0%' }}
             />
           </div>
@@ -121,7 +121,7 @@ export function AudioTelemetryOverlay({
           <div className="flex-1 h-2 bg-white/10 rounded overflow-hidden">
             <div
               ref={midBarRef}
-              className="h-full bg-cyber-magenta transition-all duration-75 shadow-sm shadow-cyber-magenta/50"
+              className="h-full bg-cyber-magenta shadow-sm shadow-cyber-magenta/50"
               style={{ width: '0%' }}
             />
           </div>
@@ -133,7 +133,7 @@ export function AudioTelemetryOverlay({
           <div className="flex-1 h-2 bg-white/10 rounded overflow-hidden">
             <div
               ref={trebleBarRef}
-              className="h-full bg-cyber-amber transition-all duration-75 shadow-sm shadow-cyber-amber/50"
+              className="h-full bg-cyber-amber shadow-sm shadow-cyber-amber/50"
               style={{ width: '0%' }}
             />
           </div>
@@ -145,7 +145,7 @@ export function AudioTelemetryOverlay({
           <div className="flex-1 h-2 bg-white/10 rounded overflow-hidden">
             <div
               ref={rmsBarRef}
-              className="h-full bg-emerald-400 transition-all duration-75 shadow-sm shadow-emerald-400/50"
+              className="h-full bg-emerald-400 shadow-sm shadow-emerald-400/50"
               style={{ width: '0%' }}
             />
           </div>

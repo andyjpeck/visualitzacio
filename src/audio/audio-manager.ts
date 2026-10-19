@@ -7,21 +7,23 @@ export interface AudioManagerOptions {
 }
 
 export class AudioManager {
-  private audioContext: AudioContext
-  private masterGain: GainNode
-  private analyserNode: AnalyserNode
+  private audioContext: AudioContext | null = null
+  private masterGain: GainNode | null = null
+  private analyserNode: AnalyserNode | null = null
   private sampleBuffer: AudioBuffer | null = null
   private currentSourceNode: AudioBufferSourceNode | null = null
   private micStream: MediaStream | null = null
   private micSourceNode: MediaStreamAudioSourceNode | null = null
+  private muteGainNode: GainNode | null = null
 
+  private readonly factory: () => AudioContext
   private sourceType: AudioSourceType = 'none'
   private playing = false
   private volume = 1.0
   private lastError: string | null = null
 
   constructor(options: AudioManagerOptions = {}) {
-    const factory =
+    this.factory =
       options.createAudioContext ??
       (() => {
         const AudioCtx =
@@ -31,23 +33,47 @@ export class AudioManager {
         return new AudioCtx()
       })
 
-    this.audioContext = factory()
-    this.masterGain = this.audioContext.createGain()
-    this.analyserNode = this.audioContext.createAnalyser()
-    this.analyserNode.fftSize = 2048
-    this.analyserNode.smoothingTimeConstant = 0.8
+    // Initialize graph
+    this.ensureActiveGraph()
+  }
 
-    // Audio routing for output
-    this.masterGain.connect(this.analyserNode)
-    this.analyserNode.connect(this.audioContext.destination)
+  /**
+   * Ensures an active, unclosed AudioContext and connected nodes exist.
+   */
+  private ensureActiveGraph(): AudioContext {
+    if (!this.audioContext || this.audioContext.state === 'closed') {
+      const ctx = this.factory()
+      this.audioContext = ctx
+
+      this.masterGain = ctx.createGain()
+      this.masterGain.gain.value = this.volume
+
+      this.analyserNode = ctx.createAnalyser()
+      this.analyserNode.fftSize = 2048
+      this.analyserNode.smoothingTimeConstant = 0.8
+
+      // Master audio output chain: masterGain -> analyserNode -> destination
+      this.masterGain.connect(this.analyserNode)
+      this.analyserNode.connect(ctx.destination)
+
+      // Mute gain for microphone sink (keeps Chromium audio thread running without speaker feedback)
+      this.muteGainNode = ctx.createGain()
+      this.muteGainNode.gain.value = 0.0
+      this.muteGainNode.connect(ctx.destination)
+
+      this.sampleBuffer = null
+    }
+
+    return this.audioContext
   }
 
   /**
    * Unlocks AudioContext on user gesture.
    */
   async resume(): Promise<void> {
-    if (this.audioContext.state === 'suspended') {
-      await this.audioContext.resume()
+    const ctx = this.ensureActiveGraph()
+    if (ctx.state === 'suspended') {
+      await ctx.resume()
     }
   }
 
@@ -55,24 +81,25 @@ export class AudioManager {
    * Starts playback of the procedural / bundled rhythmic test sample.
    */
   async playSample(): Promise<void> {
+    const ctx = this.ensureActiveGraph()
     await this.resume()
 
     if (this.sourceType === 'mic') {
       this.disableMicrophone()
     }
 
-    if (this.playing) {
+    if (this.playing && this.currentSourceNode) {
       return
     }
 
     if (!this.sampleBuffer) {
-      this.sampleBuffer = createProceduralBeatBuffer(this.audioContext, 120, 2)
+      this.sampleBuffer = createProceduralBeatBuffer(ctx, 120, 2)
     }
 
-    const source = this.audioContext.createBufferSource()
+    const source = ctx.createBufferSource()
     source.buffer = this.sampleBuffer
     source.loop = true
-    source.connect(this.masterGain)
+    source.connect(this.masterGain!)
 
     source.start(0)
     this.currentSourceNode = source
@@ -104,6 +131,7 @@ export class AudioManager {
    * Enables microphone capture with uncompressed musical capture settings.
    */
   async enableMicrophone(): Promise<boolean> {
+    const ctx = this.ensureActiveGraph()
     await this.resume()
 
     if (this.playing) {
@@ -124,10 +152,13 @@ export class AudioManager {
       })
 
       this.micStream = stream
-      this.micSourceNode = this.audioContext.createMediaStreamSource(stream)
+      this.micSourceNode = ctx.createMediaStreamSource(stream)
 
-      // Connect microphone to analyserNode only — DO NOT connect to destination to avoid acoustic feedback!
-      this.micSourceNode.connect(this.analyserNode)
+      // Connect mic to analyserNode and to mute sink
+      this.micSourceNode.connect(this.analyserNode!)
+      if (this.muteGainNode) {
+        this.micSourceNode.connect(this.muteGainNode)
+      }
 
       this.sourceType = 'mic'
       this.playing = true
@@ -184,19 +215,25 @@ export class AudioManager {
   }
 
   getAnalyserNode(): AnalyserNode {
-    return this.analyserNode
+    this.ensureActiveGraph()
+    return this.analyserNode!
   }
 
   getSampleRate(): number {
-    return this.audioContext.sampleRate || 44100
+    this.ensureActiveGraph()
+    return this.audioContext?.sampleRate || 44100
   }
 
   dispose(): void {
     this.pauseSample()
     this.disableMicrophone()
 
-    if (this.audioContext.state !== 'closed') {
+    if (this.audioContext && this.audioContext.state !== 'closed') {
       this.audioContext.close().catch(() => {})
     }
+    this.audioContext = null
+    this.masterGain = null
+    this.analyserNode = null
+    this.muteGainNode = null
   }
 }

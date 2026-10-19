@@ -23,35 +23,39 @@ export function createProceduralBeatBuffer(
     const isKick = beat % 2 === 0 // Beats 1 and 3
     const isSnare = beat % 2 === 1 // Beats 2 and 4
 
-    // 1. Kick Drum
+    // 1. Kick Drum (Sub-bass pitch drop chirp)
     if (isKick) {
       const kickDuration = 0.35
       const kickSamples = Math.floor(kickDuration * sampleRate)
       const startSample = Math.floor(beatStartTime * sampleRate)
+      let phase = 0
 
       for (let i = 0; i < kickSamples && startSample + i < totalSamples; i++) {
         const t = i / sampleRate
-        // Pitch drop from 160 Hz to 40 Hz
-        const freq = 40 + 120 * Math.exp(-t * 22)
-        const envelope = Math.exp(-t * 9)
-        const sample = Math.sin(2 * Math.PI * freq * t) * envelope * 0.9
+        // Pitch drop from 160 Hz to 45 Hz
+        const freq = 45 + 115 * Math.exp(-t * 22)
+        phase += (2 * Math.PI * freq) / sampleRate
+        const envelope = Math.exp(-t * 8)
+        const sample = Math.sin(phase) * envelope * 0.95
 
         left[startSample + i] += sample
         right[startSample + i] += sample
       }
     }
 
-    // 2. Snare Drum
+    // 2. Snare Drum (185 Hz body + white noise burst)
     if (isSnare) {
-      const snareDuration = 0.25
+      const snareDuration = 0.28
       const snareSamples = Math.floor(snareDuration * sampleRate)
       const startSample = Math.floor(beatStartTime * sampleRate)
+      let phase = 0
 
       for (let i = 0; i < snareSamples && startSample + i < totalSamples; i++) {
         const t = i / sampleRate
-        const noise = (Math.random() * 2 - 1) * Math.exp(-t * 18)
-        const tone = Math.sin(2 * Math.PI * 190 * t) * Math.exp(-t * 24)
-        const sample = (noise * 0.6 + tone * 0.4) * 0.75
+        phase += (2 * Math.PI * 185) / sampleRate
+        const tone = Math.sin(phase) * Math.exp(-t * 22) * 0.4
+        const noise = (Math.random() * 2 - 1) * Math.exp(-t * 12) * 0.6
+        const sample = (tone + noise) * 0.85
 
         left[startSample + i] += sample
         right[startSample + i] += sample
@@ -61,20 +65,19 @@ export function createProceduralBeatBuffer(
     // 3. Hi-Hats (every eighth note)
     for (let sub = 0; sub < 2; sub++) {
       const hatTime = beatStartTime + sub * (secondsPerBeat / 2)
-      const hatDuration = 0.06
+      const hatDuration = 0.05
       const hatSamples = Math.floor(hatDuration * sampleRate)
       const startSample = Math.floor(hatTime * sampleRate)
 
       for (let i = 0; i < hatSamples && startSample + i < totalSamples; i++) {
         const t = i / sampleRate
-        // High-frequency noise
-        const noise = (Math.random() * 2 - 1) * Math.exp(-t * 45)
-        const sample = noise * 0.35
+        // High-frequency noise burst
+        const noise = (Math.random() * 2 - 1) * Math.exp(-t * 45) * 0.45
 
         // Slight stereo panning on off-beat hats
-        const pan = sub === 1 ? 0.8 : 0.5
-        left[startSample + i] += sample * (1 - pan)
-        right[startSample + i] += sample * pan
+        const pan = sub === 1 ? 0.65 : 0.45
+        left[startSample + i] += noise * (1 - pan)
+        right[startSample + i] += noise * pan
       }
     }
   }
