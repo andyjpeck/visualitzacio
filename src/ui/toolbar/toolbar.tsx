@@ -1,15 +1,16 @@
 import React, { useEffect, useRef } from 'react'
 import {
-  Play,
-  Pause,
-  Mic,
+  Activity,
+  AlertCircle,
   Disc,
   FileAudio,
+  Loader2,
+  Mic,
+  Pause,
+  Play,
+  Settings,
   Volume2,
   VolumeX,
-  Activity,
-  Settings,
-  AlertCircle,
   X,
 } from 'lucide-react'
 import { useAppStore } from '../store/app-store'
@@ -50,6 +51,13 @@ export function Toolbar({ audioManager }: ToolbarProps): React.ReactElement {
   )
   const isFormulaTestbedOpen = useAppStore((state) => state.isFormulaTestbedOpen)
   const toggleFormulaTestbed = useAppStore((state) => state.toggleFormulaTestbed)
+  const isAudioLoading = useAppStore((state) => state.isAudioLoading)
+  const audioLoadingProgress = useAppStore((state) => state.audioLoadingProgress)
+  const audioLoadingStage = useAppStore((state) => state.audioLoadingStage)
+  const setIsAudioLoading = useAppStore((state) => state.setIsAudioLoading)
+  const setAudioLoadingProgress = useAppStore(
+    (state) => state.setAudioLoadingProgress,
+  )
 
   const isMicActive = sourceType === 'mic'
 
@@ -134,13 +142,18 @@ export function Toolbar({ audioManager }: ToolbarProps): React.ReactElement {
       audioManager.pauseSample()
       audioManager.pauseCustomFile()
       setIsPlaying(false)
+      setIsAudioLoading(true, 5, 'Reading file...')
 
-      const name = await audioManager.loadAudioFile(file)
+      const name = await audioManager.loadAudioFile(file, (percent, stage) => {
+        setAudioLoadingProgress(percent, stage)
+      })
       setAudioFileName(name)
       setAudioError(null)
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err)
       setAudioError(`Failed to decode audio file: ${msg}`)
+    } finally {
+      setIsAudioLoading(false)
     }
   }
 
@@ -253,9 +266,13 @@ export function Toolbar({ audioManager }: ToolbarProps): React.ReactElement {
                 : 'text-slate-400 hover:text-white'
             }`}
           >
-            <FileAudio className="w-3.5 h-3.5" />
+            {isAudioLoading ? (
+              <Loader2 className="w-3.5 h-3.5 text-cyber-amber animate-spin" />
+            ) : (
+              <FileAudio className="w-3.5 h-3.5" />
+            )}
             <span className="max-w-[70px] truncate">
-              {audioFileName || 'File'}
+              {isAudioLoading ? `${audioLoadingProgress}%` : audioFileName || 'File'}
             </span>
           </button>
           <button
@@ -274,8 +291,38 @@ export function Toolbar({ audioManager }: ToolbarProps): React.ReactElement {
           </button>
         </div>
 
-        {/* Progress & Seek Bar (Visible when audio file is loaded/active) */}
-        {sourceType === 'file' && audioFileName && (
+        {/* Audio File Loading Indicator with Progress Bar */}
+        {isAudioLoading && (
+          <div
+            data-testid="audio-loading-indicator"
+            role="progressbar"
+            aria-valuenow={audioLoadingProgress}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            className="flex items-center gap-2 px-2.5 py-1 bg-black/60 rounded-lg border border-cyber-amber/40 text-xs font-mono shadow-md shadow-cyber-amber/10 animate-in fade-in"
+          >
+            <Loader2 className="w-3.5 h-3.5 text-cyber-amber animate-spin shrink-0" />
+            <div className="flex flex-col gap-0.5">
+              <div className="flex items-center justify-between gap-2 text-[10px] leading-tight">
+                <span className="text-slate-300 font-medium truncate max-w-[120px]">
+                  {audioLoadingStage || 'Loading audio...'}
+                </span>
+                <span className="text-cyber-amber font-bold tabular-nums">
+                  {audioLoadingProgress}%
+                </span>
+              </div>
+              <div className="w-24 sm:w-32 h-1 bg-white/10 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-cyber-amber to-amber-300 transition-all duration-150 rounded-full"
+                  style={{ width: `${audioLoadingProgress}%` }}
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Progress & Seek Bar (Visible when audio file is loaded/active and not currently loading) */}
+        {!isAudioLoading && sourceType === 'file' && audioFileName && (
           <div
             data-testid="audio-progress-bar"
             className="flex items-center gap-2 px-2.5 py-1 bg-white/5 rounded-lg border border-white/5 text-xs font-mono"

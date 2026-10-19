@@ -138,7 +138,7 @@ describe('Toolbar Component', () => {
       fireEvent.change(fileInput, { target: { files: [testFile] } })
     })
 
-    expect(mockAudioManager.loadAudioFile).toHaveBeenCalledWith(testFile)
+    expect(mockAudioManager.loadAudioFile).toHaveBeenCalledWith(testFile, expect.any(Function))
     expect(useAppStore.getState().audioFileName).toBe('retro-wave.mp3')
     expect(useAppStore.getState().sourceType).toBe('file')
 
@@ -192,5 +192,21 @@ describe('Toolbar Component', () => {
 
     fireEvent.click(fxBtn)
     expect(useAppStore.getState().isFormulaTestbedOpen).toBe(false)
+  })
+
+  it('displays audio loading progress bar and stage message when audio file is loading', () => {
+    useAppStore.setState({
+      isAudioLoading: true,
+      audioLoadingProgress: 45,
+      audioLoadingStage: 'Decoding audio buffer...',
+    })
+
+    render(<Toolbar audioManager={mockAudioManager} />)
+
+    const indicator = screen.getByTestId('audio-loading-indicator')
+    expect(indicator).toBeInTheDocument()
+    expect(indicator).toHaveAttribute('aria-valuenow', '45')
+    expect(screen.getByText('Decoding audio buffer...')).toBeInTheDocument()
+    expect(screen.getAllByText('45%').length).toBeGreaterThanOrEqual(1)
   })
 })

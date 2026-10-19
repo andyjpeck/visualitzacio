@@ -166,4 +166,23 @@ describe('FormulaTestbed Component', () => {
     fireEvent.click(bassChip)
     expect(useAppStore.getState().activeFormula).toBe('1.0 + $BASS * 0.8 + $BASS')
   })
+
+  it('renders real-time line chart canvas and peak scale readout instead of telemetry ticker', () => {
+    render(<FormulaTestbed engine={mockEngine} />)
+    expect(screen.getByTestId('formula-line-chart')).toBeInTheDocument()
+    expect(screen.getByTestId('formula-chart-peak')).toBeInTheDocument()
+    expect(screen.getByText(/Real-Time Plot/i)).toBeInTheDocument()
+
+    // Confirm old telemetry ticker is not in this dialog
+    expect(screen.queryByText('$TIME:')).not.toBeInTheDocument()
+  })
+
+  it('renders Quick Reference above Example Formula Presets in document order', () => {
+    render(<FormulaTestbed engine={mockEngine} />)
+    const refToggle = screen.getByTestId('toggle-formula-reference')
+    const presetsToggle = screen.getByTestId('toggle-formula-presets')
+
+    // refToggle should appear before presetsToggle in DOM order
+    expect(refToggle.compareDocumentPosition(presetsToggle) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  })
 })

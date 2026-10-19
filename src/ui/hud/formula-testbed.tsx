@@ -218,9 +218,9 @@ export function FormulaTestbed({ engine }: FormulaTestbedProps): React.ReactElem
   })
 
   const valueDisplayRef = useRef<HTMLDivElement>(null)
-  const bassValRef = useRef<HTMLSpanElement>(null)
-  const beatValRef = useRef<HTMLSpanElement>(null)
-  const timeValRef = useRef<HTMLSpanElement>(null)
+  const chartCanvasRef = useRef<HTMLCanvasElement>(null)
+  const chartPeakRef = useRef<HTMLSpanElement>(null)
+  const historyRef = useRef<number[]>(new Array(180).fill(0))
 
   const expressionEngine = useMemo(() => getDefaultExpressionEngine(), [])
 
@@ -333,35 +333,101 @@ export function FormulaTestbed({ engine }: FormulaTestbedProps): React.ReactElem
     }
   }
 
-  // 60 FPS live readout loop updating DOM directly without React re-renders
+  // 60 FPS live readout loop updating DOM and Canvas chart directly without React re-renders
   useEffect(() => {
     if (!isOpen || !engine) return
 
     let rafId: number
     const tick = () => {
       const ctx = engine.getFrameContext()
+      let evaluated = 0.0
 
       if (valueDisplayRef.current) {
         if (validation.isValid) {
-          const evaluated = expressionEngine.evaluate(activeFormula, ctx, 0.0)
+          evaluated = expressionEngine.evaluate(activeFormula, ctx, 0.0)
           valueDisplayRef.current.textContent = evaluated.toFixed(3)
         } else {
           valueDisplayRef.current.textContent = '---'
         }
       }
 
-      if (bassValRef.current) {
-        bassValRef.current.textContent = ctx.$BASS.toFixed(2)
+      const history = historyRef.current
+      history.push(evaluated)
+      if (history.length > 180) {
+        history.shift()
       }
-      if (beatValRef.current) {
-        beatValRef.current.textContent = ctx.$BEAT > 0 ? 'BEAT' : '0'
-        beatValRef.current.className =
-          ctx.$BEAT > 0
-            ? 'px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-cyber-amber text-black'
-            : 'px-1.5 py-0.5 rounded text-[10px] font-mono bg-white/10 text-slate-400'
-      }
-      if (timeValRef.current) {
-        timeValRef.current.textContent = ctx.$TIME.toFixed(1) + 's'
+
+      const canvas = chartCanvasRef.current
+      if (canvas && typeof canvas.getContext === 'function') {
+        const ctx2d = canvas.getContext('2d')
+        if (ctx2d) {
+          const w = canvas.width
+          const h = canvas.height
+
+          ctx2d.clearRect(0, 0, w, h)
+
+          // Calculate dynamic min/max over the sliding window
+          let maxVal = -Infinity
+          let minVal = Infinity
+          for (let i = 0; i < history.length; i++) {
+            const v = history[i]
+            if (v > maxVal) maxVal = v
+            if (v < minVal) minVal = v
+          }
+
+          if (maxVal === -Infinity || minVal === Infinity) {
+            maxVal = 1.0
+            minVal = 0.0
+          }
+          if (maxVal <= minVal) {
+            maxVal = minVal + 1.0
+          }
+
+          if (chartPeakRef.current) {
+            chartPeakRef.current.textContent = `max: ${maxVal.toFixed(2)}`
+          }
+
+          const span = maxVal - minVal
+          const paddedMax = maxVal + span * 0.1
+          const paddedMin = minVal - span * 0.1
+          const paddedRange = paddedMax - paddedMin || 1.0
+
+          // Subtle horizontal center grid line
+          ctx2d.strokeStyle = 'rgba(255, 255, 255, 0.08)'
+          ctx2d.lineWidth = 1
+          ctx2d.beginPath()
+          ctx2d.moveTo(0, h / 2)
+          ctx2d.lineTo(w, h / 2)
+          ctx2d.stroke()
+
+          // Plot line
+          ctx2d.beginPath()
+          const len = history.length
+          for (let i = 0; i < len; i++) {
+            const x = (i / (len - 1)) * w
+            const norm = (history[i] - paddedMin) / paddedRange
+            const y = Math.max(1, Math.min(h - 1, h - norm * h))
+            if (i === 0) {
+              ctx2d.moveTo(x, y)
+            } else {
+              ctx2d.lineTo(x, y)
+            }
+          }
+
+          ctx2d.strokeStyle = '#00f0ff'
+          ctx2d.lineWidth = 1.5
+          ctx2d.stroke()
+
+          // Gradient fill under curve
+          ctx2d.lineTo(w, h)
+          ctx2d.lineTo(0, h)
+          ctx2d.closePath()
+          const grad = ctx2d.createLinearGradient(0, 0, 0, h)
+          grad.addColorStop(0, 'rgba(0, 240, 255, 0.25)')
+          grad.addColorStop(1, 'rgba(0, 240, 255, 0.0)')
+          ctx2d.fillStyle = grad
+          ctx2d.fill()
+        }
       }
 
       rafId = requestAnimationFrame(tick)
@@ -475,26 +541,25 @@ export function FormulaTestbed({ engine }: FormulaTestbedProps): React.ReactElem
               </div>
             </div>
 
-            {/* Telemetry Snapshot Ticker */}
-            <div className="flex items-center gap-2">
-              <div className="text-right">
-                <span className="block text-[9px] font-mono text-slate-500 uppercase">$BASS</span>
-                <span ref={bassValRef} className="font-mono text-xs text-cyber-cyan font-bold">
-                  0.00
+            {/* Real-time Line Chart Canvas */}
+            <div className="flex flex-col items-end">
+              <div className="flex items-center justify-between w-full text-[9px] font-mono text-slate-400 mb-1">
+                <span className="text-slate-500 uppercase tracking-wider text-[8px]">Real-Time Plot</span>
+                <span
+                  ref={chartPeakRef}
+                  data-testid="formula-chart-peak"
+                  className="text-cyber-cyan font-semibold tabular-nums text-[9px]"
+                >
+                  max: 0.00
                 </span>
               </div>
-              <div className="text-right">
-                <span className="block text-[9px] font-mono text-slate-500 uppercase">$BEAT</span>
-                <span ref={beatValRef} className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-white/10 text-slate-400">
-                  0
-                </span>
-              </div>
-              <div className="text-right">
-                <span className="block text-[9px] font-mono text-slate-500 uppercase">$TIME</span>
-                <span ref={timeValRef} className="font-mono text-xs text-slate-300">
-                  0.0s
-                </span>
-              </div>
+              <canvas
+                ref={chartCanvasRef}
+                data-testid="formula-line-chart"
+                width={220}
+                height={48}
+                className="w-44 sm:w-52 h-11 sm:h-12 rounded bg-black/60 border border-white/10 shadow-inner"
+              />
             </div>
           </div>
 
@@ -516,60 +581,7 @@ export function FormulaTestbed({ engine }: FormulaTestbedProps): React.ReactElem
             </div>
           </label>
 
-          {/* Preset Formulas (Collapsible) */}
-          <div className="border border-white/10 rounded-lg bg-white/5 overflow-hidden">
-            <button
-              type="button"
-              onClick={toggleFormulaPresets}
-              className="w-full flex items-center justify-between p-2.5 text-xs font-mono font-medium text-slate-300 hover:text-white hover:bg-white/5 transition-colors cursor-pointer select-none"
-              aria-expanded={isFormulaPresetsOpen}
-              aria-controls="formula-presets-panel"
-              data-testid="toggle-formula-presets"
-            >
-              <div className="flex items-center gap-1.5 uppercase tracking-wider text-slate-400">
-                <Sparkles className="w-3.5 h-3.5 text-cyber-amber" />
-                <span>Example Formula Presets</span>
-              </div>
-              <div className="flex items-center gap-1.5 text-slate-400">
-                <span className="text-[10px] text-slate-500 font-mono">
-                  {isFormulaPresetsOpen ? 'Hide' : `${PRESET_FORMULAS.length} presets`}
-                </span>
-                {isFormulaPresetsOpen ? (
-                  <ChevronDown className="w-4 h-4 text-slate-400" />
-                ) : (
-                  <ChevronRight className="w-4 h-4 text-slate-400" />
-                )}
-              </div>
-            </button>
-
-            {isFormulaPresetsOpen && (
-              <div
-                id="formula-presets-panel"
-                className="p-3 pt-1 border-t border-white/5 grid grid-cols-2 gap-2"
-                data-testid="formula-presets-panel"
-              >
-                {PRESET_FORMULAS.map((preset) => (
-                  <button
-                    key={preset.name}
-                    type="button"
-                    onClick={() => setActiveFormula(preset.formula)}
-                    className="p-2.5 rounded-lg text-left bg-black/40 border border-white/10 hover:bg-cyber-cyan/10 hover:border-cyber-cyan/40 hover:text-cyber-cyan transition-all group cursor-pointer"
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-semibold group-hover:text-cyber-cyan">
-                        {preset.name}
-                      </span>
-                    </div>
-                    <div className="font-mono text-[11px] text-slate-400 truncate mt-1">
-                      {preset.formula}
-                    </div>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Quick Reference (Collapsible with Tooltips) */}
+          {/* Quick Reference (Collapsible with Tooltips) - Moved above Example Formulas */}
           <div className="border border-white/10 rounded-lg bg-white/5 overflow-hidden">
             <button
               type="button"
@@ -640,6 +652,59 @@ export function FormulaTestbed({ engine }: FormulaTestbedProps): React.ReactElem
                     ))}
                   </div>
                 </div>
+              </div>
+            )}
+          </div>
+
+          {/* Preset Formulas (Collapsible) */}
+          <div className="border border-white/10 rounded-lg bg-white/5 overflow-hidden">
+            <button
+              type="button"
+              onClick={toggleFormulaPresets}
+              className="w-full flex items-center justify-between p-2.5 text-xs font-mono font-medium text-slate-300 hover:text-white hover:bg-white/5 transition-colors cursor-pointer select-none"
+              aria-expanded={isFormulaPresetsOpen}
+              aria-controls="formula-presets-panel"
+              data-testid="toggle-formula-presets"
+            >
+              <div className="flex items-center gap-1.5 uppercase tracking-wider text-slate-400">
+                <Sparkles className="w-3.5 h-3.5 text-cyber-amber" />
+                <span>Example Formula Presets</span>
+              </div>
+              <div className="flex items-center gap-1.5 text-slate-400">
+                <span className="text-[10px] text-slate-500 font-mono">
+                  {isFormulaPresetsOpen ? 'Hide' : `${PRESET_FORMULAS.length} presets`}
+                </span>
+                {isFormulaPresetsOpen ? (
+                  <ChevronDown className="w-4 h-4 text-slate-400" />
+                ) : (
+                  <ChevronRight className="w-4 h-4 text-slate-400" />
+                )}
+              </div>
+            </button>
+
+            {isFormulaPresetsOpen && (
+              <div
+                id="formula-presets-panel"
+                className="p-3 pt-1 border-t border-white/5 grid grid-cols-2 gap-2"
+                data-testid="formula-presets-panel"
+              >
+                {PRESET_FORMULAS.map((preset) => (
+                  <button
+                    key={preset.name}
+                    type="button"
+                    onClick={() => setActiveFormula(preset.formula)}
+                    className="p-2.5 rounded-lg text-left bg-black/40 border border-white/10 hover:bg-cyber-cyan/10 hover:border-cyber-cyan/40 hover:text-cyber-cyan transition-all group cursor-pointer"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-semibold group-hover:text-cyber-cyan">
+                        {preset.name}
+                      </span>
+                    </div>
+                    <div className="font-mono text-[11px] text-slate-400 truncate mt-1">
+                      {preset.formula}
+                    </div>
+                  </button>
+                ))}
               </div>
             )}
           </div>

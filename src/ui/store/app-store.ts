@@ -41,6 +41,9 @@ export interface AppState {
   volume: number
   audioError: string | null
   audioFileName: string | null
+  isAudioLoading: boolean
+  audioLoadingProgress: number
+  audioLoadingStage: string
 
   // HUD & UI overlay state
   showFpsOverlay: boolean
@@ -66,6 +69,8 @@ export interface AppState {
   setVolume: (volume: number) => void
   setAudioError: (error: string | null) => void
   setAudioFileName: (name: string | null) => void
+  setIsAudioLoading: (loading: boolean, progress?: number, stage?: string) => void
+  setAudioLoadingProgress: (progress: number, stage?: string) => void
 
   setShowFpsOverlay: (show: boolean) => void
   toggleFpsOverlay: () => void
@@ -94,6 +99,9 @@ export const useAppStore = create<AppState>((set) => ({
   volume: 0.8,
   audioError: null,
   audioFileName: null,
+  isAudioLoading: false,
+  audioLoadingProgress: 0,
+  audioLoadingStage: '',
 
   showFpsOverlay: true,
   isPresetSettingsOpen: false,
@@ -115,6 +123,13 @@ export const useAppStore = create<AppState>((set) => ({
   setVolume: (volume) => set({ volume }),
   setAudioError: (audioError) => set({ audioError }),
   setAudioFileName: (audioFileName) => set({ audioFileName }),
+  setIsAudioLoading: (isAudioLoading, progress = 0, stage = '') =>
+    set({ isAudioLoading, audioLoadingProgress: progress, audioLoadingStage: stage }),
+  setAudioLoadingProgress: (audioLoadingProgress, stage) =>
+    set((state) => ({
+      audioLoadingProgress,
+      audioLoadingStage: stage !== undefined ? stage : state.audioLoadingStage,
+    })),
 
   setShowFpsOverlay: (showFpsOverlay) => set({ showFpsOverlay }),
   toggleFpsOverlay: () =>

@@ -122,10 +122,15 @@ describe('AudioManager', () => {
     })
     mockFile.arrayBuffer = vi.fn().mockResolvedValue(new ArrayBuffer(1024))
 
-    const loadedName = await manager.loadAudioFile(mockFile)
+    const progressCalls: Array<{ percent: number; stage: string }> = []
+    const loadedName = await manager.loadAudioFile(mockFile, (percent, stage) => {
+      progressCalls.push({ percent, stage })
+    })
     expect(loadedName).toBe('synthwave-track.mp3')
     expect(manager.hasCustomFile()).toBe(true)
     expect(manager.getCustomFileName()).toBe('synthwave-track.mp3')
+    expect(progressCalls.length).toBeGreaterThan(0)
+    expect(progressCalls[progressCalls.length - 1].percent).toBe(100)
 
     const mockSourceNode = {
       buffer: null,

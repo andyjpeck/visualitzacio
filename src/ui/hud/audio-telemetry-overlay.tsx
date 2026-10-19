@@ -14,6 +14,8 @@ export function AudioTelemetryOverlay({
   const rmsBarRef = useRef<HTMLDivElement>(null)
   const beatPillRef = useRef<HTMLSpanElement>(null)
   const bpmRef = useRef<HTMLSpanElement>(null)
+  const timeRef = useRef<HTMLSpanElement>(null)
+  const frameRef = useRef<HTMLSpanElement>(null)
 
   useEffect(() => {
     if (!engine) return
@@ -46,6 +48,12 @@ export function AudioTelemetryOverlay({
       if (bpmRef.current) {
         bpmRef.current.textContent = `${ctx.$BPM.toFixed(1)} BPM`
       }
+      if (timeRef.current) {
+        timeRef.current.textContent = `${ctx.$TIME.toFixed(1)}s`
+      }
+      if (frameRef.current) {
+        frameRef.current.textContent = String(ctx.$FRAME)
+      }
 
       rafId = requestAnimationFrame(updateDOM)
     }
@@ -54,6 +62,12 @@ export function AudioTelemetryOverlay({
     const initialCtx = engine.getFrameContext()
     if (bpmRef.current) {
       bpmRef.current.textContent = `${initialCtx.$BPM.toFixed(1)} BPM`
+    }
+    if (timeRef.current) {
+      timeRef.current.textContent = `${initialCtx.$TIME.toFixed(1)}s`
+    }
+    if (frameRef.current) {
+      frameRef.current.textContent = String(initialCtx.$FRAME)
     }
     if (bassBarRef.current) {
       bassBarRef.current.style.width = `${Math.min(100, Math.max(0, initialCtx.$BASS * 100))}%`
@@ -149,6 +163,30 @@ export function AudioTelemetryOverlay({
               style={{ width: '0%' }}
             />
           </div>
+        </div>
+      </div>
+
+      {/* Telemetry Ticker: $TIME & $FRAME */}
+      <div className="flex items-center justify-between pt-1.5 border-t border-white/10 font-mono text-[9px]">
+        <div className="flex items-center gap-1">
+          <span className="text-slate-500 uppercase font-semibold">$TIME:</span>
+          <span
+            ref={timeRef}
+            data-testid="telemetry-time"
+            className="text-slate-200 font-bold tabular-nums"
+          >
+            0.0s
+          </span>
+        </div>
+        <div className="flex items-center gap-1">
+          <span className="text-slate-500 uppercase font-semibold">$FRAME:</span>
+          <span
+            ref={frameRef}
+            data-testid="telemetry-frame"
+            className="text-slate-200 font-bold tabular-nums"
+          >
+            0
+          </span>
         </div>
       </div>
     </div>
