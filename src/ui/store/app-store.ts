@@ -7,6 +7,33 @@ import {
 
 export type AudioSourceType = 'sample' | 'mic' | 'file'
 
+export const STORAGE_KEY_FORMULA_PRESETS_OPEN = 'visualitzacio_formula_presets_open'
+export const STORAGE_KEY_FORMULA_REFERENCE_OPEN = 'visualitzacio_formula_reference_open'
+
+function loadBoolFromStorage(key: string, defaultValue: boolean): boolean {
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const stored = window.localStorage.getItem(key)
+      if (stored !== null) {
+        return stored === 'true'
+      }
+    }
+  } catch {
+    // localStorage may be restricted or unavailable
+  }
+  return defaultValue
+}
+
+function saveBoolToStorage(key: string, value: boolean): void {
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      window.localStorage.setItem(key, String(value))
+    }
+  } catch {
+    // ignore
+  }
+}
+
 export interface AppState {
   // Audio state (<10 Hz user actions)
   isPlaying: boolean
@@ -29,6 +56,8 @@ export interface AppState {
   isFormulaTestbedOpen: boolean
   activeFormula: string
   bindFormulaToScene: boolean
+  isFormulaPresetsOpen: boolean
+  isFormulaReferenceOpen: boolean
 
   // Actions
   setIsPlaying: (isPlaying: boolean) => void
@@ -48,6 +77,10 @@ export interface AppState {
   toggleFormulaTestbed: () => void
   setActiveFormula: (formula: string) => void
   setBindFormulaToScene: (bind: boolean) => void
+  setIsFormulaPresetsOpen: (isOpen: boolean) => void
+  toggleFormulaPresets: () => void
+  setIsFormulaReferenceOpen: (isOpen: boolean) => void
+  toggleFormulaReference: () => void
 
   setTargetFps: (fps: number) => void
   setResolutionScale: (scale: ResolutionScale) => void
@@ -73,6 +106,8 @@ export const useAppStore = create<AppState>((set) => ({
   isFormulaTestbedOpen: false,
   activeFormula: '1.0 + $BASS * 0.8 + #BEAT(0.2) * 0.5',
   bindFormulaToScene: true,
+  isFormulaPresetsOpen: loadBoolFromStorage(STORAGE_KEY_FORMULA_PRESETS_OPEN, true),
+  isFormulaReferenceOpen: loadBoolFromStorage(STORAGE_KEY_FORMULA_REFERENCE_OPEN, true),
 
   setIsPlaying: (isPlaying) => set({ isPlaying }),
   togglePlay: () => set((state) => ({ isPlaying: !state.isPlaying })),
@@ -96,6 +131,26 @@ export const useAppStore = create<AppState>((set) => ({
     set((state) => ({ isFormulaTestbedOpen: !state.isFormulaTestbedOpen })),
   setActiveFormula: (activeFormula) => set({ activeFormula }),
   setBindFormulaToScene: (bindFormulaToScene) => set({ bindFormulaToScene }),
+  setIsFormulaPresetsOpen: (isFormulaPresetsOpen) => {
+    saveBoolToStorage(STORAGE_KEY_FORMULA_PRESETS_OPEN, isFormulaPresetsOpen)
+    set({ isFormulaPresetsOpen })
+  },
+  toggleFormulaPresets: () =>
+    set((state) => {
+      const next = !state.isFormulaPresetsOpen
+      saveBoolToStorage(STORAGE_KEY_FORMULA_PRESETS_OPEN, next)
+      return { isFormulaPresetsOpen: next }
+    }),
+  setIsFormulaReferenceOpen: (isFormulaReferenceOpen) => {
+    saveBoolToStorage(STORAGE_KEY_FORMULA_REFERENCE_OPEN, isFormulaReferenceOpen)
+    set({ isFormulaReferenceOpen })
+  },
+  toggleFormulaReference: () =>
+    set((state) => {
+      const next = !state.isFormulaReferenceOpen
+      saveBoolToStorage(STORAGE_KEY_FORMULA_REFERENCE_OPEN, next)
+      return { isFormulaReferenceOpen: next }
+    }),
 
   setTargetFps: (targetFps) => set({ targetFps }),
   setResolutionScale: (resolutionScale) => set({ resolutionScale }),

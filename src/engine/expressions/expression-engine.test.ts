@@ -107,6 +107,30 @@ describe('ExpressionEngine (TDD)', () => {
       const result = engine.evaluate('invalid_var_xyz * 2', context, fallbackVal)
       expect(result).toBe(fallbackVal)
     })
+
+    it('detects and rejects misspelled system functions such as #BEAzT(0.2f) * 2.0', () => {
+      const res = engine.validate('#BEAzT(0.2f) * 2.0')
+      expect(res.isValid).toBe(false)
+      expect(res.error).toContain('Unknown system function: #BEAzT')
+    })
+
+    it('detects and rejects invalid float suffix or unexpected identifier tokens', () => {
+      const res = engine.validate('#BEAT(0.2f) * 2.0')
+      expect(res.isValid).toBe(false)
+      expect(res.error).toContain('Unknown variable or invalid identifier: "f"')
+    })
+
+    it('detects and rejects unknown system variables ($UNKNOWN)', () => {
+      const res = engine.validate('$BASS * $UNKNOWN')
+      expect(res.isValid).toBe(false)
+      expect(res.error).toContain('Unknown system variable: $UNKNOWN')
+    })
+
+    it('requires system functions to be called with parentheses', () => {
+      const res = engine.validate('1.0 + #BEAT')
+      expect(res.isValid).toBe(false)
+      expect(res.error).toContain('must be invoked with parentheses')
+    })
   })
 
   describe('Security & Sandboxing', () => {

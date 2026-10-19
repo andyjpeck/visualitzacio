@@ -107,4 +107,63 @@ describe('FormulaTestbed Component', () => {
     expect(newLeft).toBe(initialLeft + 80)
     expect(newTop).toBe(initialTop + 50)
   })
+
+  it('rejects misspelled function "#BEAzT(0.2f) * 2.0" and displays syntax error details', () => {
+    useAppStore.setState({ activeFormula: '#BEAzT(0.2f) * 2.0' })
+    render(<FormulaTestbed engine={mockEngine} />)
+
+    expect(screen.getByText('Syntax Error')).toBeInTheDocument()
+    expect(screen.getByText(/Unknown system function: #BEAzT/i)).toBeInTheDocument()
+  })
+
+  it('toggles collapsible presets section and updates aria-expanded', () => {
+    render(<FormulaTestbed engine={mockEngine} />)
+    const toggleBtn = screen.getByTestId('toggle-formula-presets')
+    expect(toggleBtn).toHaveAttribute('aria-expanded', 'true')
+    expect(screen.getByText('Bass Pulsar')).toBeInTheDocument()
+
+    // Collapse presets
+    fireEvent.click(toggleBtn)
+    expect(toggleBtn).toHaveAttribute('aria-expanded', 'false')
+    expect(screen.queryByText('Bass Pulsar')).not.toBeInTheDocument()
+    expect(useAppStore.getState().isFormulaPresetsOpen).toBe(false)
+
+    // Expand presets
+    fireEvent.click(toggleBtn)
+    expect(toggleBtn).toHaveAttribute('aria-expanded', 'true')
+    expect(screen.getByText('Bass Pulsar')).toBeInTheDocument()
+    expect(useAppStore.getState().isFormulaPresetsOpen).toBe(true)
+  })
+
+  it('toggles collapsible quick reference section and updates aria-expanded', () => {
+    render(<FormulaTestbed engine={mockEngine} />)
+    const toggleBtn = screen.getByTestId('toggle-formula-reference')
+    expect(toggleBtn).toHaveAttribute('aria-expanded', 'true')
+    expect(screen.getByTestId('var-item-BASS')).toBeInTheDocument()
+
+    // Collapse reference
+    fireEvent.click(toggleBtn)
+    expect(toggleBtn).toHaveAttribute('aria-expanded', 'false')
+    expect(screen.queryByTestId('var-item-BASS')).not.toBeInTheDocument()
+    expect(useAppStore.getState().isFormulaReferenceOpen).toBe(false)
+
+    // Expand reference
+    fireEvent.click(toggleBtn)
+    expect(toggleBtn).toHaveAttribute('aria-expanded', 'true')
+    expect(screen.getByTestId('var-item-BASS')).toBeInTheDocument()
+    expect(useAppStore.getState().isFormulaReferenceOpen).toBe(true)
+  })
+
+  it('renders tooltips over quick reference VAR and FUNC items and allows inserting them', () => {
+    render(<FormulaTestbed engine={mockEngine} />)
+    const bassChip = screen.getByTestId('var-item-BASS')
+    const beatFuncChip = screen.getByTestId('func-item-BEATdecay')
+
+    expect(bassChip).toHaveAttribute('title', expect.stringContaining('$BASS: Audio bass energy'))
+    expect(beatFuncChip).toHaveAttribute('title', expect.stringContaining('#BEAT'))
+
+    // Click to append token into formula
+    fireEvent.click(bassChip)
+    expect(useAppStore.getState().activeFormula).toBe('1.0 + $BASS * 0.8 + $BASS')
+  })
 })

@@ -1,5 +1,15 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
-import { CheckCircle2, Code2, GripHorizontal, Sparkles, X, XCircle } from 'lucide-react'
+import {
+  BookOpen,
+  CheckCircle2,
+  ChevronDown,
+  ChevronRight,
+  Code2,
+  GripHorizontal,
+  Sparkles,
+  X,
+  XCircle,
+} from 'lucide-react'
 import type { RenderEngine } from '../../engine/render-engine'
 import { TestVisualNode } from '../../engine/visual-node'
 import { getDefaultExpressionEngine } from '../../engine/expressions/expression-engine'
@@ -48,6 +58,138 @@ const PRESET_FORMULAS: FormulaPreset[] = [
   },
 ]
 
+interface QuickRefItem {
+  name: string
+  insertText: string
+  tooltip: string
+}
+
+const QUICK_REF_VARS: QuickRefItem[] = [
+  {
+    name: '$BASS',
+    insertText: '$BASS',
+    tooltip: '$BASS: Audio bass energy [0.0 - 1.0] with exponential decay smoothing',
+  },
+  {
+    name: '$MID',
+    insertText: '$MID',
+    tooltip: '$MID: Audio midrange energy [0.0 - 1.0] for lead and vocal presence',
+  },
+  {
+    name: '$TREBLE',
+    insertText: '$TREBLE',
+    tooltip: '$TREBLE: Audio treble energy [0.0 - 1.0] for high-frequency transients and percussion',
+  },
+  {
+    name: '$RMS',
+    insertText: '$RMS',
+    tooltip: '$RMS: Root Mean Square overall audio amplitude energy [0.0 - 1.0]',
+  },
+  {
+    name: '$BEAT',
+    insertText: '$BEAT',
+    tooltip: '$BEAT: Beat trigger pulse flag (1.0 on beat frame onset, 0.0 otherwise)',
+  },
+  {
+    name: '$BPM',
+    insertText: '$BPM',
+    tooltip: '$BPM: Estimated musical tempo in beats per minute (e.g. 120.0)',
+  },
+  {
+    name: '$TIME',
+    insertText: '$TIME',
+    tooltip: '$TIME: Total elapsed visualization playback time in seconds',
+  },
+  {
+    name: '$DT',
+    insertText: '$DT',
+    tooltip: '$DT: Delta time between consecutive render frames in seconds (~0.016s at 60 FPS)',
+  },
+  {
+    name: '$FRAME',
+    insertText: '$FRAME',
+    tooltip: '$FRAME: Monotonic frame counter index',
+  },
+  {
+    name: '$FPS',
+    insertText: '$FPS',
+    tooltip: '$FPS: Current measured rendering framerate (e.g. 60.0)',
+  },
+  {
+    name: '$WIDTH',
+    insertText: '$WIDTH',
+    tooltip: '$WIDTH: Viewport canvas width in pixels',
+  },
+  {
+    name: '$HEIGHT',
+    insertText: '$HEIGHT',
+    tooltip: '$HEIGHT: Viewport canvas height in pixels',
+  },
+  {
+    name: '$ASPECT',
+    insertText: '$ASPECT',
+    tooltip: '$ASPECT: Viewport aspect ratio ($WIDTH / $HEIGHT)',
+  },
+  {
+    name: '$PIXEL_RATIO',
+    insertText: '$PIXEL_RATIO',
+    tooltip: '$PIXEL_RATIO: Device pixel ratio (DPR)',
+  },
+]
+
+const QUICK_REF_FUNCS: QuickRefItem[] = [
+  {
+    name: '#BEAT(decay)',
+    insertText: '#BEAT(0.2)',
+    tooltip: '#BEAT([decay_seconds = 0.2]): Exponential decay pulse [1.0 -> 0.0] following beat onset',
+  },
+  {
+    name: '#BEAT_FRAMES(f, curve)',
+    insertText: '#BEAT_FRAMES(12, "exponential")',
+    tooltip: '#BEAT_FRAMES([frames = 12], [curve = "exponential"|"linear"|"logarithmic"]): Frame-based decay envelope',
+  },
+  {
+    name: '#FFT(band, width)',
+    insertText: '#FFT(0.02, 0.04)',
+    tooltip: '#FFT(lower_band, [band_width = 0.02]): Normalized frequency slice [0.0 - 1.0] from FFT spectrum',
+  },
+  {
+    name: '#WAVEFORM(pos)',
+    insertText: '#WAVEFORM(0.5)',
+    tooltip: '#WAVEFORM(position): Oscilloscope audio waveform sample [-1.0 to 1.0] at normalized position [0.0 - 1.0]',
+  },
+  {
+    name: '#TRI(t)',
+    insertText: '#TRI($TIME)',
+    tooltip: '#TRI(t): Normalized periodic triangle wave [-1.0 to 1.0] with period 1.0',
+  },
+  {
+    name: '#SAW(t)',
+    insertText: '#SAW($TIME)',
+    tooltip: '#SAW(t): Normalized periodic sawtooth wave [-1.0 to 1.0] with period 1.0',
+  },
+  {
+    name: '#SQR(t)',
+    insertText: '#SQR($TIME)',
+    tooltip: '#SQR(t): Normalized periodic square wave [-1.0 or 1.0] with period 1.0',
+  },
+  {
+    name: 'clamp(x, min, max)',
+    insertText: 'clamp($BASS, 0.2, 1.0)',
+    tooltip: 'clamp(x, min, max): Restricts x to the range [min, max]',
+  },
+  {
+    name: 'lerp(a, b, t)',
+    insertText: 'lerp(1.0, 2.0, $BASS)',
+    tooltip: 'lerp(a, b, t): Linear interpolation between a and b by factor t (a + (b - a) * t)',
+  },
+  {
+    name: 'smoothstep(e0, e1, x)',
+    insertText: 'smoothstep(0.2, 0.8, $RMS)',
+    tooltip: 'smoothstep(edge0, edge1, x): Smooth Hermite interpolation between 0 and 1',
+  },
+]
+
 export function FormulaTestbed({ engine }: FormulaTestbedProps): React.ReactElement | null {
   const isOpen = useAppStore((state) => state.isFormulaTestbedOpen)
   const setIsOpen = useAppStore((state) => state.setIsFormulaTestbedOpen)
@@ -55,6 +197,14 @@ export function FormulaTestbed({ engine }: FormulaTestbedProps): React.ReactElem
   const setActiveFormula = useAppStore((state) => state.setActiveFormula)
   const bindFormulaToScene = useAppStore((state) => state.bindFormulaToScene)
   const setBindFormulaToScene = useAppStore((state) => state.setBindFormulaToScene)
+  const isFormulaPresetsOpen = useAppStore((state) => state.isFormulaPresetsOpen)
+  const toggleFormulaPresets = useAppStore((state) => state.toggleFormulaPresets)
+  const isFormulaReferenceOpen = useAppStore((state) => state.isFormulaReferenceOpen)
+  const toggleFormulaReference = useAppStore((state) => state.toggleFormulaReference)
+
+  const handleInsertToken = (token: string) => {
+    setActiveFormula(activeFormula ? `${activeFormula} + ${token}` : token)
+  }
 
   const dialogRef = useRef<HTMLDivElement>(null)
   const dragStartRef = useRef<{ mouseX: number; mouseY: number; startX: number; startY: number } | null>(null)
@@ -366,44 +516,132 @@ export function FormulaTestbed({ engine }: FormulaTestbedProps): React.ReactElem
             </div>
           </label>
 
-          {/* Preset Formulas */}
-          <div>
-            <div className="flex items-center gap-1.5 mb-2.5 text-xs font-mono font-medium text-slate-400 uppercase tracking-wider">
-              <Sparkles className="w-3.5 h-3.5 text-cyber-amber" />
-              <span>Example Formula Presets</span>
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              {PRESET_FORMULAS.map((preset) => (
-                <button
-                  key={preset.name}
-                  type="button"
-                  onClick={() => setActiveFormula(preset.formula)}
-                  className="p-2.5 rounded-lg text-left bg-white/5 border border-white/10 hover:bg-cyber-cyan/10 hover:border-cyber-cyan/40 hover:text-cyber-cyan transition-all group"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold group-hover:text-cyber-cyan">
-                      {preset.name}
-                    </span>
-                  </div>
-                  <div className="font-mono text-[11px] text-slate-400 truncate mt-1">
-                    {preset.formula}
-                  </div>
-                </button>
-              ))}
-            </div>
+          {/* Preset Formulas (Collapsible) */}
+          <div className="border border-white/10 rounded-lg bg-white/5 overflow-hidden">
+            <button
+              type="button"
+              onClick={toggleFormulaPresets}
+              className="w-full flex items-center justify-between p-2.5 text-xs font-mono font-medium text-slate-300 hover:text-white hover:bg-white/5 transition-colors cursor-pointer select-none"
+              aria-expanded={isFormulaPresetsOpen}
+              aria-controls="formula-presets-panel"
+              data-testid="toggle-formula-presets"
+            >
+              <div className="flex items-center gap-1.5 uppercase tracking-wider text-slate-400">
+                <Sparkles className="w-3.5 h-3.5 text-cyber-amber" />
+                <span>Example Formula Presets</span>
+              </div>
+              <div className="flex items-center gap-1.5 text-slate-400">
+                <span className="text-[10px] text-slate-500 font-mono">
+                  {isFormulaPresetsOpen ? 'Hide' : `${PRESET_FORMULAS.length} presets`}
+                </span>
+                {isFormulaPresetsOpen ? (
+                  <ChevronDown className="w-4 h-4 text-slate-400" />
+                ) : (
+                  <ChevronRight className="w-4 h-4 text-slate-400" />
+                )}
+              </div>
+            </button>
+
+            {isFormulaPresetsOpen && (
+              <div
+                id="formula-presets-panel"
+                className="p-3 pt-1 border-t border-white/5 grid grid-cols-2 gap-2"
+                data-testid="formula-presets-panel"
+              >
+                {PRESET_FORMULAS.map((preset) => (
+                  <button
+                    key={preset.name}
+                    type="button"
+                    onClick={() => setActiveFormula(preset.formula)}
+                    className="p-2.5 rounded-lg text-left bg-black/40 border border-white/10 hover:bg-cyber-cyan/10 hover:border-cyber-cyan/40 hover:text-cyber-cyan transition-all group cursor-pointer"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-semibold group-hover:text-cyber-cyan">
+                        {preset.name}
+                      </span>
+                    </div>
+                    <div className="font-mono text-[11px] text-slate-400 truncate mt-1">
+                      {preset.formula}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
-          {/* Reference Cheat Sheet */}
-          <div className="p-3 rounded-lg bg-white/5 border border-white/10 text-[11px] font-mono space-y-1 text-slate-400">
-            <div className="font-bold text-slate-300 uppercase tracking-wider text-[10px]">
-              Quick Reference
-            </div>
-            <div>
-              <span className="text-cyber-cyan">$VARS:</span> $BASS, $MID, $TREBLE, $RMS, $BEAT, $BPM, $TIME, $FRAME, $WIDTH, $HEIGHT, $ASPECT
-            </div>
-            <div>
-              <span className="text-cyber-magenta">#FUNCS:</span> #BEAT(decay), #BEAT_FRAMES(frames, curve), #FFT(band, width), #WAVEFORM(pos), #TRI(t), #SAW(t), #SQR(t), clamp(), lerp(), smoothstep()
-            </div>
+          {/* Quick Reference (Collapsible with Tooltips) */}
+          <div className="border border-white/10 rounded-lg bg-white/5 overflow-hidden">
+            <button
+              type="button"
+              onClick={toggleFormulaReference}
+              className="w-full flex items-center justify-between p-2.5 text-xs font-mono font-medium text-slate-300 hover:text-white hover:bg-white/5 transition-colors cursor-pointer select-none"
+              aria-expanded={isFormulaReferenceOpen}
+              aria-controls="formula-reference-panel"
+              data-testid="toggle-formula-reference"
+            >
+              <div className="flex items-center gap-1.5 uppercase tracking-wider text-slate-400">
+                <BookOpen className="w-3.5 h-3.5 text-cyber-cyan" />
+                <span>Quick Reference</span>
+              </div>
+              <div className="flex items-center gap-1.5 text-slate-400">
+                <span className="text-[10px] text-slate-500 font-mono">
+                  {isFormulaReferenceOpen ? 'Hide' : 'Vars & Funcs'}
+                </span>
+                {isFormulaReferenceOpen ? (
+                  <ChevronDown className="w-4 h-4 text-slate-400" />
+                ) : (
+                  <ChevronRight className="w-4 h-4 text-slate-400" />
+                )}
+              </div>
+            </button>
+
+            {isFormulaReferenceOpen && (
+              <div
+                id="formula-reference-panel"
+                className="p-3 pt-1 border-t border-white/5 text-[11px] font-mono space-y-2.5 text-slate-400"
+                data-testid="formula-reference-panel"
+              >
+                <div>
+                  <div className="text-[10px] font-bold text-cyber-cyan uppercase tracking-wider mb-1.5">
+                    System Variables ($VARS) — Hover for details
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {QUICK_REF_VARS.map((item) => (
+                      <button
+                        key={item.name}
+                        type="button"
+                        title={item.tooltip}
+                        onClick={() => handleInsertToken(item.insertText)}
+                        className="px-2 py-0.5 rounded bg-black/40 border border-cyber-cyan/30 text-cyber-cyan hover:bg-cyber-cyan/20 hover:border-cyber-cyan cursor-help transition-all text-[11px] font-mono"
+                        data-testid={`var-item-${item.name.replace('$', '')}`}
+                      >
+                        {item.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <div className="text-[10px] font-bold text-cyber-magenta uppercase tracking-wider mb-1.5">
+                    System & Math Functions (#FUNCS) — Hover for details
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {QUICK_REF_FUNCS.map((item) => (
+                      <button
+                        key={item.name}
+                        type="button"
+                        title={item.tooltip}
+                        onClick={() => handleInsertToken(item.insertText)}
+                        className="px-2 py-0.5 rounded bg-black/40 border border-cyber-magenta/30 text-cyber-magenta hover:bg-cyber-magenta/20 hover:border-cyber-magenta cursor-help transition-all text-[11px] font-mono"
+                        data-testid={`func-item-${item.name.replace(/[^a-zA-Z0-9]/g, '')}`}
+                      >
+                        {item.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

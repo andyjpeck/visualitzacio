@@ -26,6 +26,40 @@ export interface ExpressionValidationResult {
 }
 
 /**
+ * Set of supported system variable tokens.
+ */
+export const SUPPORTED_SYSTEM_VARIABLES: ReadonlySet<string> = new Set([
+  '__SYS_TIME',
+  '__SYS_DT',
+  '__SYS_FRAME',
+  '__SYS_FPS',
+  '__SYS_WIDTH',
+  '__SYS_HEIGHT',
+  '__SYS_ASPECT',
+  '__SYS_PIXEL_RATIO',
+  '__SYS_BASS',
+  '__SYS_MID',
+  '__SYS_TREBLE',
+  '__SYS_RMS',
+  '__SYS_BEAT',
+  '__SYS_BPM',
+])
+
+/**
+ * Set of supported system function tokens.
+ */
+export const SUPPORTED_SYSTEM_FUNCTIONS: ReadonlySet<string> = new Set([
+  '__FN_BEAT',
+  '__FN_BEAT_SECONDS',
+  '__FN_BEAT_FRAMES',
+  '__FN_FFT',
+  '__FN_WAVEFORM',
+  '__FN_TRI',
+  '__FN_SAW',
+  '__FN_SQR',
+])
+
+/**
  * High-performance, sandboxed mathematical expression evaluator for real-time visual parameter modulation.
  * Pre-compiles formulas to ASTs, caches compiled expressions, and evaluates at 60 FPS with zero GC allocations.
  */
@@ -34,6 +68,44 @@ export class ExpressionEngine {
   private cache = new Map<string, CompiledExpression>()
   private scope: Record<string, number> = {}
   private activeContext: FrameContext | null = null
+
+  private dummyContext: FrameContext = {
+    $TIME: 1.0,
+    $DT: 0.016,
+    $FRAME: 60,
+    $FPS: 60.0,
+    $WIDTH: 1920,
+    $HEIGHT: 1080,
+    $ASPECT: 16 / 9,
+    $PIXEL_RATIO: 1.0,
+    $BASS: 0.5,
+    $MID: 0.5,
+    $TREBLE: 0.5,
+    $RMS: 0.5,
+    $BEAT: 0.0,
+    $BPM: 120.0,
+    secondsSinceLastBeat: 0.1,
+    framesSinceLastBeat: 6,
+    frequencyData: new Uint8Array(1024),
+    timeDomainData: new Float32Array(1024),
+  }
+
+  private dummyScope: Record<string, number> = {
+    __SYS_TIME: 1.0,
+    __SYS_DT: 0.016,
+    __SYS_FRAME: 60,
+    __SYS_FPS: 60.0,
+    __SYS_WIDTH: 1920,
+    __SYS_HEIGHT: 1080,
+    __SYS_ASPECT: 16 / 9,
+    __SYS_PIXEL_RATIO: 1.0,
+    __SYS_BASS: 0.5,
+    __SYS_MID: 0.5,
+    __SYS_TREBLE: 0.5,
+    __SYS_RMS: 0.5,
+    __SYS_BEAT: 0.0,
+    __SYS_BPM: 120.0,
+  }
 
   /**
    * Initializes the ExpressionEngine with sandboxed parser options and math helper functions.
@@ -190,9 +262,65 @@ export class ExpressionEngine {
       return { isValid: false, error: 'Member access and property navigation are not permitted' }
     }
 
+    // Reject standalone or dangling # and $ symbols not followed by an identifier
+    if (/(^|[^\w])[$#](?!\w)/.test(expressionStr)) {
+      return {
+        isValid: false,
+        error: 'Incomplete symbol: "$" and "#" must be followed by an identifier (e.g. $BASS or #BEAT)',
+      }
+    }
+
+    // Require all #SYSTEM_FUNCTIONS to be invoked with parentheses
+    const fnWithoutParens = expressionStr.match(/#([a-zA-Z0-9_]+)\b\s*(?!\()/g)
+    if (fnWithoutParens && fnWithoutParens.length > 0) {
+      const fnName = fnWithoutParens[0].trim()
+      return {
+        isValid: false,
+        error: `System function ${fnName} must be invoked with parentheses, e.g. ${fnName}()`,
+      }
+    }
+
     try {
       const transformed = this.transformTokens(expressionStr)
-      this.parser.parse(transformed)
+      const ast = this.parser.parse(transformed)
+
+      // Validate all extracted AST variables against allowed system variables & functions
+      const variables = ast.variables()
+      for (const token of variables) {
+        if (token.startsWith('__FN_')) {
+          if (SUPPORTED_SYSTEM_FUNCTIONS.has(token)) {
+            return {
+              isValid: false,
+              error: `System function #${token.slice(5)} must be invoked with parentheses, e.g. #${token.slice(5)}()`,
+            }
+          }
+          return { isValid: false, error: `Unknown system function: #${token.slice(5)}` }
+        }
+
+        if (token.startsWith('__SYS_')) {
+          if (!SUPPORTED_SYSTEM_VARIABLES.has(token)) {
+            return { isValid: false, error: `Unknown system variable: $${token.slice(6)}` }
+          }
+        } else {
+          return { isValid: false, error: `Unknown variable or invalid identifier: "${token}"` }
+        }
+      }
+
+      // Dry-run evaluation with test context and scope to catch runtime argument/arithmetic failures
+      const previousContext = this.activeContext
+      try {
+        this.activeContext = this.dummyContext
+        const testRes = ast.evaluate(this.dummyScope)
+        if (typeof testRes !== 'number' || !Number.isFinite(testRes)) {
+          return { isValid: false, error: 'Expression evaluation did not return a valid finite number' }
+        }
+      } catch (evalErr) {
+        const message = evalErr instanceof Error ? evalErr.message : String(evalErr)
+        return { isValid: false, error: message }
+      } finally {
+        this.activeContext = previousContext
+      }
+
       return { isValid: true }
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err)

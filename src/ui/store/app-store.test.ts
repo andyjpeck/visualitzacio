@@ -60,4 +60,16 @@ describe('useAppStore (Zustand State Plane)', () => {
     store.resetAudioBands()
     expect(useAppStore.getState().audioBands.bassMax).toBe(250)
   })
+
+  it('toggles formula presets and reference collapsed state', () => {
+    const store = useAppStore.getState()
+    expect(store.isFormulaPresetsOpen).toBe(true)
+    expect(store.isFormulaReferenceOpen).toBe(true)
+
+    store.toggleFormulaPresets()
+    expect(useAppStore.getState().isFormulaPresetsOpen).toBe(false)
+
+    store.toggleFormulaReference()
+    expect(useAppStore.getState().isFormulaReferenceOpen).toBe(false)
+  })
 })
