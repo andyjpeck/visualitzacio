@@ -34,7 +34,7 @@ describe('FormulaTestbed Component', () => {
       closePath: vi.fn(),
       fill: vi.fn(),
       createLinearGradient: vi.fn().mockReturnValue({ addColorStop: vi.fn() }),
-    })) as any)
+    })) as unknown as typeof HTMLCanvasElement.prototype.getContext)
   })
 
   it('renders formula input, validation status, and presets when open', () => {

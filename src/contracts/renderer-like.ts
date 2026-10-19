@@ -13,6 +13,7 @@ export interface RendererLike {
   getRenderTarget?(): unknown
   clear?(): void
   clearDepth?(): void
+  setClearColor?(color: unknown, alpha?: number): void
   dispose(): void
 }
 

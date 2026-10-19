@@ -2,20 +2,27 @@ import React, { useEffect, useRef } from 'react'
 import { RenderEngine } from '../../engine/render-engine'
 import { TestVisualNode } from '../../engine/visual-node'
 import { FrameBufferNode } from '../../engine/frame-buffer/frame-buffer-node'
-import { ExpressionEngine } from '../../engine/expressions/expression-engine'
+import {
+  type ExpressionEngine,
+  getDefaultExpressionEngine,
+} from '../../engine/expressions/expression-engine'
 import { useAppStore } from '../store/app-store'
 
 export interface ViewportCanvasProps {
   onEngineReady?: (engine: RenderEngine) => void
 }
 
+/**
+ * Main WebGL rendering canvas container mounted in the DOM.
+ * Manages RenderEngine lifecycle, ResizeObserver with debouncing, and master frame buffer bindings.
+ */
 export function ViewportCanvas({
   onEngineReady,
 }: ViewportCanvasProps): React.ReactElement {
   const containerRef = useRef<HTMLDivElement>(null)
   const engineRef = useRef<RenderEngine | null>(null)
   const masterBufferRef = useRef<FrameBufferNode | null>(null)
-  const exprEngineRef = useRef<ExpressionEngine>(new ExpressionEngine())
+  const exprEngineRef = useRef<ExpressionEngine>(getDefaultExpressionEngine())
   const resizeTimeoutRef = useRef<number | null>(null)
 
   const targetFps = useAppStore((state) => state.targetFps)

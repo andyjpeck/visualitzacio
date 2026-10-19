@@ -1,18 +1,15 @@
 # Global Application Store (`src/ui/store/`)
 
-This directory provides centralized state management for low-frequency UI states using Zustand.
+This directory provides centralized state management for low-frequency UI states (<10 Hz) using Zustand.
 
-## Modules
+## Files
 
 - [**`app-store.ts`**](file:///C:/Users/andyj/Documents/visualitzacio/src/ui/store/app-store.ts):
-  - State fields:
-    - `isPlaying`: Global audio playback state.
-    - `sourceType`: Currently selected audio input (`'sample'`, `'file'`, `'mic'`).
-    - `volume`: Output audio volume in [0.0, 1.0].
-    - `audioFileName`: Name of user-loaded custom audio file.
-    - `audioError`: Descriptive error message when hardware permissions fail or file decoding errors occur.
-    - `showFpsOverlay`: Visibility toggle for the FPS HUD badge.
-    - `isPresetSettingsOpen`: Modal open/close state.
-    - `currentFps`: Measured frame rate reported by `RenderEngine`.
-    - `targetFps` & `resolutionScale`: Performance preset tuning.
-  - Action setters for all state mutations.
+  - **Audio & Transport State:** `isPlaying`, `sourceType` (`'sample' | 'file' | 'mic'`), `volume`, `audioFileName`, `audioError`, `isAudioLoading`, `audioLoadingProgress`, `audioLoadingStage`.
+  - **Dialog Navigation Stack:** `dialogStack: DialogId[]` enforcing single active dialog invariant, history walk-back, and derived flags (`isPresetSettingsOpen`, `isFormulaTestbedOpen`, `isTemplateSelectorOpen`).
+  - **Performance & DSP Presets:** `currentFps`, `targetFps`, `resolutionScale`, `showFpsOverlay`, `audioBands` (`bassMin`, `bassMax`, `midMin`, `midMax`, `trebleMin`, `trebleMax`).
+  - **Dynamic Formula State:** `activeFormula`, `bindFormulaToScene`, `isFormulaPresetsOpen`, `isFormulaReferenceOpen`.
+  - **Frame Buffer & Feedback:** `selectedTemplateId`, `feedbackEnabled`, `feedbackBlendMode`, `feedbackOpacity`, `feedbackScale`, `feedbackRotation`, `feedbackPositionX`, `feedbackPositionY`, `isCustomFeedbackConfig`.
+  - **Actions:** Unified stack actions (`openDialog`, `closeDialog`, `toggleDialog`, `closeAllDialogs`), template applicators, audio progress setters, and DSP tuning reducers.
+- [**`app-store.test.ts`**](file:///C:/Users/andyj/Documents/visualitzacio/src/ui/store/app-store.test.ts):
+  - Comprehensive unit test suite covering audio loading progress stages, mutual exclusion, stack history navigation, and DSP band resets.

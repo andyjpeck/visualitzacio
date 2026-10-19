@@ -47,7 +47,7 @@ Inspired by Winamp AVS and modern GPU post-processing pipelines, this architectu
 
 ### FR-3: Multi-Pass Blending Shader
 - **Compositing Shader:**
-  - Custom full-screen quad GLSL shader with uniforms: `uSourceTexture`, `uDestTexture`, `uOpacity`, `uBlendMode`, `uTransformMatrix`.
+  - Custom full-screen quad GLSL shader with uniforms: `uBaseTexture`, `uBlendTexture`, `uHasBase`, `uScale`, `uRotation`, `uOffset`, `uOpacity`, `uBlendMode`.
 - **6 Supported Blend Modes:**
   1. `replace`: Direct source overwrite ($C_{out} = C_{src}$).
   2. `additive`: $C_{out} = \min(1.0, C_{dst} + C_{src} \times \text{opacity})$.
@@ -75,8 +75,9 @@ Inspired by Winamp AVS and modern GPU post-processing pipelines, this architectu
   - `contain`: Preserves aspect ratio, scaling image to fit entirely within the canvas with letterboxing.
   - `stretch`: Non-uniform stretch to exactly match buffer dimensions.
 - **Modulatable Parameters:**
+  - `fit`: Aspect scaling mode (`cover`, `contain`, `stretch`).
   - `opacity`: Alpha multiplier in $[0.0, 1.0]$.
-  - `position_x`, `position_y`, `scale`, `rotation`.
+  - `save_to`: Optional buffer pool destination (`@IMAGE`).
 
 ### FR-6: Curated Frame Buffer Templates
 The system includes 6 built-in, production-ready frame buffer templates selectable from the UI:
@@ -86,17 +87,19 @@ The system includes 6 built-in, production-ready frame buffer templates selectab
    - `blend_mode: "replace"`, `opacity: 1.0`, `scale: 1.0`, `rotation: 0.0`.
 2. **Analog Phosphor Trails:**
    - Warm CRT/oscilloscope persistence motion trails.
-   - `blend_mode: "additive"`, `opacity: 0.92`, `scale: 1.0`, `rotation: 0.0`.
+   - `blend_mode: "additive"`, `opacity: 0.94`, `scale: 1.0`, `rotation: 0.0`.
 3. **Infinite Feedback Vortex:**
-   - Audio-reactive hypnotic tunnel zooming into the center.
-   - `blend_mode: "additive"`, `opacity: "0.92 - ($BASS * 0.05)"`, `scale: "1.02 + ($BASS * 0.02)"`, `rotation: "0.01"`.
+   - Hypnotic recursive tunnel zooming gently into the center.
+   - `blend_mode: "replace"`, `opacity: 0.96`, `scale: 0.98`, `rotation: 0.02`.
 4. **4-Corner Multi-Screen Replicator:**
-   - Generator buffer writes to `@BUFFER_A`; four child buffers display `@BUFFER_A` scaled to 0.5 positioned at each corner `(±0.5, ±0.5)`.
+   - Multi-pass generator buffer writing to `@MAIN_FEEDBACK` with persistence.
+   - `blend_mode: "replace"`, `opacity: 1.0`, `scale: 1.0`, `rotation: 0.0`, `save_to: "@MAIN_FEEDBACK"`.
 5. **Picture-in-Picture (PIP) Echo:**
-   - Fullscreen main scene plus a miniature inset feedback monitor in the bottom-right corner (`scale: 0.35`, `position_x: 0.6`, `position_y: -0.6`).
+   - Miniature inset feedback monitor in the upper-right corner.
+   - `blend_mode: "replace"`, `opacity: 0.92`, `scale: 0.35`, `position_x: 0.6`, `position_y: 0.6`.
 6. **Beat-Pulsed Shockwave Feedback:**
-   - Dilation ring that flashes and expands on every kick drum transient.
-   - `blend_mode: "screen"`, `opacity: "0.88 + #BEAT(0.2) * 0.08"`, `scale: "1.0 + #BEAT(0.15) * 0.06"`, `rotation: 0.0`.
+   - Audio-reactive feedback dilation pulsing on kick transients.
+   - `blend_mode: "additive"`, `opacity: "0.85 + $BEAT * 0.1"`, `scale: "1.0 + $BEAT * 0.08"`, `rotation: "$BASS * 0.03"`.
 
 ### FR-7: UI Integration & Template Selector
 - **HUD Preset Selector Popover:**

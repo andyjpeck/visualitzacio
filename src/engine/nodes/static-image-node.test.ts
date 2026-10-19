@@ -3,21 +3,13 @@ import { StaticImageNode } from './static-image-node'
 import { createDefaultFrameContext } from '../../contracts/frame-context'
 import type { RendererLike } from '../../contracts/renderer-like'
 import { BufferPool } from '../frame-buffer/buffer-pool'
+import { createMockRenderer } from '../../test/fixtures/renderer-mock'
 
 describe('StaticImageNode', () => {
   let mockRenderer: RendererLike
 
   beforeEach(() => {
-    const canvas = document.createElement('canvas')
-    mockRenderer = {
-      domElement: canvas,
-      autoClear: true,
-      setSize: vi.fn(),
-      setPixelRatio: vi.fn(),
-      render: vi.fn(),
-      clear: vi.fn(),
-      dispose: vi.fn(),
-    }
+    mockRenderer = createMockRenderer()
   })
 
   it('calculates aspect ratios correctly for contain, cover, and stretch fit modes', () => {

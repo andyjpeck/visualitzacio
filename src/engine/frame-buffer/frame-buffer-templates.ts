@@ -1,5 +1,8 @@
 import { FrameBufferNode, type FrameBufferNodeOptions } from './frame-buffer-node'
-import type { ExpressionEngine } from '../expressions/expression-engine'
+import {
+  type ExpressionEngine,
+  getDefaultExpressionEngine,
+} from '../expressions/expression-engine'
 
 export type TemplateCategory = 'basic' | 'feedback' | 'multi-pass' | 'audio-reactive'
 
@@ -174,15 +177,13 @@ export function getTemplateById(id: string): FrameBufferTemplate | undefined {
 export function applyTemplateToNode(
   node: FrameBufferNode,
   template: FrameBufferTemplate,
-  engine?: ExpressionEngine,
+  engine: ExpressionEngine = getDefaultExpressionEngine(),
 ): void {
   node.setFeedback(template.config.feedback)
   node.blendMode = template.config.blendMode
-  if (engine) {
-    node.bindExpression('opacity', template.config.opacity, engine)
-    node.bindExpression('scale', template.config.scale, engine)
-    node.bindExpression('rotation', template.config.rotation, engine)
-    node.bindExpression('positionX', template.config.positionX, engine)
-    node.bindExpression('positionY', template.config.positionY, engine)
-  }
+  node.bindExpression('opacity', template.config.opacity, engine)
+  node.bindExpression('scale', template.config.scale, engine)
+  node.bindExpression('rotation', template.config.rotation, engine)
+  node.bindExpression('positionX', template.config.positionX, engine)
+  node.bindExpression('positionY', template.config.positionY, engine)
 }

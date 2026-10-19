@@ -40,13 +40,9 @@ export function Toolbar({ audioManager }: ToolbarProps): React.ReactElement {
   const setAudioError = useAppStore((state) => state.setAudioError)
   const showFpsOverlay = useAppStore((state) => state.showFpsOverlay)
   const toggleFpsOverlay = useAppStore((state) => state.toggleFpsOverlay)
-  const togglePresetSettings = useAppStore(
-    (state) => state.togglePresetSettings,
-  )
+  const toggleDialog = useAppStore((state) => state.toggleDialog)
   const isFormulaTestbedOpen = useAppStore((state) => state.isFormulaTestbedOpen)
-  const toggleFormulaTestbed = useAppStore((state) => state.toggleFormulaTestbed)
   const isTemplateSelectorOpen = useAppStore((state) => state.isTemplateSelectorOpen)
-  const toggleTemplateSelector = useAppStore((state) => state.toggleTemplateSelector)
   const feedbackEnabled = useAppStore((state) => state.feedbackEnabled)
   const isAudioLoading = useAppStore((state) => state.isAudioLoading)
   const audioLoadingProgress = useAppStore((state) => state.audioLoadingProgress)
@@ -308,7 +304,7 @@ export function Toolbar({ audioManager }: ToolbarProps): React.ReactElement {
         {/* Dynamic Formula Testbed f(x) Button */}
         <button
           type="button"
-          onClick={toggleFormulaTestbed}
+          onClick={() => toggleDialog('formula-testbed')}
           aria-label="Open Dynamic Expression Testbed"
           title="Open Dynamic Expression Testbed f(x)"
           className={`px-2.5 py-1.5 rounded-lg border transition-colors cursor-pointer font-mono font-bold text-xs select-none ${
@@ -323,7 +319,7 @@ export function Toolbar({ audioManager }: ToolbarProps): React.ReactElement {
         {/* Frame Buffer & Ping-Pong Feedback Templates Button */}
         <button
           type="button"
-          onClick={toggleTemplateSelector}
+          onClick={() => toggleDialog('template-selector')}
           aria-label="Open Frame Buffer Templates"
           title="Open Frame Buffer & Ping-Pong Feedback Templates"
           className={`p-2 rounded-lg border transition-colors cursor-pointer ${
@@ -340,7 +336,7 @@ export function Toolbar({ audioManager }: ToolbarProps): React.ReactElement {
         {/* Preset Settings Modal Button */}
         <button
           type="button"
-          onClick={togglePresetSettings}
+          onClick={() => toggleDialog('preset-settings')}
           aria-label="Open Preset Settings"
           title="Open Preset Performance Settings"
           className="p-2 rounded-lg bg-white/5 text-slate-300 hover:text-white hover:bg-white/10 transition-colors border border-transparent hover:border-white/10 cursor-pointer"

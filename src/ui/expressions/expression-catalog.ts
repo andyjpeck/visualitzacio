@@ -148,9 +148,9 @@ export const QUICK_REF_FUNCS: QuickRefItem[] = [
     tooltip: '#SAW(t): Normalized periodic sawtooth wave [-1.0 to 1.0] with period 1.0',
   },
   {
-    name: '#SQR(t)',
-    insertText: '#SQR($TIME)',
-    tooltip: '#SQR(t): Normalized periodic square wave [-1.0 or 1.0] with period 1.0',
+    name: '#SQR(t, [duty])',
+    insertText: '#SQR($TIME, 0.5)',
+    tooltip: '#SQR(t, [duty=0.5]): Normalized periodic square wave [-1.0 or 1.0] with period 1.0 and duty cycle',
   },
   {
     name: 'clamp(x, min, max)',

@@ -433,9 +433,20 @@ export class FrameBufferNode implements VisualNode {
         this.renderer.setRenderTarget(writeTarget)
       }
 
-      if (this.isMaster && this.blendMode === 'replace') {
-        if (this.renderer.clear) {
-          this.renderer.clear()
+      if (this.clearColor && this.renderer.setClearColor) {
+        this.renderer.setClearColor(this.clearColor)
+      }
+
+      if (this.blendMode === 'replace' && this.renderer.clear) {
+        this.renderer.clear()
+      }
+
+      if (this.loadFrom && this.bufferPool && this.compositeScene && this.compositeCamera && this.compositeMaterial) {
+        const loadedTex = this.bufferPool.resolve(this.loadFrom, this.id)
+        if (loadedTex) {
+          this.compositeMaterial.map = loadedTex
+          this.compositeMaterial.opacity = 1.0
+          this.renderer.render(this.compositeScene, this.compositeCamera)
         }
       }
 
@@ -462,12 +473,14 @@ export class FrameBufferNode implements VisualNode {
       }
     }
 
-    // 4. Composite to display if master root
+    // 4. Composite to display if master root, or onto parent target if nested
     const displayTarget = this.feedback ? this.getReadTarget() : writeTarget
-    if (this.isMaster && displayTarget && this.compositeScene && this.compositeCamera && this.compositeMaterial) {
-      this.compositeMaterial.map = displayTarget.texture
-      this.compositeMaterial.opacity = 1.0
-      this.renderer.render(this.compositeScene, this.compositeCamera)
+    if (displayTarget && this.compositeScene && this.compositeCamera && this.compositeMaterial) {
+      if (this.isMaster || prevTarget) {
+        this.compositeMaterial.map = displayTarget.texture
+        this.compositeMaterial.opacity = this.opacityVal
+        this.renderer.render(this.compositeScene, this.compositeCamera)
+      }
     }
   }
 

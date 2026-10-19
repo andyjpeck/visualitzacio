@@ -5,8 +5,9 @@ import {
   type ResolutionScale,
 } from '../../contracts/preset-settings'
 import { getTemplateById } from '../../engine/frame-buffer/frame-buffer-templates'
+import type { AudioSourceType } from '../../audio/audio-manager'
 
-export type AudioSourceType = 'sample' | 'mic' | 'file'
+export type { AudioSourceType }
 
 export const STORAGE_KEY_FORMULA_PRESETS_OPEN = 'visualitzacio_formula_presets_open'
 export const STORAGE_KEY_FORMULA_REFERENCE_OPEN = 'visualitzacio_formula_reference_open'

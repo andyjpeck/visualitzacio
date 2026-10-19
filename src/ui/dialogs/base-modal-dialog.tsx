@@ -111,13 +111,7 @@ export function BaseModalDialog({
   const handleClose =
     explicitOnClose ??
     (() => {
-      if (dialogId === 'preset-settings') {
-        useAppStore.getState().setIsPresetSettingsOpen(false)
-      } else if (dialogId === 'formula-testbed') {
-        useAppStore.getState().setIsFormulaTestbedOpen(false)
-      } else if (dialogId === 'template-selector') {
-        useAppStore.getState().setIsTemplateSelectorOpen(false)
-      } else {
+      if (dialogId) {
         storeCloseDialog(dialogId)
       }
     })

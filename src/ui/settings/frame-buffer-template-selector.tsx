@@ -59,7 +59,7 @@ export function FrameBufferTemplateSelector(): React.ReactElement | null {
     <BaseModalDialog
       dialogId="template-selector"
       title="Frame Buffer Templates"
-      icon={<div className="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-pulse shadow-glow" />}
+      icon={<div className="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-pulse shadow-[0_0_8px_rgba(6,182,212,0.6)]" />}
       headerTestId="template-selector-header"
       closeAriaLabel="Close template selector"
       dragTooltip="Drag to move template dialog around screen"
@@ -70,7 +70,7 @@ export function FrameBufferTemplateSelector(): React.ReactElement | null {
     >
 
         {/* Content list */}
-        <div className="p-6 overflow-y-auto space-y-3 flex-1 custom-scrollbar">
+        <div className="p-6 overflow-y-auto space-y-3 flex-1 pr-1">
           {FRAME_BUFFER_TEMPLATES.map((template) => {
             const isSelected = template.id === selectedTemplateId && !isCustomConfig
             return (
@@ -118,7 +118,7 @@ export function FrameBufferTemplateSelector(): React.ReactElement | null {
 
         {/* Dirty State Confirmation Overlay */}
         {pendingTemplate && (
-          <div className="absolute inset-0 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-6 z-10 animate-fade-in">
+          <div className="absolute inset-0 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-6 z-10 animate-in fade-in">
             <div className="max-w-md w-full bg-slate-900 border border-amber-500/50 rounded-xl p-5 shadow-2xl space-y-4">
               <div className="flex items-center space-x-2 text-amber-400">
                 <svg
@@ -154,7 +154,7 @@ export function FrameBufferTemplateSelector(): React.ReactElement | null {
                 <button
                   type="button"
                   onClick={handleConfirmOverwrite}
-                  className="px-3 py-1.5 rounded text-xs font-semibold text-slate-950 bg-amber-400 hover:bg-amber-300 transition-colors shadow-glow"
+                  className="px-3 py-1.5 rounded text-xs font-semibold text-slate-950 bg-amber-400 hover:bg-amber-300 transition-colors shadow-md shadow-amber-500/20"
                 >
                   Overwrite
                 </button>

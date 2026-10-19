@@ -185,7 +185,9 @@ export class StaticImageNode implements VisualNode {
     }
   }
 
-  resize(width: number, height: number, _pixelRatio = 1.0, _resolutionScale = 1.0): void {
+  resize(width: number, height: number, pixelRatio = 1.0, resolutionScale = 1.0): void {
+    void pixelRatio
+    void resolutionScale
     this.canvasWidth = width
     this.canvasHeight = height
     this.recalculateAspect()

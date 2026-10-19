@@ -1,30 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import * as THREE from 'three'
 import { FrameBufferNode } from './frame-buffer-node'
 import { createDefaultFrameContext } from '../../contracts/frame-context'
 import type { RendererLike, VisualNode } from '../../contracts/renderer-like'
+import { createMockRenderer } from '../../test/fixtures/renderer-mock'
 
 describe('FrameBufferNode', () => {
   let mockRenderer: RendererLike
-  let currentRenderTarget: THREE.WebGLRenderTarget | null = null
 
   beforeEach(() => {
-    currentRenderTarget = null
-    const canvas = document.createElement('canvas')
-    mockRenderer = {
-      domElement: canvas,
-      autoClear: true,
-      setSize: vi.fn(),
-      setPixelRatio: vi.fn(),
-      render: vi.fn(),
-      setRenderTarget: vi.fn((target: unknown) => {
-        currentRenderTarget = target as THREE.WebGLRenderTarget | null
-      }),
-      getRenderTarget: vi.fn(() => currentRenderTarget),
-      clear: vi.fn(),
-      clearDepth: vi.fn(),
-      dispose: vi.fn(),
-    }
+    mockRenderer = createMockRenderer()
   })
 
   it('initializes with default options and creates WebGL render targets upon resize', () => {

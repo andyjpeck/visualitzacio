@@ -81,7 +81,7 @@ export function validateExpression(
     let evalError: string | null = null
     const dummyScope = createDummyScope()
 
-    executeWithContext((_ctx) => {
+    executeWithContext(() => {
       try {
         const testRes = ast.evaluate(dummyScope)
         if (typeof testRes !== 'number' || !Number.isFinite(testRes)) {

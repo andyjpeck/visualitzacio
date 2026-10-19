@@ -7,17 +7,23 @@ export interface DraggableDialogOptions {
   initialY?: number
 }
 
+/**
+ * Hook providing drag-and-drop repositioning with boundary clamping and window resize protection.
+ */
 export function useDraggableDialog(options: DraggableDialogOptions = {}) {
-  const { defaultWidth = 576, defaultHeight = 600 } = options
+  const { defaultWidth = 576, defaultHeight = 600, initialX, initialY } = options
 
   const dialogRef = useRef<HTMLDivElement>(null)
   const dragStartRef = useRef<{ mouseX: number; mouseY: number; startX: number; startY: number } | null>(null)
   const [isDragging, setIsDragging] = useState(false)
 
   const [position, setPosition] = useState<{ x: number; y: number }>(() => {
-    const x = typeof window !== 'undefined' ? Math.max(16, Math.floor((window.innerWidth - defaultWidth) / 2)) : 100
-    const y = typeof window !== 'undefined' ? Math.max(70, Math.floor((window.innerHeight - defaultHeight) / 2)) : 100
-    return { x, y }
+    const defaultX = typeof window !== 'undefined' ? Math.max(16, Math.floor((window.innerWidth - defaultWidth) / 2)) : 100
+    const defaultY = typeof window !== 'undefined' ? Math.max(70, Math.floor((window.innerHeight - defaultHeight) / 2)) : 100
+    return {
+      x: initialX ?? defaultX,
+      y: initialY ?? defaultY,
+    }
   })
 
   // Keep position clamped within viewport on window resize

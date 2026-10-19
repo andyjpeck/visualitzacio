@@ -54,7 +54,7 @@ visualitzacio/
 │   └── tracks/            # Track execution plans and task specifications
 ├── public/                # Static public assets served by Vite
 └── src/                   # Core frontend application source code
-    ├── assets/            # Global stylesheets (Tailwind CSS 4) and theme tokens
+    ├── assets/            # Global theme tokens and assets
     ├── audio/             # Web Audio graph, DSP FFT analysis, and beat synthesis
     ├── contracts/         # TypeScript interfaces, FrameContext, and engine contracts
     ├── engine/            # 60 FPS Two-Plane RenderEngine, scheduler, and 3D scenes
@@ -65,6 +65,7 @@ visualitzacio/
     │   └── fixtures/      # Reusable mock factories
     └── ui/                # React 19 user interface
         ├── canvas/        # Viewport canvas mount and ResizeObserver
+        ├── dialogs/       # Reusable BaseModalDialog shell and stack history navigation
         ├── expressions/   # Sparkline canvas, formula input, quick-reference, and preset catalog
         ├── hooks/         # Viewport dialog dragging and Escape key listeners
         ├── hud/           # Real-time audio telemetry overlay, FPS badge, and formula testbed

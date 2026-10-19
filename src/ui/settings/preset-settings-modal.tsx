@@ -21,7 +21,8 @@ const FPS_OPTIONS: number[] = [30, 60, 120]
  * and audio DSP frequency band boundaries ($BASS, $MID, $TREBLE).
  */
 export function PresetSettingsModal(): React.ReactElement | null {
-  const setIsOpen = useAppStore((state) => state.setIsPresetSettingsOpen)
+  const closeDialog = useAppStore((state) => state.closeDialog)
+  const openDialog = useAppStore((state) => state.openDialog)
   const targetFps = useAppStore((state) => state.targetFps)
   const setTargetFps = useAppStore((state) => state.setTargetFps)
   const resolutionScale = useAppStore((state) => state.resolutionScale)
@@ -39,7 +40,8 @@ export function PresetSettingsModal(): React.ReactElement | null {
   const setFeedbackOpacity = useAppStore((state) => state.setFeedbackOpacity)
   const feedbackScale = useAppStore((state) => state.feedbackScale)
   const setFeedbackScale = useAppStore((state) => state.setFeedbackScale)
-  const setIsTemplateSelectorOpen = useAppStore((state) => state.setIsTemplateSelectorOpen)
+  const feedbackRotation = useAppStore((state) => state.feedbackRotation)
+  const setFeedbackRotation = useAppStore((state) => state.setFeedbackRotation)
 
   return (
     <BaseModalDialog
@@ -194,7 +196,7 @@ export function PresetSettingsModal(): React.ReactElement | null {
               </div>
               <button
                 type="button"
-                onClick={() => setIsTemplateSelectorOpen(true)}
+                onClick={() => openDialog('template-selector')}
                 className="px-2.5 py-1 text-xs font-mono rounded border border-purple-500/40 bg-purple-950/30 text-purple-300 hover:bg-purple-900/40 transition-colors"
               >
                 Template: {getTemplateById(selectedTemplateId)?.name ?? 'Custom'}
@@ -236,8 +238,8 @@ export function PresetSettingsModal(): React.ReactElement | null {
                 </select>
               </div>
 
-              {/* Opacity Slider */}
-              {typeof feedbackOpacity === 'number' && (
+              {/* Opacity Control */}
+              {typeof feedbackOpacity === 'number' ? (
                 <div>
                   <div className="flex justify-between text-[11px] font-mono text-slate-400 mb-1">
                     <span>Decay Persistence</span>
@@ -254,10 +256,25 @@ export function PresetSettingsModal(): React.ReactElement | null {
                     className="w-full h-1 bg-white/10 rounded appearance-none cursor-pointer accent-cyber-cyan"
                   />
                 </div>
+              ) : (
+                <div className="flex items-center justify-between p-2 rounded bg-white/5 border border-purple-500/30">
+                  <div className="text-[11px] font-mono">
+                    <span className="text-slate-400">Decay: </span>
+                    <span className="text-purple-300 font-bold">{feedbackOpacity}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setFeedbackOpacity(0.92)}
+                    className="text-[10px] font-mono text-slate-400 hover:text-white px-2 py-0.5 rounded bg-white/10 cursor-pointer"
+                    title="Switch to manual slider"
+                  >
+                    Reset to Slider
+                  </button>
+                </div>
               )}
 
-              {/* Scale Slider */}
-              {typeof feedbackScale === 'number' && (
+              {/* Scale Control */}
+              {typeof feedbackScale === 'number' ? (
                 <div>
                   <div className="flex justify-between text-[11px] font-mono text-slate-400 mb-1">
                     <span>Feedback Zoom</span>
@@ -274,6 +291,56 @@ export function PresetSettingsModal(): React.ReactElement | null {
                     className="w-full h-1 bg-white/10 rounded appearance-none cursor-pointer accent-cyber-cyan"
                   />
                 </div>
+              ) : (
+                <div className="flex items-center justify-between p-2 rounded bg-white/5 border border-purple-500/30">
+                  <div className="text-[11px] font-mono">
+                    <span className="text-slate-400">Zoom: </span>
+                    <span className="text-purple-300 font-bold">{feedbackScale}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setFeedbackScale(1.0)}
+                    className="text-[10px] font-mono text-slate-400 hover:text-white px-2 py-0.5 rounded bg-white/10 cursor-pointer"
+                    title="Switch to manual slider"
+                  >
+                    Reset to Slider
+                  </button>
+                </div>
+              )}
+
+              {/* Rotation Control */}
+              {typeof feedbackRotation === 'number' ? (
+                <div>
+                  <div className="flex justify-between text-[11px] font-mono text-slate-400 mb-1">
+                    <span>Feedback Rotation</span>
+                    <span>{feedbackRotation.toFixed(3)} rad</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="-0.1"
+                    max="0.1"
+                    step="0.005"
+                    value={feedbackRotation}
+                    onChange={(e) => setFeedbackRotation(parseFloat(e.target.value))}
+                    aria-label="Feedback rotation"
+                    className="w-full h-1 bg-white/10 rounded appearance-none cursor-pointer accent-cyber-cyan"
+                  />
+                </div>
+              ) : (
+                <div className="flex items-center justify-between p-2 rounded bg-white/5 border border-purple-500/30">
+                  <div className="text-[11px] font-mono">
+                    <span className="text-slate-400">Rotation: </span>
+                    <span className="text-purple-300 font-bold">{feedbackRotation}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setFeedbackRotation(0.0)}
+                    className="text-[10px] font-mono text-slate-400 hover:text-white px-2 py-0.5 rounded bg-white/10 cursor-pointer"
+                    title="Switch to manual slider"
+                  >
+                    Reset to Slider
+                  </button>
+                </div>
               )}
             </div>
           </div>
@@ -283,7 +350,7 @@ export function PresetSettingsModal(): React.ReactElement | null {
         <div className="mt-6 pt-4 border-t border-white/10 flex justify-end shrink-0">
           <button
             type="button"
-            onClick={() => setIsOpen(false)}
+            onClick={() => closeDialog('preset-settings')}
             className="px-4 py-2 rounded-lg text-xs font-semibold uppercase tracking-wider bg-cyber-cyan text-black hover:bg-cyber-cyan/90 transition-colors font-mono font-bold cursor-pointer"
           >
             Done

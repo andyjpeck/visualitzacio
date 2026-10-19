@@ -8,6 +8,10 @@ export interface ExpressionQuickReferenceProps {
   onInsertToken: (token: string) => void
 }
 
+/**
+ * Collapsible accordion panel displaying built-in system variables ($BASS, $MID, etc.)
+ * and system functions (#BEAT, #FFT, etc.) with clickable token insertion chips.
+ */
 export function ExpressionQuickReference({
   isOpen,
   onToggle,
