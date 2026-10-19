@@ -4,4 +4,6 @@ This directory contains static assets served directly at the root path by Vite w
 
 ## Contents
 
-- Static favicons, web app manifest, and icons.
+- `favicon.jpg`: Retro sci-fi digital sun tab icon.
+- `favicon.svg`: Vector fallback icon.
+- `icons.svg`: SVG icon sprite definitions.
