@@ -3,6 +3,7 @@ import {
   Activity,
   Disc,
   FileAudio,
+  Layers,
   Loader2,
   Mic,
   Pause,
@@ -39,11 +40,10 @@ export function Toolbar({ audioManager }: ToolbarProps): React.ReactElement {
   const setAudioError = useAppStore((state) => state.setAudioError)
   const showFpsOverlay = useAppStore((state) => state.showFpsOverlay)
   const toggleFpsOverlay = useAppStore((state) => state.toggleFpsOverlay)
-  const togglePresetSettings = useAppStore(
-    (state) => state.togglePresetSettings,
-  )
+  const toggleDialog = useAppStore((state) => state.toggleDialog)
   const isFormulaTestbedOpen = useAppStore((state) => state.isFormulaTestbedOpen)
-  const toggleFormulaTestbed = useAppStore((state) => state.toggleFormulaTestbed)
+  const isTemplateSelectorOpen = useAppStore((state) => state.isTemplateSelectorOpen)
+  const feedbackEnabled = useAppStore((state) => state.feedbackEnabled)
   const isAudioLoading = useAppStore((state) => state.isAudioLoading)
   const audioLoadingProgress = useAppStore((state) => state.audioLoadingProgress)
   const audioLoadingStage = useAppStore((state) => state.audioLoadingStage)
@@ -304,7 +304,7 @@ export function Toolbar({ audioManager }: ToolbarProps): React.ReactElement {
         {/* Dynamic Formula Testbed f(x) Button */}
         <button
           type="button"
-          onClick={toggleFormulaTestbed}
+          onClick={() => toggleDialog('formula-testbed')}
           aria-label="Open Dynamic Expression Testbed"
           title="Open Dynamic Expression Testbed f(x)"
           className={`px-2.5 py-1.5 rounded-lg border transition-colors cursor-pointer font-mono font-bold text-xs select-none ${
@@ -316,10 +316,27 @@ export function Toolbar({ audioManager }: ToolbarProps): React.ReactElement {
           f(x)
         </button>
 
+        {/* Frame Buffer & Ping-Pong Feedback Templates Button */}
+        <button
+          type="button"
+          onClick={() => toggleDialog('template-selector')}
+          aria-label="Open Frame Buffer Templates"
+          title="Open Frame Buffer & Ping-Pong Feedback Templates"
+          className={`p-2 rounded-lg border transition-colors cursor-pointer ${
+            feedbackEnabled
+              ? 'bg-purple-950/40 border-purple-400/60 text-purple-300 shadow-sm shadow-purple-500/20'
+              : isTemplateSelectorOpen
+                ? 'bg-white/15 border-white/30 text-white'
+                : 'bg-white/5 border-transparent text-slate-300 hover:text-white hover:bg-white/10'
+          }`}
+        >
+          <Layers className="w-4 h-4" />
+        </button>
+
         {/* Preset Settings Modal Button */}
         <button
           type="button"
-          onClick={togglePresetSettings}
+          onClick={() => toggleDialog('preset-settings')}
           aria-label="Open Preset Settings"
           title="Open Preset Performance Settings"
           className="p-2 rounded-lg bg-white/5 text-slate-300 hover:text-white hover:bg-white/10 transition-colors border border-transparent hover:border-white/10 cursor-pointer"

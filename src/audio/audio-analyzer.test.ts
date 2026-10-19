@@ -122,17 +122,6 @@ describe('AudioAnalyzer DSP Utilities', () => {
       expect(frameContext.$RMS).toBeLessThan(initialRms)
     })
 
-    it('extracts normalized waveform in [-1.0, 1.0]', () => {
-      const timeData = new Float32Array(512)
-      timeData[0] = -1.0
-      timeData[1] = 0.5
-      timeData[2] = 1.0
-
-      const waveform = analyzer.getWaveform(timeData)
-      expect(waveform[0]).toBe(-1.0)
-      expect(waveform[1]).toBe(0.5)
-      expect(waveform[2]).toBe(1.0)
-    })
   })
 
   describe('Binary $BEAT Transient Detection & Rolling $BPM', () => {

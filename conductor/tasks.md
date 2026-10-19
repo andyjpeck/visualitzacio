@@ -35,14 +35,18 @@
 
 ---
 
-## Active Milestone: Track 3 — Modular Frame Buffer, Ping-Pong Feedback & Named Buffers
+- [x] **Track 3: Modular Frame Buffer, Ping-Pong Feedback & Named Buffers**
+  - [x] Phase 1: Frame Buffer Node & Dual-FBO Ping-Pong Core.
+  - [x] Phase 2: Ping-Pong Feedback Motion Trails & Multi-Pass Shader Blending.
+  - [x] Phase 3: Named Buffers (`@NAME`), Static Image Component & Built-in Templates.
+  - [x] Phase 4: UI Integration, Template Selector & Toolbar Integration.
+  - [x] Phase 5: Quality Assurance, Documentation & Mandatory Track Completion Protocol.
+
+---
+
+## Next Milestone: Track 4 — Visual Studio Shell, Node Graph & Preset Import/Export
 
 1. **Track Planning (`conductor-new-track`):**
-   - [ ] Plan Track 3: "Modular Frame Buffer, Ping-Pong Feedback & Named Buffers".
-   - [ ] Generate `conductor/tracks/track_3_frame_buffer_pingpong_feedback/spec.md` and `plan.md`.
+   - [ ] Plan Track 4: "Visual Studio Shell, Node Graph & Preset Import/Export".
+   - [ ] Generate `conductor/tracks/track_4_visual_studio_shell/spec.md` and `plan.md`.
    - [ ] Update `conductor/tracks.md`.
-
-2. **Track 3 Implementation (`conductor-implement`):**
-   - [ ] Phase 1: Frame Buffer Node & Dual-FBO Ping-Pong Core.
-   - [ ] Phase 2: Ping-Pong Feedback Motion Trails & Multi-Pass Shader Blending.
-   - [ ] Phase 3: Named Buffers (`@NAME`), Static Image Component & Preset UI.

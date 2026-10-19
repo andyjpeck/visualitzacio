@@ -90,4 +90,70 @@ describe('useAppStore (Zustand State Plane)', () => {
     store.setIsAudioLoading(false)
     expect(useAppStore.getState().isAudioLoading).toBe(false)
   })
+
+  it('enforces single open dialog mutual exclusion', () => {
+    const store = useAppStore.getState()
+
+    // 1. Open preset settings -> only preset settings should be open
+    store.setIsPresetSettingsOpen(true)
+    expect(useAppStore.getState().isPresetSettingsOpen).toBe(true)
+    expect(useAppStore.getState().isFormulaTestbedOpen).toBe(false)
+    expect(useAppStore.getState().isTemplateSelectorOpen).toBe(false)
+
+    // 2. Open formula testbed -> preset settings automatically closes
+    store.setIsFormulaTestbedOpen(true)
+    expect(useAppStore.getState().isPresetSettingsOpen).toBe(false)
+    expect(useAppStore.getState().isFormulaTestbedOpen).toBe(true)
+    expect(useAppStore.getState().isTemplateSelectorOpen).toBe(false)
+
+    // 3. Open template selector -> formula testbed automatically closes
+    store.setIsTemplateSelectorOpen(true)
+    expect(useAppStore.getState().isPresetSettingsOpen).toBe(false)
+    expect(useAppStore.getState().isFormulaTestbedOpen).toBe(false)
+    expect(useAppStore.getState().isTemplateSelectorOpen).toBe(true)
+  })
+
+  it('maintains a history of opened dialogs and reopens the previous dialog when the active dialog closes', () => {
+    const store = useAppStore.getState()
+    store.closeAllDialogs()
+    expect(useAppStore.getState().dialogStack).toEqual([])
+
+    // User opens Preset Settings (dialog 1)
+    store.openDialog('preset-settings')
+    expect(useAppStore.getState().dialogStack).toEqual(['preset-settings'])
+    expect(useAppStore.getState().isPresetSettingsOpen).toBe(true)
+    expect(useAppStore.getState().isTemplateSelectorOpen).toBe(false)
+
+    // From Preset Settings, user opens Frame Buffer Templates (dialog 2)
+    store.openDialog('template-selector')
+    expect(useAppStore.getState().dialogStack).toEqual(['preset-settings', 'template-selector'])
+    expect(useAppStore.getState().isTemplateSelectorOpen).toBe(true)
+    expect(useAppStore.getState().isPresetSettingsOpen).toBe(false) // Only 1 active at a time!
+
+    // User closes the 2nd dialog (Template Selector) -> 1st dialog (Preset Settings) automatically reopens
+    store.closeDialog('template-selector')
+    expect(useAppStore.getState().dialogStack).toEqual(['preset-settings'])
+    expect(useAppStore.getState().isPresetSettingsOpen).toBe(true)
+    expect(useAppStore.getState().isTemplateSelectorOpen).toBe(false)
+
+    // Closing the 1st dialog empties the stack
+    store.closeDialog('preset-settings')
+    expect(useAppStore.getState().dialogStack).toEqual([])
+    expect(useAppStore.getState().isPresetSettingsOpen).toBe(false)
+    expect(useAppStore.getState().isFormulaTestbedOpen).toBe(false)
+    expect(useAppStore.getState().isTemplateSelectorOpen).toBe(false)
+  })
+
+  it('supports closeAllDialogs to completely clear dialog history', () => {
+    const store = useAppStore.getState()
+    store.openDialog('preset-settings')
+    store.openDialog('template-selector')
+    expect(useAppStore.getState().dialogStack).toHaveLength(2)
+
+    store.closeAllDialogs()
+    expect(useAppStore.getState().dialogStack).toEqual([])
+    expect(useAppStore.getState().isPresetSettingsOpen).toBe(false)
+    expect(useAppStore.getState().isTemplateSelectorOpen).toBe(false)
+    expect(useAppStore.getState().isFormulaTestbedOpen).toBe(false)
+  })
 })

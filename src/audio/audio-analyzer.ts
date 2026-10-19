@@ -143,6 +143,7 @@ export class AudioAnalyzer {
     frameContext.$BASS = bass
     frameContext.$MID = mid
     frameContext.$TREBLE = treble
+    frameContext.sampleRate = sampleRate
 
     // Beat transient detection & rolling BPM
     const currentNowMs = nowMs ?? (typeof performance !== 'undefined' ? performance.now() : 0)
@@ -221,12 +222,6 @@ export class AudioAnalyzer {
     frameContext.$RMS = Math.max(0, Math.min(1.0, this.smoothedRms))
   }
 
-  /**
-   * Returns normalized waveform view in [-1.0, 1.0].
-   */
-  getWaveform(timeData: Float32Array): Float32Array {
-    return timeData
-  }
 
   /**
    * Full frame analysis pass reading from Web Audio AnalyserNode.

@@ -69,7 +69,10 @@ export function createDynamicParam(
     return {
       raw,
       isDynamic: true,
-      evaluate: (_context: FrameContext, fallback = 0.0): number => fallback,
+      evaluate: (context: FrameContext, fallback = 0.0): number => {
+        void context
+        return fallback
+      },
     }
   }
 }

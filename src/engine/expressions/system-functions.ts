@@ -79,8 +79,8 @@ export function registerSystemFunctions(parser: Parser, getActiveContext: () => 
     const minFreq = logScaleToFrequency(lower)
     const maxFreq = logScaleToFrequency(lower + width)
 
-    // Assuming Nyquist frequency = 22050 Hz (standard 44100 Hz sample rate)
-    const nyquist = 22050
+    // Assuming Nyquist frequency = sampleRate / 2 (default 22050 Hz)
+    const nyquist = ctx?.sampleRate ? ctx.sampleRate / 2 : 22050
     const startBin = Math.max(0, Math.min(binCount - 1, Math.floor((minFreq / nyquist) * binCount)))
     const endBin = Math.max(startBin + 1, Math.min(binCount, Math.ceil((maxFreq / nyquist) * binCount)))
 
@@ -119,9 +119,10 @@ export function registerSystemFunctions(parser: Parser, getActiveContext: () => 
     return 2.0 * phase - 1.0
   }
 
-  // #SQR(t): Normalized square wave [-1.0, 1.0] with period 1.0
-  fn.__FN_SQR = (t: number): number => {
+  // #SQR(t, [duty = 0.5]): Normalized square wave [-1.0, 1.0] with period 1.0 and configurable duty cycle
+  fn.__FN_SQR = (t: number, duty = 0.5): number => {
+    const d = Math.max(0.01, Math.min(0.99, typeof duty === 'number' ? duty : 0.5))
     const phase = ((t % 1.0) + 1.0) % 1.0
-    return phase < 0.5 ? 1.0 : -1.0
+    return phase < d ? 1.0 : -1.0
   }
 }

@@ -13,6 +13,9 @@ The UI components operate on the **Low-Frequency User Plane** (<10 Hz). They do 
 - [**`canvas/`**](file:///C:/Users/andyj/Documents/visualitzacio/src/ui/canvas/README.md)
   Full-viewport WebGL canvas container and debounced `ResizeObserver` lifecycle management.
 
+- [**`dialogs/`**](file:///C:/Users/andyj/Documents/visualitzacio/src/ui/dialogs/README.md)
+  Reusable modal dialog framework (`BaseModalDialog`) providing pointer-capture dragging, Escape key dismissal, and centralized dialog stack history navigation.
+
 - [**`expressions/`**](file:///C:/Users/andyj/Documents/visualitzacio/src/ui/expressions/README.md)
   Modular dynamic expression UI subcomponents: formula input with validation badge, 60 FPS canvas sparkline with dynamic scaling, quick-reference tooltips, and preset catalog.
 

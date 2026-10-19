@@ -22,7 +22,7 @@ To ensure smooth 60 FPS rendering under heavy audio FFT processing, the applicat
 The following subdirectories compose the application layer:
 
 - [**`assets/`**](file:///C:/Users/andyj/Documents/visualitzacio/src/assets/README.md)
-  Static styles, global CSS styling (Tailwind CSS 4), and font/asset imports.
+  Static assets and theme resources (global styles configured via Tailwind CSS 3.4 at `src/index.css`).
 
 - [**`audio/`**](file:///C:/Users/andyj/Documents/visualitzacio/src/audio/README.md)
   Web Audio API graph infrastructure, DSP analysis, procedural beat synthesis, microphone capture, and local audio file playback with seeking.

@@ -20,10 +20,10 @@ All system variables use an uppercase name prefixed with a dollar sign (`$`). Th
 | **`$FRAME`** | `int` | $\ge 0$ | Monotonically increasing frame counter integer since engine start (0, 1, 2, ...). Useful for discrete step cycles. |
 | **`$DT`** | `float` | $\ge 0.0$ | Elapsed delta time since the previous render frame in fractional seconds (e.g., ~0.0166s at 60 FPS). Useful for frame-rate-independent physics integration. |
 | **`$FPS`** | `float` | $\ge 0.0$ | Instantaneous rendered frames per second. Reflects active display refresh rate and performance throttling. |
-| **`$WIDTH`** | `float` | $> 0.0$ | Render canvas buffer width in physical pixels. |
-| **`$HEIGHT`** | `float` | $> 0.0$ | Render canvas buffer height in physical pixels. |
+| **`$WIDTH`** | `float` | $> 0.0$ | Render canvas viewport width in CSS pixels. |
+| **`$HEIGHT`** | `float` | $> 0.0$ | Render canvas viewport height in CSS pixels. |
 | **`$ASPECT`** | `float` | $> 0.0$ | Viewport aspect ratio ($WIDTH / $HEIGHT, e.g. 1.777 for 16:9). Ideal for maintaining proportional shapes. |
-| **`$PIXEL_RATIO`** | `float` | $> 0.0$ | Active device pixel ratio scaled by current resolution multiplier (e.g. 1.0, 1.5, 2.0). |
+| **`$PIXEL_RATIO`** | `float` | $> 0.0$ | Active hardware device pixel ratio clamped to $\le 2.0$ (e.g. 1.0, 1.5, 2.0). |
 
 ---
 

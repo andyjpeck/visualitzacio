@@ -14,6 +14,6 @@ This directory contains project requirements, product definition, and track plan
 
 - **`product.md`**: Overall vision, target audience, core capabilities, and architectural principles.
 - **`product-guidelines.md`**: Design language, cyberpunk aesthetic palettes, and ergonomics.
-- **`tech-stack.md`**: Approved technology stack (Vite, React 19, Three.js, Web Audio, Tailwind 4, Vitest, Oxlint).
+- **`tech-stack.md`**: Approved technology stack (Vite, React 19, Three.js, Web Audio, Tailwind CSS 3.4, Vitest, Oxlint).
 - **`system_variables.md` & `system_functions.md`**: Specifications for mathematical expression evaluations and telemetry variables.
 - **`workflow.md`**: Development protocols and Git branching conventions.

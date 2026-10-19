@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react'
 import { Loader2 } from 'lucide-react'
-import type { AudioManager } from '../../audio/audio-manager'
+import type { AudioManager, AudioSourceType } from '../../audio/audio-manager'
 
 /**
  * Formats a duration in seconds to standard MM:SS display format.
@@ -17,7 +17,7 @@ function formatTime(seconds: number): string {
 
 export interface AudioProgressScrubberProps {
   audioManager: AudioManager | null
-  sourceType: string
+  sourceType: AudioSourceType
   audioFileName: string | null
   isPlaying: boolean
   isAudioLoading: boolean
@@ -128,10 +128,8 @@ export function AudioProgressScrubber({
           onPointerDown={() => {
             isDraggingRef.current = true
           }}
-          onPointerUp={(e) => {
+          onPointerUp={() => {
             isDraggingRef.current = false
-            const targetVal = parseFloat((e.target as HTMLInputElement).value)
-            audioManager?.seek(targetVal)
           }}
           onChange={(e) => {
             const targetVal = parseFloat(e.target.value)

@@ -69,34 +69,34 @@ Generates a transient beat attack pulse that decays toward `0.0` over a specifie
 
 ---
 
-### 5. `#TRI(phase)`
+### 5. `#TRI(t)`
 Evaluates a periodic triangle wave oscillator ranging from `-1.0` to `1.0`.
 
 - **Arguments:**
-  - `phase` (`float`): Cycle phase in radians (period = $2\pi$).
+  - `t` (`float`): Normalized cycle phase (period = 1.0).
 - **Returns:** `float` in range `-1.0` to `1.0`.
 - **Example:**
   - `#TRI($TIME * 2)`
 
 ---
 
-### 6. `#SAW(phase)`
+### 6. `#SAW(t)`
 Evaluates a periodic sawtooth wave oscillator ramping linearly from `-1.0` up to `1.0`.
 
 - **Arguments:**
-  - `phase` (`float`): Cycle phase in radians (period = $2\pi$).
+  - `t` (`float`): Normalized cycle phase (period = 1.0).
 - **Returns:** `float` in range `-1.0` to `1.0`.
 - **Example:**
   - `#SAW($TIME * 4)`
 
 ---
 
-### 7. `#SQR(phase, [duty = 0.5])`
+### 7. `#SQR(t, [duty = 0.5])`
 Evaluates a periodic square / pulse wave oscillator alternating between `1.0` and `-1.0`.
 
 - **Arguments:**
-  - `phase` (`float`): Cycle phase in radians (period = $2\pi$).
-  - `duty` (`float`, optional, default `0.5`, range `0.0` to `1.0`): Pulse duty cycle ratio.
+  - `t` (`float`): Normalized cycle phase (period = 1.0).
+  - `duty` (`float`, optional, default `0.5`, range `0.01` to `0.99`): Pulse duty cycle ratio.
 - **Returns:** `float`: `1.0` or `-1.0`.
 - **Example:**
   - `#SQR($TIME * 3, 0.25)`

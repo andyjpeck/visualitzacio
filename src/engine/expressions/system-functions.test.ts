@@ -122,9 +122,11 @@ describe('System Functions Library (#FUNCTION) (TDD)', () => {
       expect(engine.evaluate('#SAW(0.99)', context)).toBeCloseTo(0.98, 2)
     })
 
-    it('evaluates #SQR (square wave) with period 1.0', () => {
+    it('evaluates #SQR (square wave) with period 1.0 and configurable duty cycle', () => {
       expect(engine.evaluate('#SQR(0.2)', context)).toBe(1.0)
       expect(engine.evaluate('#SQR(0.7)', context)).toBe(-1.0)
+      expect(engine.evaluate('#SQR(0.3, 0.25)', context)).toBe(-1.0)
+      expect(engine.evaluate('#SQR(0.2, 0.25)', context)).toBe(1.0)
     })
   })
 })

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { ViewportCanvas } from './ui/canvas/viewport-canvas'
 import { FpsBadge } from './ui/hud/fps-badge'
 import { PresetSettingsModal } from './ui/settings/preset-settings-modal'
+import { FrameBufferTemplateSelector } from './ui/settings/frame-buffer-template-selector'
 import { Toolbar } from './ui/toolbar/toolbar'
 import { AudioTelemetryOverlay } from './ui/hud/audio-telemetry-overlay'
 import { FormulaTestbed } from './ui/hud/formula-testbed'
@@ -68,6 +69,7 @@ export function App(): React.ReactElement {
 
       {/* Modals & Dialogs */}
       <PresetSettingsModal />
+      <FrameBufferTemplateSelector />
       <FormulaTestbed engine={engine} />
     </div>
   )

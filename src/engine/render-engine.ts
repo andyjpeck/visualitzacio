@@ -12,6 +12,7 @@ import type {
   Scheduler,
   VisualNode,
 } from '../contracts/renderer-like'
+import { BufferPool } from './frame-buffer/buffer-pool'
 
 export interface RenderEngineOptions {
   canvas?: HTMLCanvasElement
@@ -32,6 +33,7 @@ export class RenderEngine {
   private readonly scheduler: Scheduler
   private readonly frameContext: FrameContext = createDefaultFrameContext()
   private readonly nodes: VisualNode[] = []
+  readonly bufferPool: BufferPool = new BufferPool()
 
   private presetSettings: PresetSettings
   private onFpsUpdate?: (fps: number) => void
@@ -160,6 +162,11 @@ export class RenderEngine {
       ...settings,
     }
     this.applySize()
+    for (const node of this.nodes) {
+      if (node.resize) {
+        node.resize(this.width, this.height, this.pixelRatio, this.presetSettings.resolution_scale)
+      }
+    }
   }
 
   /**
@@ -180,10 +187,10 @@ export class RenderEngine {
   addNode(node: VisualNode): void {
     this.nodes.push(node)
     if (node.init) {
-      node.init(this.renderer)
+      node.init(this.renderer, this.bufferPool)
     }
     if (node.resize) {
-      node.resize(this.width, this.height, this.pixelRatio)
+      node.resize(this.width, this.height, this.pixelRatio, this.presetSettings.resolution_scale)
     }
   }
 
@@ -203,10 +210,37 @@ export class RenderEngine {
   }
 
   /**
-   * Returns a read-only array of all visual nodes currently attached to the engine pipeline.
+   * Returns a read-only array of top-level visual nodes attached to the engine pipeline.
    */
   getNodes(): readonly VisualNode[] {
     return this.nodes
+  }
+
+  /**
+   * Returns all visual nodes across the entire node hierarchy (including child nodes within container nodes like FrameBufferNode).
+   */
+  getAllNodes(): readonly VisualNode[] {
+    const result: VisualNode[] = []
+    const traverse = (nodeList: readonly VisualNode[]) => {
+      for (const node of nodeList) {
+        result.push(node)
+        if (typeof node.getChildren === 'function') {
+          const children = node.getChildren()
+          if (children && children.length > 0) {
+            traverse(children)
+          }
+        }
+      }
+    }
+    traverse(this.nodes)
+    return result
+  }
+
+  /**
+   * Returns the global texture BufferPool registry.
+   */
+  getBufferPool(): BufferPool {
+    return this.bufferPool
   }
 
   /**
@@ -230,7 +264,7 @@ export class RenderEngine {
 
     for (const node of this.nodes) {
       if (node.resize) {
-        node.resize(width, height, this.pixelRatio)
+        node.resize(width, height, this.pixelRatio, this.presetSettings.resolution_scale)
       }
     }
   }
@@ -300,6 +334,7 @@ export class RenderEngine {
       }
     }
     this.nodes.length = 0
+    this.bufferPool.dispose()
     this.renderer.dispose()
   }
 }

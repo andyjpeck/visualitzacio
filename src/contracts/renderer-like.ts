@@ -5,9 +5,15 @@ import type { FrameContext } from './frame-context'
  */
 export interface RendererLike {
   domElement: HTMLCanvasElement
+  autoClear?: boolean
   setSize(width: number, height: number, updateStyle?: boolean): void
   setPixelRatio(pixelRatio: number): void
   render(scene: unknown, camera: unknown): void
+  setRenderTarget?(target: unknown): void
+  getRenderTarget?(): unknown
+  clear?(): void
+  clearDepth?(): void
+  setClearColor?(color: unknown, alpha?: number): void
   dispose(): void
 }
 
@@ -24,8 +30,9 @@ export interface Scheduler {
  * Minimal node interface implemented by visual passes and components in the render pipeline.
  */
 export interface VisualNode {
-  init?(renderer: RendererLike): void
-  resize?(width: number, height: number, pixelRatio: number): void
+  init?(renderer: RendererLike, bufferPool?: unknown): void
+  resize?(width: number, height: number, pixelRatio?: number, resolutionScale?: number): void
   update(ctx: FrameContext): void
+  getChildren?(): readonly VisualNode[]
   dispose?(): void
 }

@@ -11,6 +11,9 @@ export interface ExpressionInputProps {
   placeholder?: string
 }
 
+/**
+ * Reusable mathematical expression text input with live syntax validation status badge.
+ */
 export function ExpressionInput({
   id = 'formula-input',
   label = 'Formula Expression',

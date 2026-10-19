@@ -32,6 +32,7 @@ export interface FrameContext {
   // Raw audio buffer references for #FFT and #WAVEFORM functions
   frequencyData?: Uint8Array
   timeDomainData?: Float32Array
+  sampleRate?: number
 }
 
 /**
@@ -47,6 +48,7 @@ export function createDefaultFrameContext(): FrameContext {
     $HEIGHT: 1080,
     $ASPECT: 1920 / 1080,
     $PIXEL_RATIO: 1.0,
+    sampleRate: 44100,
     $BASS: 0.0,
     $MID: 0.0,
     $TREBLE: 0.0,
