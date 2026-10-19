@@ -105,4 +105,44 @@ describe('AudioManager', () => {
     expect(analyser).toBeDefined()
     expect(analyser.fftSize).toBe(2048)
   })
+
+  it('loads and plays custom audio file from local filesystem', async () => {
+    const mockAudioBuffer = {
+      duration: 120,
+      length: 44100 * 120,
+      numberOfChannels: 2,
+      sampleRate: 44100,
+      getChannelData: () => new Float32Array(1024),
+    } as unknown as AudioBuffer
+
+    mockContextObj.audioContext.decodeAudioData = vi.fn().mockResolvedValue(mockAudioBuffer)
+
+    const mockFile = new File(['mock audio data'], 'synthwave-track.mp3', {
+      type: 'audio/mp3',
+    })
+    mockFile.arrayBuffer = vi.fn().mockResolvedValue(new ArrayBuffer(1024))
+
+    const loadedName = await manager.loadAudioFile(mockFile)
+    expect(loadedName).toBe('synthwave-track.mp3')
+    expect(manager.hasCustomFile()).toBe(true)
+    expect(manager.getCustomFileName()).toBe('synthwave-track.mp3')
+
+    const mockSourceNode = {
+      buffer: null,
+      loop: false,
+      connect: vi.fn(),
+      disconnect: vi.fn(),
+      start: vi.fn(),
+      stop: vi.fn(),
+    }
+    mockContextObj.audioContext.createBufferSource = vi.fn(() => mockSourceNode as unknown as AudioBufferSourceNode)
+
+    await manager.playCustomFile()
+    expect(manager.isPlaying()).toBe(true)
+    expect(manager.getSourceType()).toBe('file')
+    expect(mockSourceNode.start).toHaveBeenCalled()
+
+    manager.pauseCustomFile()
+    expect(manager.isPlaying()).toBe(false)
+  })
 })

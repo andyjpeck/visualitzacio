@@ -22,6 +22,11 @@ describe('Toolbar Component', () => {
       pauseSample: vi.fn(),
       enableMicrophone: vi.fn().mockResolvedValue(true),
       disableMicrophone: vi.fn(),
+      loadAudioFile: vi.fn().mockResolvedValue('test.mp3'),
+      playCustomFile: vi.fn(),
+      pauseCustomFile: vi.fn(),
+      hasCustomFile: vi.fn().mockReturnValue(false),
+      getCustomFileName: vi.fn().mockReturnValue(null),
       setVolume: vi.fn(),
       getLastError: vi.fn().mockReturnValue(null),
     } as unknown as AudioManager
@@ -110,5 +115,37 @@ describe('Toolbar Component', () => {
     rerender(<Toolbar audioManager={mockAudioManager} />)
     const playButton = screen.getByRole('button', { name: /^play$/i })
     expect(playButton).toBeDisabled()
+  })
+
+  it('loads and plays custom audio file when selected', async () => {
+    mockAudioManager.loadAudioFile = vi.fn().mockResolvedValue('retro-wave.mp3')
+    mockAudioManager.playCustomFile = vi.fn().mockResolvedValue(undefined)
+    mockAudioManager.pauseCustomFile = vi.fn()
+    mockAudioManager.hasCustomFile = vi.fn().mockReturnValue(true)
+
+    render(<Toolbar audioManager={mockAudioManager} />)
+
+    const fileButton = screen.getByRole('button', { name: /use local audio file/i })
+    expect(fileButton).toBeInTheDocument()
+
+    const fileInput = screen.getByTestId('audio-file-input')
+    const testFile = new File(['audio'], 'retro-wave.mp3', { type: 'audio/mp3' })
+
+    await act(async () => {
+      fireEvent.change(fileInput, { target: { files: [testFile] } })
+    })
+
+    expect(mockAudioManager.loadAudioFile).toHaveBeenCalledWith(testFile)
+    expect(useAppStore.getState().audioFileName).toBe('retro-wave.mp3')
+    expect(useAppStore.getState().sourceType).toBe('file')
+
+    // Now clicking Play plays the custom file
+    const playButton = screen.getByRole('button', { name: /^play$/i })
+    await act(async () => {
+      fireEvent.click(playButton)
+    })
+
+    expect(mockAudioManager.playCustomFile).toHaveBeenCalledTimes(1)
+    expect(useAppStore.getState().isPlaying).toBe(true)
   })
 })

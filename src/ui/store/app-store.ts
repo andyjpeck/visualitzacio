@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import type { ResolutionScale } from '../../contracts/preset-settings'
 
-export type AudioSourceType = 'sample' | 'mic'
+export type AudioSourceType = 'sample' | 'mic' | 'file'
 
 export interface AppState {
   // Audio state (<10 Hz user actions)
@@ -9,6 +9,7 @@ export interface AppState {
   sourceType: AudioSourceType
   volume: number
   audioError: string | null
+  audioFileName: string | null
 
   // HUD & UI overlay state
   showFpsOverlay: boolean
@@ -25,6 +26,7 @@ export interface AppState {
   setSourceType: (source: AudioSourceType) => void
   setVolume: (volume: number) => void
   setAudioError: (error: string | null) => void
+  setAudioFileName: (name: string | null) => void
 
   setShowFpsOverlay: (show: boolean) => void
   toggleFpsOverlay: () => void
@@ -41,6 +43,7 @@ export const useAppStore = create<AppState>((set) => ({
   sourceType: 'sample',
   volume: 0.8,
   audioError: null,
+  audioFileName: null,
 
   showFpsOverlay: true,
   isPresetSettingsOpen: false,
@@ -54,6 +57,7 @@ export const useAppStore = create<AppState>((set) => ({
   setSourceType: (sourceType) => set({ sourceType, audioError: null }),
   setVolume: (volume) => set({ volume }),
   setAudioError: (audioError) => set({ audioError }),
+  setAudioFileName: (audioFileName) => set({ audioFileName }),
 
   setShowFpsOverlay: (showFpsOverlay) => set({ showFpsOverlay }),
   toggleFpsOverlay: () =>

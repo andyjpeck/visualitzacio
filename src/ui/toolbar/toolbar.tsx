@@ -1,9 +1,10 @@
-import React from 'react'
+import React, { useRef } from 'react'
 import {
   Play,
   Pause,
   Mic,
   Disc,
+  FileAudio,
   Volume2,
   VolumeX,
   Activity,
@@ -19,10 +20,14 @@ export interface ToolbarProps {
 }
 
 export function Toolbar({ audioManager }: ToolbarProps): React.ReactElement {
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
   const isPlaying = useAppStore((state) => state.isPlaying)
   const setIsPlaying = useAppStore((state) => state.setIsPlaying)
   const sourceType = useAppStore((state) => state.sourceType)
   const setSourceType = useAppStore((state) => state.setSourceType)
+  const audioFileName = useAppStore((state) => state.audioFileName)
+  const setAudioFileName = useAppStore((state) => state.setAudioFileName)
   const volume = useAppStore((state) => state.volume)
   const setVolume = useAppStore((state) => state.setVolume)
   const audioError = useAppStore((state) => state.audioError)
@@ -39,17 +44,33 @@ export function Toolbar({ audioManager }: ToolbarProps): React.ReactElement {
     if (!audioManager || isMicActive) return
 
     if (isPlaying) {
-      audioManager.pauseSample()
+      if (sourceType === 'file') {
+        audioManager.pauseCustomFile()
+      } else {
+        audioManager.pauseSample()
+      }
       setIsPlaying(false)
     } else {
-      await audioManager.playSample()
-      setIsPlaying(true)
+      if (sourceType === 'file') {
+        if (!audioManager.hasCustomFile()) {
+          fileInputRef.current?.click()
+          return
+        }
+        await audioManager.playCustomFile()
+        setIsPlaying(true)
+      } else {
+        await audioManager.playSample()
+        setIsPlaying(true)
+      }
     }
   }
 
   const handleSelectSample = () => {
     if (!audioManager) return
     audioManager.disableMicrophone()
+    if (sourceType === 'file') {
+      audioManager.pauseCustomFile()
+    }
     setIsPlaying(false)
     setSourceType('sample')
     setAudioError(null)
@@ -57,8 +78,9 @@ export function Toolbar({ audioManager }: ToolbarProps): React.ReactElement {
 
   const handleSelectMic = async () => {
     if (!audioManager) return
-    // Stop the sample immediately if playing
+    // Stop any playing audio immediately
     audioManager.pauseSample()
+    audioManager.pauseCustomFile()
     setIsPlaying(false)
     setSourceType('mic')
     setAudioError(null)
@@ -74,6 +96,41 @@ export function Toolbar({ audioManager }: ToolbarProps): React.ReactElement {
     }
   }
 
+  const handleSelectFile = () => {
+    if (!audioManager) return
+    audioManager.disableMicrophone()
+    audioManager.pauseSample()
+    setIsPlaying(false)
+
+    // If clicking File again or if no file is loaded, open file picker
+    if (sourceType === 'file' || !audioManager.hasCustomFile()) {
+      fileInputRef.current?.click()
+    }
+
+    setSourceType('file')
+    setAudioError(null)
+  }
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file || !audioManager) return
+
+    try {
+      setSourceType('file')
+      audioManager.disableMicrophone()
+      audioManager.pauseSample()
+      audioManager.pauseCustomFile()
+      setIsPlaying(false)
+
+      const name = await audioManager.loadAudioFile(file)
+      setAudioFileName(name)
+      setAudioError(null)
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err)
+      setAudioError(`Failed to decode audio file: ${msg}`)
+    }
+  }
+
   const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = parseFloat(e.target.value)
     setVolume(val)
@@ -84,9 +141,19 @@ export function Toolbar({ audioManager }: ToolbarProps): React.ReactElement {
 
   return (
     <>
+      {/* Hidden Audio File Input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        data-testid="audio-file-input"
+        accept="audio/*"
+        onChange={handleFileChange}
+        className="hidden"
+      />
+
       {/* Top Floating Glassmorphic Toolbar */}
       <header className="fixed top-4 right-4 z-40 flex items-center gap-2 p-1.5 rounded-xl backdrop-blur-md bg-cyber-void/85 border border-white/10 shadow-2xl select-none">
-        {/* Play / Pause (Controls Sample Player; disabled when Mic is active) */}
+        {/* Play / Pause (Controls Sample/File playback; disabled when Mic is active) */}
         <button
           type="button"
           onClick={handlePlayPause}
@@ -94,10 +161,12 @@ export function Toolbar({ audioManager }: ToolbarProps): React.ReactElement {
           aria-label={isPlaying && !isMicActive ? 'Pause' : 'Play'}
           title={
             isMicActive
-              ? 'Sample playback disabled while Microphone is active'
+              ? 'Playback disabled while Microphone is active'
               : isPlaying
                 ? 'Pause audio'
-                : 'Play procedural drum beat'
+                : sourceType === 'file'
+                  ? 'Play custom audio file'
+                  : 'Play procedural drum beat'
           }
           className={`p-2 rounded-lg font-bold shadow-md transition-all ${
             isMicActive
@@ -112,7 +181,7 @@ export function Toolbar({ audioManager }: ToolbarProps): React.ReactElement {
           )}
         </button>
 
-        {/* Source Toggle: Sample vs Mic */}
+        {/* Source Toggle: Sample vs Mic vs File */}
         <div className="flex items-center rounded-lg bg-white/5 p-0.5 border border-white/5">
           <button
             type="button"
@@ -141,6 +210,26 @@ export function Toolbar({ audioManager }: ToolbarProps): React.ReactElement {
           >
             <Mic className="w-3.5 h-3.5" />
             <span>Mic</span>
+          </button>
+          <button
+            type="button"
+            onClick={handleSelectFile}
+            aria-label="Use Local Audio File"
+            title={
+              audioFileName
+                ? `File: ${audioFileName} (click to choose another)`
+                : 'Load audio file from local filesystem'
+            }
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-mono font-medium transition-colors cursor-pointer ${
+              sourceType === 'file'
+                ? 'bg-cyber-amber/20 text-cyber-amber border border-cyber-amber/30'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <FileAudio className="w-3.5 h-3.5" />
+            <span className="max-w-[70px] truncate">
+              {audioFileName || 'File'}
+            </span>
           </button>
         </div>
 

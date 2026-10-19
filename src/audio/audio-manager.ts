@@ -1,6 +1,6 @@
 import { createProceduralBeatBuffer } from './procedural-beat'
 
-export type AudioSourceType = 'sample' | 'mic' | 'none'
+export type AudioSourceType = 'sample' | 'mic' | 'file' | 'none'
 
 export interface AudioManagerOptions {
   createAudioContext?: () => AudioContext
@@ -12,6 +12,8 @@ export class AudioManager {
   private micGain: GainNode | null = null
   private analyserNode: AnalyserNode | null = null
   private sampleBuffer: AudioBuffer | null = null
+  private customBuffer: AudioBuffer | null = null
+  private customFileName: string | null = null
   private currentSourceNode: AudioBufferSourceNode | null = null
   private micStream: MediaStream | null = null
   private micSourceNode: MediaStreamAudioSourceNode | null = null
@@ -137,6 +139,90 @@ export class AudioManager {
     }
     this.playing = false
     if (this.sourceType === 'sample') {
+      this.sourceType = 'none'
+    }
+  }
+
+  /**
+   * Loads an audio file from the user's filesystem and decodes it into memory.
+   */
+  async loadAudioFile(file: File): Promise<string> {
+    const ctx = this.ensureActiveGraph()
+    await this.resume()
+
+    const arrayBuffer =
+      typeof file.arrayBuffer === 'function'
+        ? await file.arrayBuffer()
+        : await new Promise<ArrayBuffer>((resolve, reject) => {
+            const reader = new FileReader()
+            reader.onload = () => resolve(reader.result as ArrayBuffer)
+            reader.onerror = () => reject(reader.error)
+            reader.readAsArrayBuffer(file)
+          })
+
+    const decoded = await ctx.decodeAudioData(arrayBuffer)
+    this.customBuffer = decoded
+    this.customFileName = file.name
+    return file.name
+  }
+
+  hasCustomFile(): boolean {
+    return this.customBuffer !== null
+  }
+
+  getCustomFileName(): string | null {
+    return this.customFileName
+  }
+
+  /**
+   * Plays the user-loaded audio file through the master output.
+   */
+  async playCustomFile(): Promise<void> {
+    const ctx = this.ensureActiveGraph()
+    await this.resume()
+
+    if (this.sourceType === 'mic') {
+      this.disableMicrophone()
+    }
+    if (this.sourceType === 'sample') {
+      this.pauseSample()
+    }
+
+    if (this.playing && this.currentSourceNode) {
+      return
+    }
+
+    if (!this.customBuffer) {
+      throw new Error('No custom audio file loaded')
+    }
+
+    const source = ctx.createBufferSource()
+    source.buffer = this.customBuffer
+    source.loop = true
+    source.connect(this.masterGain!)
+
+    source.start(0)
+    this.currentSourceNode = source
+    this.playing = true
+    this.sourceType = 'file'
+    this.lastError = null
+  }
+
+  /**
+   * Pauses the user-loaded audio file.
+   */
+  pauseCustomFile(): void {
+    if (this.currentSourceNode) {
+      try {
+        this.currentSourceNode.stop()
+      } catch {
+        // Node may already be stopped
+      }
+      this.currentSourceNode.disconnect()
+      this.currentSourceNode = null
+    }
+    this.playing = false
+    if (this.sourceType === 'file') {
       this.sourceType = 'none'
     }
   }
