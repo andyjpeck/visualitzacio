@@ -1,0 +1,14 @@
+{
+  "track_id": "track_4_visual_studio_node_graph",
+  "type": "feature",
+  "status": "in_progress",
+  "created_at": "2026-10-19T16:55:00-07:00",
+  "updated_at": "2026-10-19T16:55:00-07:00",
+  "description": "Visual Studio Shell, Node Graph & Preset Import/Export: Split-view studio workspace, @xyflow/react node graph with custom nodes and port wiring, universal f(x) parameter inspector with autocomplete and 60 FPS sparklines, component preset selector, 100-step undo/redo history with input coalescing, and JSON preset serializer.",
+  "github_issue": {
+    "number": 7,
+    "url": "https://github.com/andyjpeck/visualitzacio/issues/7"
+  },
+  "branch": "issue-7-track-4-visual-studio-node-graph",
+  "tasks": []
+}

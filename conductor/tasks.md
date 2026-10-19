@@ -44,9 +44,9 @@
 
 ---
 
-## Next Milestone: Track 4 — Visual Studio Shell, Node Graph & Preset Import/Export
-
-1. **Track Planning (`conductor-new-track`):**
-   - [ ] Plan Track 4: "Visual Studio Shell, Node Graph & Preset Import/Export".
-   - [ ] Generate `conductor/tracks/track_4_visual_studio_shell/spec.md` and `plan.md`.
-   - [ ] Update `conductor/tracks.md`.
+- [ ] **Track 4: Visual Studio Shell, Node Graph & Preset Import/Export**
+  - [ ] Phase 1: Dependencies, Layout & Studio Shell Framework.
+  - [ ] Phase 2: Visual Node Graph Pipeline (`@xyflow/react`).
+  - [ ] Phase 3: Universal `f(x)` Parameter Inspector & Autocomplete.
+  - [ ] Phase 4: 100-Step Undo / Redo Engine & Preset Serialization.
+  - [ ] Phase 5: End-to-End Integration, Documentation Sync & Track Protocol.

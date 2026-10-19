@@ -20,7 +20,7 @@ This registry tracks the planned, active, and completed workstreams across Visua
 
 - [ ] **Track 4: Visual Studio Shell, Node Graph & Preset Import/Export**
   *Goal: Split-view UI, `@xyflow/react` node graph with auto-layout, universal `f(x)` inspector with inline autocomplete dropdown, component preset selector with overwrite confirmation dialog, 100-step Undo/Redo JSON history buffer, and JSON preset serializer.*  
-  *Status: Planned (Spec & Plan to follow Track 3)*
+  *Link: [./tracks/track_4_visual_studio_node_graph/index.md](./tracks/track_4_visual_studio_node_graph/index.md)* (In Progress)
 
 ---
 
