@@ -160,27 +160,55 @@ export class AudioManager {
 
   /**
    * Loads an audio file from the user's filesystem and decodes it into memory.
+   * Reports progress via optional callback for large files.
+   *
+   * @param file - File selected by user.
+   * @param onProgress - Optional callback receiving progress percentage (0-100) and stage message.
+   * @returns Loaded file name.
    */
-  async loadAudioFile(file: File): Promise<string> {
+  async loadAudioFile(
+    file: File,
+    onProgress?: (percent: number, stage: string) => void,
+  ): Promise<string> {
     const ctx = this.ensureActiveGraph()
     await this.resume()
 
-    const arrayBuffer =
-      typeof file.arrayBuffer === 'function'
-        ? await file.arrayBuffer()
-        : await new Promise<ArrayBuffer>((resolve, reject) => {
-            const reader = new FileReader()
-            reader.onload = () => resolve(reader.result as ArrayBuffer)
-            reader.onerror = () => reject(reader.error)
-            reader.readAsArrayBuffer(file)
-          })
+    const sizeMb = (file.size / (1024 * 1024)).toFixed(1)
+    onProgress?.(10, `Reading file (${sizeMb} MB)...`)
 
+    let arrayBuffer: ArrayBuffer
+    if (typeof file.arrayBuffer === 'function') {
+      arrayBuffer = await file.arrayBuffer()
+      onProgress?.(50, 'Decoding audio buffer...')
+    } else {
+      arrayBuffer = await new Promise<ArrayBuffer>((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onprogress = (e) => {
+          if (e.lengthComputable && e.total > 0) {
+            const p = Math.round(10 + (e.loaded / e.total) * 40)
+            onProgress?.(p, `Reading file (${(e.loaded / (1024 * 1024)).toFixed(1)} / ${sizeMb} MB)...`)
+          }
+        }
+        reader.onload = () => {
+          onProgress?.(50, 'Decoding audio buffer...')
+          resolve(reader.result as ArrayBuffer)
+        }
+        reader.onerror = () => reject(reader.error)
+        reader.readAsArrayBuffer(file)
+      })
+    }
+
+    onProgress?.(70, 'Decoding audio buffer...')
     const decoded = await ctx.decodeAudioData(arrayBuffer)
+    onProgress?.(95, 'Finalizing audio buffer...')
+
     this.customBuffer = decoded
     this.customFileName = file.name
     this.pausedOffset = 0
     this.playbackStartTime = 0
     this.playbackStartOffset = 0
+
+    onProgress?.(100, 'Audio ready!')
     return file.name
   }
 

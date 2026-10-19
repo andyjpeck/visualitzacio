@@ -13,6 +13,8 @@ describe('AudioTelemetryOverlay Component', () => {
     frameContext.$RMS = 0.6
     frameContext.$BEAT = 1.0
     frameContext.$BPM = 128.0
+    frameContext.$TIME = 42.5
+    frameContext.$FRAME = 2550
 
     const mockEngine = {
       getFrameContext: () => frameContext,
@@ -26,5 +28,7 @@ describe('AudioTelemetryOverlay Component', () => {
     expect(screen.getByText('RMS')).toBeInTheDocument()
     expect(screen.getByText('BEAT')).toBeInTheDocument()
     expect(screen.getByTestId('telemetry-bpm')).toHaveTextContent('128.0 BPM')
+    expect(screen.getByTestId('telemetry-time')).toHaveTextContent('42.5s')
+    expect(screen.getByTestId('telemetry-frame')).toHaveTextContent('2550')
   })
 })

@@ -24,6 +24,14 @@ export interface FrameContext {
   $RMS: number
   $BEAT: number // Instantaneous binary flag: 1.0 on beat frame, 0.0 otherwise
   $BPM: number // Rolling tempo estimation (default 120.0)
+
+  // Beat envelope timing
+  secondsSinceLastBeat: number
+  framesSinceLastBeat: number
+
+  // Raw audio buffer references for #FFT and #WAVEFORM functions
+  frequencyData?: Uint8Array
+  timeDomainData?: Float32Array
 }
 
 /**
@@ -45,5 +53,7 @@ export function createDefaultFrameContext(): FrameContext {
     $RMS: 0.0,
     $BEAT: 0.0,
     $BPM: 120.0,
+    secondsSinceLastBeat: 999.0,
+    framesSinceLastBeat: 9999,
   }
 }

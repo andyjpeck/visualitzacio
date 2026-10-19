@@ -13,6 +13,7 @@
     "lint": "oxlint"
   },
   "dependencies": {
+    "expr-eval": "^2.0.2",
     "lucide-react": "^0.475.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",

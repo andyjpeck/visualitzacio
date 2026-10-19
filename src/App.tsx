@@ -4,6 +4,7 @@ import { FpsBadge } from './ui/hud/fps-badge'
 import { PresetSettingsModal } from './ui/settings/preset-settings-modal'
 import { Toolbar } from './ui/toolbar/toolbar'
 import { AudioTelemetryOverlay } from './ui/hud/audio-telemetry-overlay'
+import { FormulaTestbed } from './ui/hud/formula-testbed'
 import { AudioManager } from './audio/audio-manager'
 import { AudioAnalyzer } from './audio/audio-analyzer'
 import type { RenderEngine } from './engine/render-engine'
@@ -67,6 +68,7 @@ export function App(): React.ReactElement {
 
       {/* Modals & Dialogs */}
       <PresetSettingsModal />
+      <FormulaTestbed engine={engine} />
     </div>
   )
 }

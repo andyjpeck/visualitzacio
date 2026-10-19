@@ -203,6 +203,13 @@ export class RenderEngine {
   }
 
   /**
+   * Returns a read-only array of all visual nodes currently attached to the engine pipeline.
+   */
+  getNodes(): readonly VisualNode[] {
+    return this.nodes
+  }
+
+  /**
    * Handles viewport resizing, updates FrameContext aspect/dimensions, and cascades to visual nodes.
    *
    * @param width - Viewport width in CSS pixels.
@@ -256,6 +263,8 @@ export class RenderEngine {
     this.frameContext.$FRAME++
     this.frameContext.$DT = dt
     this.frameContext.$TIME += dt
+    this.frameContext.secondsSinceLastBeat += dt
+    this.frameContext.framesSinceLastBeat++
 
     if (this.onBeforeUpdate) {
       this.onBeforeUpdate(this.frameContext, timestamp)

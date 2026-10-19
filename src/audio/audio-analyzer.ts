@@ -179,6 +179,8 @@ export class AudioAnalyzer {
 
     if (isTransient && cooldownElapsed) {
       frameContext.$BEAT = 1.0
+      frameContext.secondsSinceLastBeat = 0.0
+      frameContext.framesSinceLastBeat = 0
 
       if (this.lastBeatTimeMs >= 0) {
         const ibi = nowMs - this.lastBeatTimeMs
@@ -241,6 +243,8 @@ export class AudioAnalyzer {
 
     this.processFrequencyData(this.byteFrequencyData, sampleRate, frameContext, nowMs)
     this.processTimeData(this.floatTimeData, frameContext)
+    frameContext.frequencyData = this.byteFrequencyData
+    frameContext.timeDomainData = this.floatTimeData
   }
 
   /**

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { createDefaultFrameContext } from '../contracts/frame-context'
 import { createMockRenderer } from '../test/fixtures/renderer-mock'
+import { ExpressionEngine } from './expressions/expression-engine'
 import { TestVisualNode } from './visual-node'
 
 describe('TestVisualNode', () => {
@@ -33,5 +34,18 @@ describe('TestVisualNode', () => {
     const node = new TestVisualNode()
     node.resize(1920, 1080)
     expect(node.camera.aspect).toBeCloseTo(1920 / 1080, 3)
+  })
+
+  it('modulates scale with dynamic expression when configured', () => {
+    const node = new TestVisualNode()
+    const engine = new ExpressionEngine()
+    node.setScaleExpression('1.0 + $BASS * 2.0', engine)
+
+    const ctx = createDefaultFrameContext()
+    ctx.$BASS = 0.5
+    node.update(ctx)
+
+    // 1.0 + 0.5 * 2.0 = 2.0
+    expect(node.mesh.scale.x).toBeCloseTo(2.0, 2)
   })
 })

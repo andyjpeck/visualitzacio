@@ -60,4 +60,34 @@ describe('useAppStore (Zustand State Plane)', () => {
     store.resetAudioBands()
     expect(useAppStore.getState().audioBands.bassMax).toBe(250)
   })
+
+  it('toggles formula presets and reference collapsed state', () => {
+    const store = useAppStore.getState()
+    expect(store.isFormulaPresetsOpen).toBe(true)
+    expect(store.isFormulaReferenceOpen).toBe(true)
+
+    store.toggleFormulaPresets()
+    expect(useAppStore.getState().isFormulaPresetsOpen).toBe(false)
+
+    store.toggleFormulaReference()
+    expect(useAppStore.getState().isFormulaReferenceOpen).toBe(false)
+  })
+
+  it('tracks audio loading state and progress stage updates', () => {
+    const store = useAppStore.getState()
+    expect(store.isAudioLoading).toBe(false)
+    expect(store.audioLoadingProgress).toBe(0)
+
+    store.setIsAudioLoading(true, 10, 'Reading file...')
+    expect(useAppStore.getState().isAudioLoading).toBe(true)
+    expect(useAppStore.getState().audioLoadingProgress).toBe(10)
+    expect(useAppStore.getState().audioLoadingStage).toBe('Reading file...')
+
+    store.setAudioLoadingProgress(60, 'Decoding audio...')
+    expect(useAppStore.getState().audioLoadingProgress).toBe(60)
+    expect(useAppStore.getState().audioLoadingStage).toBe('Decoding audio...')
+
+    store.setIsAudioLoading(false)
+    expect(useAppStore.getState().isAudioLoading).toBe(false)
+  })
 })

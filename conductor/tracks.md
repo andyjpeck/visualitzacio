@@ -10,9 +10,9 @@ This registry tracks the planned, active, and completed workstreams across Visua
   *Goal: Two-Plane architecture, Web Audio analyzer, live preview canvas, clickable FPS overlay with preset performance settings (`target_fps`, `resolution_scale`), and day-1 reactive audio visuals.*  
   *Link: [./tracks/track_1_reactive_canvas_audio_testbed/index.md](./tracks/track_1_reactive_canvas_audio_testbed/index.md)* (Completed)
 
-- [ ] **Track 2: Dynamic Expression Engine & Parameter Binding**
+- [x] **Track 2: Dynamic Expression Engine & Parameter Binding**
   *Goal: `expr-eval` sandboxing, real-time `$VARIABLE` bindings, `#FUNCTION(...)` library with `#BEAT_FRAMES` decay curves, and live formula test input.*  
-  *Status: Planned (Spec & Plan to follow Track 1)*
+  *Link: [./tracks/track_2_expression_engine/index.md](./tracks/track_2_expression_engine/index.md)* (Completed)
 
 - [ ] **Track 3: Modular Frame Buffer, Ping-Pong Feedback & Named Buffers**
   *Goal: Master Frame Buffer root lifecycle, dual-FBO ping-pong feedback motion trails, 6 GLSL blend modes, `@NAME` buffer pool, Built-in Frame Buffer Preset Selector, and Static Image component.*  
