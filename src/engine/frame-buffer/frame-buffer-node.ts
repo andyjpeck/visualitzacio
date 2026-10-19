@@ -4,6 +4,11 @@ import type { RendererLike, VisualNode } from '../../contracts/renderer-like'
 import type { DynamicParam } from '../expressions/dynamic-param'
 import { createDynamicParam } from '../expressions/dynamic-param'
 import type { ExpressionEngine } from '../expressions/expression-engine'
+import {
+  BLEND_MODES,
+  type BlendModeName,
+  createCompositingMaterial,
+} from './compositing-shader'
 
 export interface FrameBufferNodeOptions {
   id: string
@@ -20,6 +25,7 @@ export interface FrameBufferNodeOptions {
   saveTo?: string | null
   loadFrom?: string | null
   children?: VisualNode[]
+  expressionEngine?: ExpressionEngine
 }
 
 /**
@@ -67,6 +73,12 @@ export class FrameBufferNode implements VisualNode {
   private compositeQuad: THREE.Mesh | null = null
   private compositeMaterial: THREE.MeshBasicMaterial | null = null
 
+  // Ping-pong feedback decay pass quad & compositing material
+  private feedbackScene: THREE.Scene | null = null
+  private feedbackCamera: THREE.OrthographicCamera | null = null
+  private feedbackQuad: THREE.Mesh | null = null
+  private feedbackMaterial: THREE.ShaderMaterial | null = null
+
   constructor(options: FrameBufferNodeOptions) {
     this.id = options.id
     this.name = options.name ?? 'Frame Buffer'
@@ -83,6 +95,14 @@ export class FrameBufferNode implements VisualNode {
     if (typeof options.positionX === 'number') this.positionXVal = options.positionX
     if (typeof options.positionY === 'number') this.positionYVal = options.positionY
 
+    if (options.expressionEngine) {
+      if (typeof options.opacity === 'string') this.bindExpression('opacity', options.opacity, options.expressionEngine)
+      if (typeof options.scale === 'string') this.bindExpression('scale', options.scale, options.expressionEngine)
+      if (typeof options.rotation === 'string') this.bindExpression('rotation', options.rotation, options.expressionEngine)
+      if (typeof options.positionX === 'string') this.bindExpression('positionX', options.positionX, options.expressionEngine)
+      if (typeof options.positionY === 'string') this.bindExpression('positionY', options.positionY, options.expressionEngine)
+    }
+
     if (options.children) {
       for (const child of options.children) {
         this.addChild(child)
@@ -90,6 +110,9 @@ export class FrameBufferNode implements VisualNode {
     }
 
     this.initCompositeQuad()
+    if (this.feedback) {
+      this.initFeedbackQuad()
+    }
   }
 
   private initCompositeQuad(): void {
@@ -102,6 +125,15 @@ export class FrameBufferNode implements VisualNode {
     })
     this.compositeQuad = new THREE.Mesh(geometry, this.compositeMaterial)
     this.compositeScene.add(this.compositeQuad)
+  }
+
+  private initFeedbackQuad(): void {
+    this.feedbackScene = new THREE.Scene()
+    this.feedbackCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1)
+    const geometry = new THREE.PlaneGeometry(2, 2)
+    this.feedbackMaterial = createCompositingMaterial()
+    this.feedbackQuad = new THREE.Mesh(geometry, this.feedbackMaterial)
+    this.feedbackScene.add(this.feedbackQuad)
   }
 
   get opacity(): number {
@@ -269,8 +301,33 @@ export class FrameBufferNode implements VisualNode {
   }
 
   /**
+   * Returns the feedback pass ShaderMaterial, if feedback mode is enabled.
+   */
+  getFeedbackMaterial(): THREE.ShaderMaterial | null {
+    return this.feedbackMaterial
+  }
+
+  /**
+   * Resets both ping-pong buffers by clearing their contents to black.
+   */
+  clearBuffer(): void {
+    if (!this.renderer || !this.renderer.clear || !this.renderer.setRenderTarget) return
+    const prevTarget = this.renderer.getRenderTarget ? this.renderer.getRenderTarget() : null
+    if (this.fboA) {
+      this.renderer.setRenderTarget(this.fboA)
+      this.renderer.clear()
+    }
+    if (this.fboB) {
+      this.renderer.setRenderTarget(this.fboB)
+      this.renderer.clear()
+    }
+    this.renderer.setRenderTarget(prevTarget)
+  }
+
+  /**
    * Executes the buffer render lifecycle: updates dynamic parameters, renders children
-   * into the write FBO, swaps ping-pong buffers, and composites to the parent target.
+   * into the write FBO (with ping-pong feedback if active), swaps ping-pong buffers,
+   * and composites to the parent target or screen.
    */
   update(ctx: FrameContext): void {
     if (!this.renderer) return
@@ -284,37 +341,70 @@ export class FrameBufferNode implements VisualNode {
 
     const prevTarget = this.renderer.getRenderTarget ? this.renderer.getRenderTarget() : null
     const writeTarget = this.getWriteTarget()
+    const readTarget = this.getReadTarget()
 
     // 1. Direct render pass into write FBO
     if (writeTarget && this.renderer.setRenderTarget) {
       this.renderer.setRenderTarget(writeTarget)
     }
 
-    if (this.isMaster && this.blendMode === 'replace' && !this.feedback) {
+    if (this.feedback && readTarget && this.feedbackMaterial && this.feedbackScene && this.feedbackCamera) {
+      // Clear write target
       if (this.renderer.clear) {
         this.renderer.clear()
       }
+
+      // Configure feedback shader uniforms
+      this.feedbackMaterial.uniforms.uBlendTexture.value = readTarget.texture
+      this.feedbackMaterial.uniforms.uHasBase.value = 0
+      this.feedbackMaterial.uniforms.uOpacity.value = this.opacityVal
+      this.feedbackMaterial.uniforms.uBlendMode.value = BLEND_MODES[this.blendMode as BlendModeName] ?? 0
+      this.feedbackMaterial.uniforms.uScale.value.set(this.scaleVal, this.scaleVal)
+      this.feedbackMaterial.uniforms.uRotation.value = this.rotationVal
+      this.feedbackMaterial.uniforms.uOffset.value.set(this.positionXVal, this.positionYVal)
+
+      // Render decayed and transformed feedback quad
+      this.renderer.render(this.feedbackScene, this.feedbackCamera)
+
+      // Render children on top of feedback quad without clearing
+      const prevAutoClear = this.renderer.autoClear
+      this.renderer.autoClear = false
+      if (this.renderer.clearDepth) {
+        this.renderer.clearDepth()
+      }
+
+      for (const child of this.children) {
+        child.update(ctx)
+      }
+
+      this.renderer.autoClear = prevAutoClear ?? true
+    } else {
+      if (this.isMaster && this.blendMode === 'replace') {
+        if (this.renderer.clear) {
+          this.renderer.clear()
+        }
+      }
+
+      for (const child of this.children) {
+        child.update(ctx)
+      }
     }
 
-    // 2. Render all children
-    for (const child of this.children) {
-      child.update(ctx)
-    }
-
-    // 3. Restore parent render target
+    // 2. Restore parent render target
     if (this.renderer.setRenderTarget) {
       this.renderer.setRenderTarget(prevTarget)
     }
 
-    // 4. Swap ping-pong buffers if feedback is active
+    // 3. Swap ping-pong buffers if feedback is active
     if (this.feedback) {
       this.swap()
     }
 
-    // 5. Composite to display if master root
-    if (this.isMaster && writeTarget && this.compositeScene && this.compositeCamera && this.compositeMaterial) {
-      this.compositeMaterial.map = writeTarget.texture
-      this.compositeMaterial.opacity = this.opacityVal
+    // 4. Composite to display if master root
+    const displayTarget = this.feedback ? this.getReadTarget() : writeTarget
+    if (this.isMaster && displayTarget && this.compositeScene && this.compositeCamera && this.compositeMaterial) {
+      this.compositeMaterial.map = displayTarget.texture
+      this.compositeMaterial.opacity = 1.0
       this.renderer.render(this.compositeScene, this.compositeCamera)
     }
   }
@@ -342,6 +432,17 @@ export class FrameBufferNode implements VisualNode {
     }
     this.compositeScene = null
     this.compositeCamera = null
+
+    if (this.feedbackQuad) {
+      this.feedbackQuad.geometry.dispose()
+      this.feedbackQuad = null
+    }
+    if (this.feedbackMaterial) {
+      this.feedbackMaterial.dispose()
+      this.feedbackMaterial = null
+    }
+    this.feedbackScene = null
+    this.feedbackCamera = null
 
     for (const child of this.children) {
       if (child.dispose) {

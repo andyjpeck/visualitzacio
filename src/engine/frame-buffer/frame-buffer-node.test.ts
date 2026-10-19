@@ -13,6 +13,7 @@ describe('FrameBufferNode', () => {
     const canvas = document.createElement('canvas')
     mockRenderer = {
       domElement: canvas,
+      autoClear: true,
       setSize: vi.fn(),
       setPixelRatio: vi.fn(),
       render: vi.fn(),
@@ -21,6 +22,7 @@ describe('FrameBufferNode', () => {
       }),
       getRenderTarget: vi.fn(() => currentRenderTarget),
       clear: vi.fn(),
+      clearDepth: vi.fn(),
       dispose: vi.fn(),
     }
   })
@@ -140,5 +142,89 @@ describe('FrameBufferNode', () => {
     expect(disposeSpyA).toHaveBeenCalled()
     expect(disposeSpyB).toHaveBeenCalled()
     expect(node.getWriteTarget()).toBeNull()
+  })
+
+  it('evaluates dynamic expressions and updates feedback shader uniforms', async () => {
+    const { ExpressionEngine } = await import('../expressions/expression-engine')
+    const engine = new ExpressionEngine()
+
+    const node = new FrameBufferNode({
+      id: 'fb-expr',
+      feedback: true,
+      blendMode: 'additive',
+      expressionEngine: engine,
+      opacity: '0.8 + $BASS * 0.1',
+      scale: '1.0 + $BEAT * 0.2',
+      rotation: '$TIME * 0.5',
+      positionX: '$MID * 0.1',
+      positionY: '$TREBLE * -0.1',
+    })
+
+    node.init(mockRenderer)
+    node.resize(800, 600, 1.0, 1.0)
+
+    const mat = node.getFeedbackMaterial()
+    expect(mat).toBeDefined()
+
+    const ctx = createDefaultFrameContext()
+    ctx.$TIME = 2.0
+    ctx.$BASS = 0.5
+    ctx.$BEAT = 1.0
+    ctx.$MID = 0.4
+    ctx.$TREBLE = 0.2
+
+    node.update(ctx)
+
+    expect(node.opacity).toBeCloseTo(0.85) // 0.8 + 0.5 * 0.1
+    expect(node.scale).toBeCloseTo(1.2) // 1.0 + 1.0 * 0.2
+    expect(node.rotation).toBeCloseTo(1.0) // 2.0 * 0.5
+    expect(node.positionX).toBeCloseTo(0.04) // 0.4 * 0.1
+    expect(node.positionY).toBeCloseTo(-0.02) // 0.2 * -0.1
+
+    expect(mat?.uniforms.uOpacity.value).toBeCloseTo(0.85)
+    expect(mat?.uniforms.uScale.value.x).toBeCloseTo(1.2)
+    expect(mat?.uniforms.uRotation.value).toBeCloseTo(1.0)
+    expect(mat?.uniforms.uOffset.value.x).toBeCloseTo(0.04)
+    expect(mat?.uniforms.uOffset.value.y).toBeCloseTo(-0.02)
+    expect(mat?.uniforms.uBlendMode.value).toBe(1) // BLEND_MODES.additive
+  })
+
+  it('manages autoClear and clearDepth safely during feedback and child passes', () => {
+    const node = new FrameBufferNode({
+      id: 'fb-autoclear',
+      feedback: true,
+    })
+    node.init(mockRenderer)
+    node.resize(800, 600, 1.0, 1.0)
+
+    let autoClearDuringChildUpdate = true
+    const childMock: VisualNode = {
+      update: vi.fn(() => {
+        autoClearDuringChildUpdate = mockRenderer.autoClear ?? true
+      }),
+    }
+    node.addChild(childMock)
+
+    const ctx = createDefaultFrameContext()
+    node.update(ctx)
+
+    expect(mockRenderer.clear).toHaveBeenCalled()
+    expect(mockRenderer.clearDepth).toHaveBeenCalled()
+    expect(autoClearDuringChildUpdate).toBe(false)
+    expect(mockRenderer.autoClear).toBe(true)
+  })
+
+  it('clears both ping-pong buffers when clearBuffer is invoked', () => {
+    const node = new FrameBufferNode({
+      id: 'fb-clear',
+      feedback: true,
+    })
+    node.init(mockRenderer)
+    node.resize(800, 600, 1.0, 1.0)
+
+    node.clearBuffer()
+
+    // Should set target to fboA and clear, then fboB and clear
+    expect(mockRenderer.clear).toHaveBeenCalledTimes(2)
   })
 })

@@ -15,14 +15,14 @@
 
 ## Phase 2: Ping-Pong Feedback Motion Trails & Multi-Pass Shader Blending (TDD)
 
-- [ ] Task: Multi-Pass Blending Shader Pass (TDD)
-  - [ ] Write unit tests verifying the 6 compositing blend modes (`replace`, `additive`, `maximum`, `minimum`, `subtractive`, `multiplicative`) and opacity modulation math.
-  - [ ] Implement custom GLSL full-screen quad shader (`CompositingShader`) with uniform bindings.
-- [ ] Task: Audio-Reactive Feedback Motion Modulation (TDD)
-  - [ ] Write integration tests verifying dynamic expression bindings on `opacity`, `scale`, and `rotation` driving feedback trails.
-  - [ ] Connect `ExpressionEngine` dynamic parameters to `FrameBufferNode` feedback uniforms.
-- [ ] Task: Phase 2 Checkpoint & Visual Verification
-  - [ ] Run test suite (`npm test`) and visually verify motion trails in browser with procedural beat.
+- [x] Task: Multi-Pass Blending Shader Pass (TDD)
+  - [x] Write unit tests verifying the 6 compositing blend modes (`replace`, `additive`, `maximum`, `minimum`, `subtractive`, `multiplicative`) and opacity modulation math.
+  - [x] Implement custom GLSL full-screen quad shader (`CompositingShader`) with uniform bindings.
+- [x] Task: Audio-Reactive Feedback Motion Modulation (TDD)
+  - [x] Write integration tests verifying dynamic expression bindings on `opacity`, `scale`, and `rotation` driving feedback trails.
+  - [x] Connect `ExpressionEngine` dynamic parameters to `FrameBufferNode` feedback uniforms.
+- [x] Task: Phase 2 Checkpoint & Visual Verification
+  - [x] Run test suite (`npm test`) and visually verify motion trails in browser with procedural beat.
 
 ---
 

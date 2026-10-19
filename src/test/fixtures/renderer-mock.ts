@@ -6,6 +6,7 @@ export function createMockRenderer(): RendererLike {
   let currentTarget: unknown = null
   return {
     domElement: canvas,
+    autoClear: true,
     setSize: vi.fn(),
     setPixelRatio: vi.fn(),
     render: vi.fn(),
@@ -14,6 +15,7 @@ export function createMockRenderer(): RendererLike {
     }),
     getRenderTarget: vi.fn(() => currentTarget),
     clear: vi.fn(),
+    clearDepth: vi.fn(),
     dispose: vi.fn(),
   }
 }

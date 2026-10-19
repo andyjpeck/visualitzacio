@@ -5,12 +5,14 @@ import type { FrameContext } from './frame-context'
  */
 export interface RendererLike {
   domElement: HTMLCanvasElement
+  autoClear?: boolean
   setSize(width: number, height: number, updateStyle?: boolean): void
   setPixelRatio(pixelRatio: number): void
   render(scene: unknown, camera: unknown): void
   setRenderTarget?(target: unknown): void
   getRenderTarget?(): unknown
   clear?(): void
+  clearDepth?(): void
   dispose(): void
 }
 
