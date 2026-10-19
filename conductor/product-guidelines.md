@@ -51,7 +51,26 @@ To maintain a unified, predictable visual language across all components when ex
     - **Variables (`$`):** Lists all system variables with human-readable definitions from the [System Variables Reference](./system_variables.md).
     - **System Functions (`#`):** Lists all system functions with full signatures, parameter descriptions, and return value ranges from the [System Functions Reference](./system_functions.md).
     - Full keyboard navigation (Up/Down arrow keys, Enter/Tab to select and insert with cursor positioned inside function parentheses).
-  - **Expression Validation & Status Chip:** Validates syntax upon typing. Displays an evaluated checkmark or result summary chip. Invalid formulas pulse amber/red with an inline tooltip, safely retaining the previous valid frame value (or default fixed value on frame 0) without breaking rendering.
+  - **Strict Syntax Validation & Feedback:**
+    - Validates syntax on every keystroke with immediate status icons (`Syntax Valid` check or `Syntax Error` cross).
+    - Rejects misspelled system function names (e.g. `#BEAzT(...)`) or unknown variable identifiers (`$FOO`) with explicit, actionable error diagnostics, preventing silent evaluation failures.
+    - Invalid formulas pulse amber/red with an inline tooltip, safely falling back to the designated default value without terminating the render loop.
+  - **60 FPS Real-Time Evaluation & Waveform Sparkline Chart:**
+    - **Direct DOM Telemetry:** Real-time numerical readout updates directly via DOM element refs at 60 FPS, completely bypassing virtual-DOM diffing and React re-renders.
+    - **Sliding-Window Sparkline Canvas:** A dedicated `<canvas>` renders a 180-frame sliding window (~3 seconds of real-time history) with dynamic headroom scaling, electric cyan stroke, and linear gradient fill beneath the curve.
+    - **Dual-Scale Extrema Readout:** Displays tabular `min:` and `max:` readouts computed in real-time from the active sliding window to give immediate visual feedback on dynamic range.
+  - **Strict Memory Lifecycle & Multi-Component Performance Rules:**
+    - *Scalability Mandate:* Visualització presets may contain dozens of simultaneously active components and modulated parameters. To prevent memory exhaustion and GC stutter:
+    - Sliding-window history buffers and canvas redraw loops **must only be maintained for the actively open / expanded expression control or dialog**.
+    - Whenever an expression control, popover, or testbed is closed, collapsed, or switches to a different formula, all history arrays **must be immediately cleared** (`length = 0` / released) and animation frame callbacks stopped.
+    - Background components evaluate AST expressions statelessly with zero historical memory buffering.
+  - **Draggable Dialogs & Viewport Clamping:**
+    - Floating expression testbeds and detailed formula dialogs support mouse/touch dragging via header handles with pointer capture (`setPointerCapture` / `releasePointerCapture`) for smooth movement across rapid gestures.
+    - Dialog positions automatically clamp to viewport boundaries during dragging and on browser window resize events.
+  - **Interactive Token Discovery & Quick Reference:**
+    - Expandable / collapsible Quick Reference section positioned prominently above example presets, persisting user open/closed state across sessions.
+    - Interactive chips with informative hover tooltips detailing parameter descriptions, audio characteristics, and expected output ranges.
+    - One-click token insertion directly appending into the active formula field.
 
 ## 4. Diagnostics & Error Handling
 - **Dedicated Diagnostics Console:** An integrated error and log console (capturing shader compilation issues, audio context states, buffer routing errors, and formula evaluation faults) that remains closed/collapsed by default.
