@@ -38,9 +38,9 @@
 ## Active Milestone: Track 3 — Modular Frame Buffer, Ping-Pong Feedback & Named Buffers
 
 1. **Track Planning (`conductor-new-track`):**
-   - [ ] Plan Track 3: "Modular Frame Buffer, Ping-Pong Feedback & Named Buffers".
-   - [ ] Generate `conductor/tracks/track_3_frame_buffer_pingpong_feedback/spec.md` and `plan.md`.
-   - [ ] Update `conductor/tracks.md`.
+   - [x] Plan Track 3: "Modular Frame Buffer, Ping-Pong Feedback & Named Buffers".
+   - [x] Generate `conductor/tracks/track_3_frame_buffer_pingpong_feedback/spec.md` and `plan.md`.
+   - [x] Update `conductor/tracks.md`.
 
 2. **Track 3 Implementation (`conductor-implement`):**
    - [ ] Phase 1: Frame Buffer Node & Dual-FBO Ping-Pong Core.
