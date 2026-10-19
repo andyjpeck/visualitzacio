@@ -16,6 +16,11 @@
     every public method must be commented with JSDoc, and every directory must
     have a `README.md` describing its purpose and subdirectories. Documentation
     must ALWAYS be reviewed with the exact same rigor and depth as code changes.
+8.  **Stateless Review & Decomposition at Track Completion:** Every track must
+    conclude with a comprehensive, stateless code and documentation review
+    before marking the track complete or merging into `main`. Cleaning up after
+    every track prevents the codebase from drifting into an unhealthy state that
+    is harder to remediate later.
 
 ## Task Workflow
 
@@ -226,6 +231,32 @@ that also concludes a phase in `plan.md`.
 10. **Announce Completion:** Inform the user that the phase is complete and the
     checkpoint has been created, with the detailed verification report attached
     as a git note.
+
+### Track Completion Protocol: Stateless Review & Decomposition Hygiene
+
+**Trigger:** This mandatory protocol must be executed at the conclusion of every track, before the track can be marked as complete or merged into `main`. The goal is to enforce continuous architectural hygiene and prevent technical debt or documentation drift from accumulating across tracks.
+
+1.  **File Size & Single-Responsibility Audit:**
+    -   Perform a comprehensive, stateless audit of all files modified in the track and all large files in `src/`.
+    -   Identify classes, UI components, or hooks that exceed recommended length thresholds (>250–300 lines) or accumulate multiple disparate responsibilities.
+    -   Decompose monolithic files into focused, single-responsibility modules and extract reusable UI primitives (e.g. into `src/ui/expressions/`, `src/ui/hooks/`, or shared utilities) to make upcoming tracks faster and cleaner to build.
+
+2.  **Code Hygiene & Dead Code Removal:**
+    -   Audit the repository for orphaned starter templates, unused CSS files, unreferenced image/SVG assets, dead code, or redundant helper functions.
+    -   Clean up duplicated logic, such as repeated DOM property updating loops or duplicated mathematical clamping functions.
+    -   Ensure standard coding conventions (e.g., semicolon-free style, named exports, avoidance of `.tsx` extensions in imports) are adhered to consistently.
+
+3.  **Global Documentation & Specification Synchronization:**
+    -   Synchronize root `README.md` with accurate feature descriptions, directory listings, and latest test counts.
+    -   Verify and update every directory `README.md` across `src/` and `conductor/` to accurately describe all child files and subdirectories.
+    -   Update all Conductor references, including `system_variables.md`, `system_functions.md`, `tasks.md`, `tracks.md`, `tech-stack.md`, and track specs/plans.
+    -   Ensure every public class, method, and component contains up-to-date JSDoc documentation.
+
+4.  **Quality & Verification Gates:**
+    -   **Linter:** Execute `npm run lint` (`oxlint`). Must pass with **0 warnings and 0 errors**.
+    -   **Automated Tests:** Execute `npm test` (`vitest`). Must pass with **100% test pass rate**.
+    -   **Production Build:** Execute `npm run build` (`tsc -b && vite build`). Must complete cleanly with zero compilation errors.
+    -   **Pre-Upload Verification:** Prompt the user to run pre-upload checks before pushing commits to the remote repository.
 
 ### Quality Gates
 

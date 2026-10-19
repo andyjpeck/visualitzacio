@@ -60,3 +60,12 @@
   - [x] Execute production build (`npm run build`).
   - [x] Execute full unit test suite (`npm test`).
   - [x] Commit all completed deliverables following Conventional Commits referencing Issue #3.
+- [x] Task: Track Completion Stateless Review, Decomposition & Documentation Sync
+  - [x] Conduct stateless repository audit of code complexity, file sizes, and documentation consistency.
+  - [x] Decompose `FormulaTestbed` (760L -> 195L) into reusable UI components (`src/ui/expressions/`) and hooks (`src/ui/hooks/`).
+  - [x] Decompose `ExpressionEngine` (458L -> 158L) into tokens, validator, and system functions.
+  - [x] Fix `#FFT` frequency mapping to use logarithmic scaling ($20\text{ Hz} \rightarrow 20,000\text{ Hz}$).
+  - [x] Modularize `Toolbar`, `PresetSettingsModal`, and `AudioManager` (extract file loader and fix background playback edge case).
+  - [x] Purge dead assets and synchronize 18 documentation inconsistencies across Conductor and repository READMEs.
+  - [x] Verify 100% pass rate across 117 tests and zero oxlint warnings.
+
