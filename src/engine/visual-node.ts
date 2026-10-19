@@ -1,6 +1,8 @@
 import * as THREE from 'three'
 import type { FrameContext } from '../contracts/frame-context'
 import type { RendererLike, VisualNode } from '../contracts/renderer-like'
+import { createDynamicParam, type DynamicParam } from './expressions/dynamic-param'
+import type { ExpressionEngine } from './expressions/expression-engine'
 
 /**
  * 3D visual testbed node featuring an audio-reactive cyberpunk faceted crystal,
@@ -15,6 +17,7 @@ export class TestVisualNode implements VisualNode {
   private readonly wireMaterial: THREE.MeshBasicMaterial
   private readonly haloRing: THREE.Mesh<THREE.TorusGeometry, THREE.MeshBasicMaterial>
   private renderer?: RendererLike
+  private scaleParam: DynamicParam<number> | null = null
 
   /**
    * Constructs the 3D scene, perspective camera, faceted geometry, and neon lighting rig.
@@ -100,6 +103,20 @@ export class TestVisualNode implements VisualNode {
   }
 
   /**
+   * Binds an optional dynamic mathematical expression to drive crystal scale modulation.
+   *
+   * @param expr - Numeric constant, formula string (e.g. "1.0 + $BASS * 1.5 + #BEAT(0.2)"), or null to reset.
+   * @param engine - Active ExpressionEngine instance.
+   */
+  setScaleExpression(expr: string | number | null, engine?: ExpressionEngine): void {
+    if (expr === null || expr === undefined || expr === '') {
+      this.scaleParam = null
+    } else if (engine) {
+      this.scaleParam = createDynamicParam(expr, engine)
+    }
+  }
+
+  /**
    * Animates rotation and modulates scale, emissive intensity, and halo rings based on FrameContext audio telemetry.
    *
    * @param ctx - Real-time FrameContext containing telemetry ($TIME, $BASS, $MID, $TREBLE, $BEAT, $RMS).
@@ -109,8 +126,9 @@ export class TestVisualNode implements VisualNode {
     this.mesh.rotation.x = ctx.$TIME * 0.4
     this.mesh.rotation.y = ctx.$TIME * 0.6
 
-    // Scale pulses with $BASS and instantaneous $BEAT flash (matches test contracts)
-    const baseScale = 1.0 + ctx.$BASS * 0.5 + ctx.$BEAT * 0.3
+    // Scale pulses with $BASS and instantaneous $BEAT flash, or dynamic expression if bound
+    const defaultScale = 1.0 + ctx.$BASS * 0.5 + ctx.$BEAT * 0.3
+    const baseScale = this.scaleParam ? this.scaleParam.evaluate(ctx, defaultScale) : defaultScale
     this.mesh.scale.set(baseScale, baseScale, baseScale)
 
     // Color shifts with $MID and $TREBLE energy

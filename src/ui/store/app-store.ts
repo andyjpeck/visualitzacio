@@ -25,6 +25,11 @@ export interface AppState {
   resolutionScale: ResolutionScale
   audioBands: AudioBandsSettings
 
+  // Formula Testbed HUD state
+  isFormulaTestbedOpen: boolean
+  activeFormula: string
+  bindFormulaToScene: boolean
+
   // Actions
   setIsPlaying: (isPlaying: boolean) => void
   togglePlay: () => void
@@ -38,6 +43,11 @@ export interface AppState {
   setIsPresetSettingsOpen: (isOpen: boolean) => void
   togglePresetSettings: () => void
   setCurrentFps: (fps: number) => void
+
+  setIsFormulaTestbedOpen: (isOpen: boolean) => void
+  toggleFormulaTestbed: () => void
+  setActiveFormula: (formula: string) => void
+  setBindFormulaToScene: (bind: boolean) => void
 
   setTargetFps: (fps: number) => void
   setResolutionScale: (scale: ResolutionScale) => void
@@ -60,6 +70,10 @@ export const useAppStore = create<AppState>((set) => ({
   resolutionScale: 1.0,
   audioBands: { ...DEFAULT_AUDIO_BANDS },
 
+  isFormulaTestbedOpen: false,
+  activeFormula: '1.0 + $BASS * 0.8 + #BEAT(0.2) * 0.5',
+  bindFormulaToScene: true,
+
   setIsPlaying: (isPlaying) => set({ isPlaying }),
   togglePlay: () => set((state) => ({ isPlaying: !state.isPlaying })),
   setSourceType: (sourceType) => set({ sourceType, audioError: null }),
@@ -75,6 +89,13 @@ export const useAppStore = create<AppState>((set) => ({
   togglePresetSettings: () =>
     set((state) => ({ isPresetSettingsOpen: !state.isPresetSettingsOpen })),
   setCurrentFps: (currentFps) => set({ currentFps: Math.round(currentFps) }),
+
+  setIsFormulaTestbedOpen: (isFormulaTestbedOpen) =>
+    set({ isFormulaTestbedOpen }),
+  toggleFormulaTestbed: () =>
+    set((state) => ({ isFormulaTestbedOpen: !state.isFormulaTestbedOpen })),
+  setActiveFormula: (activeFormula) => set({ activeFormula }),
+  setBindFormulaToScene: (bindFormulaToScene) => set({ bindFormulaToScene }),
 
   setTargetFps: (targetFps) => set({ targetFps }),
   setResolutionScale: (resolutionScale) => set({ resolutionScale }),

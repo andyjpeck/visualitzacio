@@ -16,3 +16,11 @@ The `engine` directory contains the high-frequency WebGL rendering orchestrator 
   - Contains `TestVisualNode`, the primary audio-reactive 3D scene.
   - Features a prominent multifaceted icosahedron crystal with neon emissive glow, an outer wireframe lattice, an orbiting cyberpunk halo ring, and dynamic multi-point neon lighting (cyan, magenta, amber).
   - Modulates rotation with `$TIME`, scale with `$BASS` and `$BEAT`, wireframe colors with `$TREBLE`, and emissive brilliance with `$RMS`.
+
+## Subdirectories
+
+- [**`expressions/`**](file:///C:/Users/andyj/Documents/visualitzacio/src/engine/expressions/README.md):
+  - Mathematical expression compiler and evaluator based on `expr-eval`.
+  - Zero-allocation per-frame scope bindings for all system variables (`$TIME`, `$BASS`, etc.).
+  - System functions library (`#BEAT`, `#BEAT_FRAMES`, `#FFT`, `#WAVEFORM`, `#TRI`, `#SAW`, `#SQR`).
+  - `DynamicParam<T>` parameter binding abstraction.

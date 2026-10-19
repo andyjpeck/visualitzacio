@@ -48,6 +48,8 @@ export function Toolbar({ audioManager }: ToolbarProps): React.ReactElement {
   const togglePresetSettings = useAppStore(
     (state) => state.togglePresetSettings,
   )
+  const isFormulaTestbedOpen = useAppStore((state) => state.isFormulaTestbedOpen)
+  const toggleFormulaTestbed = useAppStore((state) => state.toggleFormulaTestbed)
 
   const isMicActive = sourceType === 'mic'
 
@@ -358,6 +360,21 @@ export function Toolbar({ audioManager }: ToolbarProps): React.ReactElement {
           }`}
         >
           <Activity className="w-4 h-4" />
+        </button>
+
+        {/* Dynamic Formula Testbed f(x) Button */}
+        <button
+          type="button"
+          onClick={toggleFormulaTestbed}
+          aria-label="Open Dynamic Expression Testbed"
+          title="Open Dynamic Expression Testbed f(x)"
+          className={`px-2.5 py-1.5 rounded-lg border transition-colors cursor-pointer font-mono font-bold text-xs select-none ${
+            isFormulaTestbedOpen
+              ? 'bg-cyber-cyan/20 border-cyber-cyan text-cyber-cyan shadow-md shadow-cyber-cyan/20'
+              : 'bg-white/5 border-transparent text-slate-300 hover:text-white hover:bg-white/10 hover:border-white/10'
+          }`}
+        >
+          f(x)
         </button>
 
         {/* Preset Settings Modal Button */}

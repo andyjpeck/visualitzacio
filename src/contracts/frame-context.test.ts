@@ -11,6 +11,8 @@ describe('Shared Contracts & Fixtures', () => {
     expect(ctx.$BASS).toBe(0.0)
     expect(ctx.$BEAT).toBe(0.0)
     expect(ctx.$BPM).toBe(120.0)
+    expect(ctx.secondsSinceLastBeat).toBe(999.0)
+    expect(ctx.framesSinceLastBeat).toBe(9999)
   })
 
   it('provides default preset settings with target_fps 60 and resolution_scale 1.0', () => {

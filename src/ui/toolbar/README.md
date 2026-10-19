@@ -10,5 +10,6 @@ This directory contains the main interactive control header of Visualització.
   - **Source Toggle Buttons**: Ordered as **Sample → File → Mic**. Clicking opens file pickers or requests microphone permissions as appropriate.
   - **Progress & Seek Bar**: Dynamically appears when **File** is active, showing current elapsed time, total duration, and a draggable scrubber slider operating on 60 FPS RAF with zero React re-renders.
   - **Master Volume Control**: Interactive range slider adjusting output gain.
+  - **Dynamic Expression Button f(x)**: Opens the interactive Formula Testbed HUD modal for live mathematical parameter modulation.
   - **HUD Toggle & Settings Gear**: Toggles FPS overlay and opens the Preset Performance Settings modal.
   - **Error Toast Banner**: Displays graceful error notifications if microphone permissions are denied or file decoding fails.
