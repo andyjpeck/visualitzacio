@@ -93,6 +93,9 @@ export function PresetSettingsModal(): React.ReactElement | null {
                 )
               })}
             </div>
+            <p className="mt-2 text-[11px] text-slate-400 font-mono leading-relaxed">
+              * Note: Actual rendering speed is capped by your display&apos;s physical refresh rate and browser VSync (e.g., 60Hz displays will cap at 60 FPS).
+            </p>
           </div>
 
           {/* Resolution Scale */}
