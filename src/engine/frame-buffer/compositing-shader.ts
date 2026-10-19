@@ -179,12 +179,14 @@ void main() {
   // uBlendTexture = fresh child render / foreground (untransformed at screen vUv)
   vec4 fg = texture2D(uBlendTexture, vUv);
 
+  // Compute effective foreground intensity/alpha for alpha-masking
+  float fgAlpha = fg.a > 0.0 ? fg.a : clamp(max(fg.r, max(fg.g, fg.b)) * 3.0, 0.0, 1.0);
+
   vec4 result = bg;
 
   if (uBlendMode == 0) {
     // replace: blend fg over decayed bg based on fg opacity/alpha
-    float alpha = fg.a > 0.0 ? fg.a : clamp(max(fg.r, max(fg.g, fg.b)) * 3.0, 0.0, 1.0);
-    result = mix(bg, fg, alpha);
+    result = mix(bg, fg, fgAlpha);
   } else if (uBlendMode == 1) {
     // additive: add fresh foreground light to background trails
     result = clamp(bg + fg, 0.0, 1.0);
@@ -192,20 +194,28 @@ void main() {
     // maximum: brightest per-channel pixels win
     result = max(bg, fg);
   } else if (uBlendMode == 3) {
-    // minimum: darkest per-channel pixels win (ignoring empty transparent background)
-    if (bg.a < 0.01) {
+    // minimum: darkest per-channel pixels win (falls back to fg where bg is empty)
+    if (bg.a < 0.01 && length(bg.rgb) < 0.01) {
       result = fg;
-    } else if (fg.a < 0.01) {
+    } else if (fgAlpha < 0.01) {
       result = bg;
     } else {
       result = min(bg, fg);
     }
   } else if (uBlendMode == 4) {
-    // subtractive: subtract foreground intensity from background
-    result = max(vec4(0.0), bg - fg);
+    // subtractive: inverted foreground modulation on background trails, falling back to fg when trails are dark
+    if (bg.a < 0.01 && length(bg.rgb) < 0.01) {
+      result = fg;
+    } else {
+      result = vec4(max(vec3(0.0), bg.rgb - fg.rgb), max(bg.a, fg.a));
+    }
   } else if (uBlendMode == 5) {
-    // multiplicative: multiply background trails by foreground colors
-    result = bg * fg;
+    // multiplicative: color-filters feedback trails where both exist, preserving fresh foreground on empty background
+    if (bg.a < 0.01 && length(bg.rgb) < 0.01) {
+      result = fg;
+    } else {
+      result = vec4(bg.rgb * fg.rgb + fg.rgb * 0.15, max(bg.a, fg.a));
+    }
   }
 
   gl_FragColor = result;
