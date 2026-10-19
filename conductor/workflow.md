@@ -236,10 +236,10 @@ that also concludes a phase in `plan.md`.
 
 **Trigger:** This mandatory protocol must be executed at the conclusion of every track, before the track can be marked as complete or merged into `main`. The goal is to enforce continuous architectural hygiene and prevent technical debt or documentation drift from accumulating across tracks.
 
-1.  **File Size & Single-Responsibility Audit:**
-    -   Perform a comprehensive, stateless audit of all files modified in the track and all large files in `src/`.
-    -   Identify classes, UI components, or hooks that exceed recommended length thresholds (>250–300 lines) or accumulate multiple disparate responsibilities.
-    -   Decompose monolithic files into focused, single-responsibility modules and extract reusable UI primitives (e.g. into `src/ui/expressions/`, `src/ui/hooks/`, or shared utilities) to make upcoming tracks faster and cleaner to build.
+1.  **Logical Scope & Single-Responsibility Audit:**
+    -   Perform a comprehensive, stateless audit of all files modified in the track and any large files in `src/`.
+    -   Use file size as an initial indicator and heuristic to evaluate whether a file can be logically decomposed, rather than a strict line-count rule. Larger files are entirely acceptable as long as they maintain a clear, narrow, and cohesive scope.
+    -   Decompose files when they accumulate multiple disparate responsibilities or contain reusable logic (e.g. data catalogs, dragging logic, canvas renderers, file I/O) that can be logically extracted into focused modules or shared UI primitives (e.g. into `src/ui/expressions/`, `src/ui/hooks/`, or shared utilities).
 
 2.  **Code Hygiene & Dead Code Removal:**
     -   Audit the repository for orphaned starter templates, unused CSS files, unreferenced image/SVG assets, dead code, or redundant helper functions.
