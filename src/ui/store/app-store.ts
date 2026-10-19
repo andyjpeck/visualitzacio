@@ -35,6 +35,8 @@ function saveBoolToStorage(key: string, value: boolean): void {
   }
 }
 
+export type DialogId = 'preset-settings' | 'formula-testbed' | 'template-selector'
+
 export interface AppState {
   // Audio state (<10 Hz user actions)
   isPlaying: boolean
@@ -48,6 +50,7 @@ export interface AppState {
 
   // HUD & UI overlay state
   showFpsOverlay: boolean
+  dialogStack: DialogId[]
   isPresetSettingsOpen: boolean
   currentFps: number
 
@@ -87,6 +90,13 @@ export interface AppState {
 
   setShowFpsOverlay: (show: boolean) => void
   toggleFpsOverlay: () => void
+
+  // Dialog Stack Navigation Actions
+  openDialog: (id: DialogId) => void
+  closeDialog: (id?: DialogId) => void
+  toggleDialog: (id: DialogId) => void
+  closeAllDialogs: () => void
+
   setIsPresetSettingsOpen: (isOpen: boolean) => void
   togglePresetSettings: () => void
   setCurrentFps: (fps: number) => void
@@ -118,6 +128,39 @@ export interface AppState {
   resetAudioBands: () => void
 }
 
+function computeDialogState(stack: DialogId[]) {
+  const active = stack[stack.length - 1] ?? null
+  return {
+    dialogStack: stack,
+    isPresetSettingsOpen: active === 'preset-settings',
+    isFormulaTestbedOpen: active === 'formula-testbed',
+    isTemplateSelectorOpen: active === 'template-selector',
+  }
+}
+
+function pushDialog(stack: DialogId[], id: DialogId): DialogId[] {
+  const next = stack.filter((d) => (d as DialogId) !== id)
+  next.push(id)
+  return next
+}
+
+function removeDialog(stack: DialogId[], id?: DialogId): DialogId[] {
+  if (id) {
+    return stack.filter((d) => (d as DialogId) !== id)
+  }
+  return stack.slice(0, -1)
+}
+
+function toggleDialogInStack(stack: DialogId[], id: DialogId): DialogId[] {
+  const top = stack[stack.length - 1]
+  if (top === id) {
+    return stack.slice(0, -1)
+  }
+  const next = stack.filter((d) => (d as DialogId) !== id)
+  next.push(id)
+  return next
+}
+
 export const useAppStore = create<AppState>((set) => ({
   isPlaying: false,
   sourceType: 'sample',
@@ -129,6 +172,7 @@ export const useAppStore = create<AppState>((set) => ({
   audioLoadingStage: '',
 
   showFpsOverlay: true,
+  dialogStack: [],
   isPresetSettingsOpen: false,
   currentFps: 60,
 
@@ -170,34 +214,60 @@ export const useAppStore = create<AppState>((set) => ({
   setShowFpsOverlay: (showFpsOverlay) => set({ showFpsOverlay }),
   toggleFpsOverlay: () =>
     set((state) => ({ showFpsOverlay: !state.showFpsOverlay })),
-  setIsPresetSettingsOpen: (isPresetSettingsOpen) =>
-    set({
-      isPresetSettingsOpen,
-      ...(isPresetSettingsOpen ? { isFormulaTestbedOpen: false, isTemplateSelectorOpen: false } : {}),
-    }),
-  togglePresetSettings: () =>
+  // Dialog Stack Actions
+  openDialog: (id: DialogId) =>
     set((state) => {
-      const next = !state.isPresetSettingsOpen
-      return {
-        isPresetSettingsOpen: next,
-        ...(next ? { isFormulaTestbedOpen: false, isTemplateSelectorOpen: false } : {}),
+      if (state.dialogStack[state.dialogStack.length - 1] === id) {
+        return state
       }
+      return computeDialogState(pushDialog(state.dialogStack, id))
     }),
+
+  closeDialog: (id?: DialogId) =>
+    set((state) => computeDialogState(removeDialog(state.dialogStack, id))),
+
+  toggleDialog: (id: DialogId) =>
+    set((state) => computeDialogState(toggleDialogInStack(state.dialogStack, id))),
+
+  closeAllDialogs: () =>
+    set({
+      dialogStack: [],
+      isPresetSettingsOpen: false,
+      isFormulaTestbedOpen: false,
+      isTemplateSelectorOpen: false,
+    }),
+
+  // Legacy convenience setters
+  setIsPresetSettingsOpen: (isOpen) =>
+    set((state) =>
+      computeDialogState(
+        isOpen
+          ? pushDialog(state.dialogStack, 'preset-settings')
+          : removeDialog(state.dialogStack, 'preset-settings')
+      )
+    ),
+
+  togglePresetSettings: () =>
+    set((state) =>
+      computeDialogState(toggleDialogInStack(state.dialogStack, 'preset-settings'))
+    ),
+
   setCurrentFps: (currentFps) => set({ currentFps: Math.round(currentFps) }),
 
-  setIsFormulaTestbedOpen: (isFormulaTestbedOpen) =>
-    set({
-      isFormulaTestbedOpen,
-      ...(isFormulaTestbedOpen ? { isPresetSettingsOpen: false, isTemplateSelectorOpen: false } : {}),
-    }),
+  setIsFormulaTestbedOpen: (isOpen) =>
+    set((state) =>
+      computeDialogState(
+        isOpen
+          ? pushDialog(state.dialogStack, 'formula-testbed')
+          : removeDialog(state.dialogStack, 'formula-testbed')
+      )
+    ),
+
   toggleFormulaTestbed: () =>
-    set((state) => {
-      const next = !state.isFormulaTestbedOpen
-      return {
-        isFormulaTestbedOpen: next,
-        ...(next ? { isPresetSettingsOpen: false, isTemplateSelectorOpen: false } : {}),
-      }
-    }),
+    set((state) =>
+      computeDialogState(toggleDialogInStack(state.dialogStack, 'formula-testbed'))
+    ),
+
   setActiveFormula: (activeFormula) => set({ activeFormula }),
   setBindFormulaToScene: (bindFormulaToScene) => set({ bindFormulaToScene }),
   setIsFormulaPresetsOpen: (isFormulaPresetsOpen) => {
@@ -222,19 +292,19 @@ export const useAppStore = create<AppState>((set) => ({
     }),
 
   setSelectedTemplateId: (selectedTemplateId) => set({ selectedTemplateId }),
-  setIsTemplateSelectorOpen: (isTemplateSelectorOpen) =>
-    set({
-      isTemplateSelectorOpen,
-      ...(isTemplateSelectorOpen ? { isPresetSettingsOpen: false, isFormulaTestbedOpen: false } : {}),
-    }),
+  setIsTemplateSelectorOpen: (isOpen) =>
+    set((state) =>
+      computeDialogState(
+        isOpen
+          ? pushDialog(state.dialogStack, 'template-selector')
+          : removeDialog(state.dialogStack, 'template-selector')
+      )
+    ),
+
   toggleTemplateSelector: () =>
-    set((state) => {
-      const next = !state.isTemplateSelectorOpen
-      return {
-        isTemplateSelectorOpen: next,
-        ...(next ? { isPresetSettingsOpen: false, isFormulaTestbedOpen: false } : {}),
-      }
-    }),
+    set((state) =>
+      computeDialogState(toggleDialogInStack(state.dialogStack, 'template-selector'))
+    ),
 
   setFeedbackEnabled: (feedbackEnabled) =>
     set({ feedbackEnabled, isCustomFeedbackConfig: true }),
