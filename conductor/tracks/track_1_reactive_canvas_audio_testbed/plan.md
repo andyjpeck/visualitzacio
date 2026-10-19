@@ -7,10 +7,10 @@
   - [x] Configure Vitest and React Testing Library setup with lightweight `RendererLike`, `Scheduler`, and `createAudioContext` dependency-injection test fixtures
   - [x] Configure ESLint and Prettier per `code_styleguides/typescript.md`
   - [x] Configure `vite.config.ts` (`base: '/visualitzacio/'`) and GitHub Actions workflow (`.github/workflows/deploy.yml`) for automated GitHub Pages deployment
-- [ ] Task: Two-Plane Architecture Skeleton, `FrameContext` & `RenderEngine` (TDD)
-  - [ ] Write unit tests for pre-allocated `FrameContext` mutation (`$TIME`, `$DT` clamped $\le 0.1$, `$FRAME`, `$FPS`, `$WIDTH`, `$HEIGHT`, `$ASPECT`, `$PIXEL_RATIO`), `VisualNode` pass lifecycle, and `RenderEngine` loop pacing against `targetFps` and `resolutionScale`
-  - [ ] Implement `RenderEngine` core class managing `requestAnimationFrame`, throttled FPS telemetry subscriber (250–500ms), 150ms debounced resize with clamped DPR ($\le 2$) scaled by `resolutionScale`, and `webglcontextlost` / `webglcontextrestored` listeners
-  - [ ] Create Zustand store (`useAppStore`) for playback state, HUD settings (`showFpsOverlay`: default `true`, `isPresetSettingsOpen`: default `false`), and preset-wide performance settings (`targetFps`: default `60`, `resolutionScale`: default `1.0`) ensuring zero audio/RAF tick re-renders
+- [x] Task: Two-Plane Architecture Skeleton, `FrameContext` & `RenderEngine` (TDD) (77f44ce)
+  - [x] Write unit tests for pre-allocated `FrameContext` mutation (`$TIME`, `$DT` clamped $\le 0.1$, `$FRAME`, `$FPS`, `$WIDTH`, `$HEIGHT`, `$ASPECT`, `$PIXEL_RATIO`), `VisualNode` pass lifecycle, and `RenderEngine` loop pacing against `targetFps` and `resolutionScale`
+  - [x] Implement `RenderEngine` core class managing `requestAnimationFrame`, throttled FPS telemetry subscriber (250–500ms), 150ms debounced resize with clamped DPR ($\le 2$) scaled by `resolutionScale`, and `webglcontextlost` / `webglcontextrestored` listeners
+  - [x] Create Zustand store (`useAppStore`) for playback state, HUD settings (`showFpsOverlay`: default `true`, `isPresetSettingsOpen`: default `false`), and preset-wide performance settings (`targetFps`: default `60`, `resolutionScale`: default `1.0`) ensuring zero audio/RAF tick re-renders
 - [ ] Task: Phase 1 Visual Checkpoint — Live 60 FPS Canvas & FPS Badge
   - [ ] Mount the Three.js canvas with a baseline `$TIME`-driven rotating geometric shape and the live FPS badge so Phase 1 is immediately visually inspectable in the browser and deployed to GitHub Pages
 
