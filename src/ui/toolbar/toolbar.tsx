@@ -3,6 +3,7 @@ import {
   Activity,
   Disc,
   FileAudio,
+  Layers,
   Loader2,
   Mic,
   Pause,
@@ -44,6 +45,9 @@ export function Toolbar({ audioManager }: ToolbarProps): React.ReactElement {
   )
   const isFormulaTestbedOpen = useAppStore((state) => state.isFormulaTestbedOpen)
   const toggleFormulaTestbed = useAppStore((state) => state.toggleFormulaTestbed)
+  const isTemplateSelectorOpen = useAppStore((state) => state.isTemplateSelectorOpen)
+  const toggleTemplateSelector = useAppStore((state) => state.toggleTemplateSelector)
+  const feedbackEnabled = useAppStore((state) => state.feedbackEnabled)
   const isAudioLoading = useAppStore((state) => state.isAudioLoading)
   const audioLoadingProgress = useAppStore((state) => state.audioLoadingProgress)
   const audioLoadingStage = useAppStore((state) => state.audioLoadingStage)
@@ -314,6 +318,23 @@ export function Toolbar({ audioManager }: ToolbarProps): React.ReactElement {
           }`}
         >
           f(x)
+        </button>
+
+        {/* Frame Buffer & Ping-Pong Feedback Templates Button */}
+        <button
+          type="button"
+          onClick={toggleTemplateSelector}
+          aria-label="Open Frame Buffer Templates"
+          title="Open Frame Buffer & Ping-Pong Feedback Templates"
+          className={`p-2 rounded-lg border transition-colors cursor-pointer ${
+            feedbackEnabled
+              ? 'bg-purple-950/40 border-purple-400/60 text-purple-300 shadow-sm shadow-purple-500/20'
+              : isTemplateSelectorOpen
+                ? 'bg-white/15 border-white/30 text-white'
+                : 'bg-white/5 border-transparent text-slate-300 hover:text-white hover:bg-white/10'
+          }`}
+        >
+          <Layers className="w-4 h-4" />
         </button>
 
         {/* Preset Settings Modal Button */}

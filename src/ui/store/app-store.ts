@@ -4,6 +4,7 @@ import {
   type AudioBandsSettings,
   type ResolutionScale,
 } from '../../contracts/preset-settings'
+import { getTemplateById } from '../../engine/frame-buffer/frame-buffer-templates'
 
 export type AudioSourceType = 'sample' | 'mic' | 'file'
 
@@ -62,6 +63,18 @@ export interface AppState {
   isFormulaPresetsOpen: boolean
   isFormulaReferenceOpen: boolean
 
+  // Frame Buffer & Ping-Pong Feedback state
+  selectedTemplateId: string
+  isTemplateSelectorOpen: boolean
+  feedbackEnabled: boolean
+  feedbackBlendMode: string
+  feedbackOpacity: number | string
+  feedbackScale: number | string
+  feedbackRotation: number | string
+  feedbackPositionX: number | string
+  feedbackPositionY: number | string
+  isCustomFeedbackConfig: boolean
+
   // Actions
   setIsPlaying: (isPlaying: boolean) => void
   togglePlay: () => void
@@ -86,6 +99,18 @@ export interface AppState {
   toggleFormulaPresets: () => void
   setIsFormulaReferenceOpen: (isOpen: boolean) => void
   toggleFormulaReference: () => void
+
+  setSelectedTemplateId: (id: string) => void
+  setIsTemplateSelectorOpen: (isOpen: boolean) => void
+  toggleTemplateSelector: () => void
+  setFeedbackEnabled: (enabled: boolean) => void
+  setFeedbackBlendMode: (mode: string) => void
+  setFeedbackOpacity: (opacity: number | string) => void
+  setFeedbackScale: (scale: number | string) => void
+  setFeedbackRotation: (rotation: number | string) => void
+  setFeedbackPositionX: (x: number | string) => void
+  setFeedbackPositionY: (y: number | string) => void
+  applyFrameBufferTemplate: (templateId: string) => void
 
   setTargetFps: (fps: number) => void
   setResolutionScale: (scale: ResolutionScale) => void
@@ -116,6 +141,17 @@ export const useAppStore = create<AppState>((set) => ({
   bindFormulaToScene: true,
   isFormulaPresetsOpen: loadBoolFromStorage(STORAGE_KEY_FORMULA_PRESETS_OPEN, true),
   isFormulaReferenceOpen: loadBoolFromStorage(STORAGE_KEY_FORMULA_REFERENCE_OPEN, true),
+
+  selectedTemplateId: 'clean-slate',
+  isTemplateSelectorOpen: false,
+  feedbackEnabled: false,
+  feedbackBlendMode: 'replace',
+  feedbackOpacity: 1.0,
+  feedbackScale: 1.0,
+  feedbackRotation: 0.0,
+  feedbackPositionX: 0.0,
+  feedbackPositionY: 0.0,
+  isCustomFeedbackConfig: false,
 
   setIsPlaying: (isPlaying) => set({ isPlaying }),
   togglePlay: () => set((state) => ({ isPlaying: !state.isPlaying })),
@@ -166,6 +202,42 @@ export const useAppStore = create<AppState>((set) => ({
       saveBoolToStorage(STORAGE_KEY_FORMULA_REFERENCE_OPEN, next)
       return { isFormulaReferenceOpen: next }
     }),
+
+  setSelectedTemplateId: (selectedTemplateId) => set({ selectedTemplateId }),
+  setIsTemplateSelectorOpen: (isTemplateSelectorOpen) => set({ isTemplateSelectorOpen }),
+  toggleTemplateSelector: () =>
+    set((state) => ({ isTemplateSelectorOpen: !state.isTemplateSelectorOpen })),
+
+  setFeedbackEnabled: (feedbackEnabled) =>
+    set({ feedbackEnabled, isCustomFeedbackConfig: true }),
+  setFeedbackBlendMode: (feedbackBlendMode) =>
+    set({ feedbackBlendMode, isCustomFeedbackConfig: true }),
+  setFeedbackOpacity: (feedbackOpacity) =>
+    set({ feedbackOpacity, isCustomFeedbackConfig: true }),
+  setFeedbackScale: (feedbackScale) =>
+    set({ feedbackScale, isCustomFeedbackConfig: true }),
+  setFeedbackRotation: (feedbackRotation) =>
+    set({ feedbackRotation, isCustomFeedbackConfig: true }),
+  setFeedbackPositionX: (feedbackPositionX) =>
+    set({ feedbackPositionX, isCustomFeedbackConfig: true }),
+  setFeedbackPositionY: (feedbackPositionY) =>
+    set({ feedbackPositionY, isCustomFeedbackConfig: true }),
+
+  applyFrameBufferTemplate: (templateId) => {
+    const template = getTemplateById(templateId)
+    if (!template) return
+    set({
+      selectedTemplateId: template.id,
+      feedbackEnabled: template.config.feedback,
+      feedbackBlendMode: template.config.blendMode,
+      feedbackOpacity: template.config.opacity,
+      feedbackScale: template.config.scale,
+      feedbackRotation: template.config.rotation,
+      feedbackPositionX: template.config.positionX,
+      feedbackPositionY: template.config.positionY,
+      isCustomFeedbackConfig: false,
+    })
+  },
 
   setTargetFps: (targetFps) => set({ targetFps }),
   setResolutionScale: (resolutionScale) => set({ resolutionScale }),

@@ -4,6 +4,7 @@ import type { ResolutionScale } from '../../contracts/preset-settings'
 import { useAppStore } from '../store/app-store'
 import { useEscapeKey } from '../hooks/use-escape-key'
 import { FrequencyBandRow } from './frequency-band-row'
+import { getTemplateById } from '../../engine/frame-buffer/frame-buffer-templates'
 
 const RESOLUTION_OPTIONS: Array<{ label: string; value: ResolutionScale }> = [
   { label: '1.0x (Native)', value: 1.0 },
@@ -28,6 +29,17 @@ export function PresetSettingsModal(): React.ReactElement | null {
   const audioBands = useAppStore((state) => state.audioBands)
   const setAudioBands = useAppStore((state) => state.setAudioBands)
   const resetAudioBands = useAppStore((state) => state.resetAudioBands)
+
+  const selectedTemplateId = useAppStore((state) => state.selectedTemplateId)
+  const feedbackEnabled = useAppStore((state) => state.feedbackEnabled)
+  const setFeedbackEnabled = useAppStore((state) => state.setFeedbackEnabled)
+  const feedbackBlendMode = useAppStore((state) => state.feedbackBlendMode)
+  const setFeedbackBlendMode = useAppStore((state) => state.setFeedbackBlendMode)
+  const feedbackOpacity = useAppStore((state) => state.feedbackOpacity)
+  const setFeedbackOpacity = useAppStore((state) => state.setFeedbackOpacity)
+  const feedbackScale = useAppStore((state) => state.feedbackScale)
+  const setFeedbackScale = useAppStore((state) => state.setFeedbackScale)
+  const setIsTemplateSelectorOpen = useAppStore((state) => state.setIsTemplateSelectorOpen)
 
   // Escape key closes modal
   useEscapeKey(isOpen, () => setIsOpen(false))
@@ -190,6 +202,103 @@ export function PresetSettingsModal(): React.ReactElement | null {
                 onMinChange={(val) => setAudioBands({ trebleMin: val, midMax: val })}
                 onMaxChange={(val) => setAudioBands({ trebleMax: val })}
               />
+            </div>
+          </div>
+
+          {/* Frame Buffer & Ping-Pong Feedback */}
+          <div className="pt-2 border-t border-white/10">
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <h3 className="text-xs font-mono font-medium text-slate-300 uppercase tracking-wider">
+                  Frame Buffer & Feedback
+                </h3>
+                <p className="text-[11px] text-slate-400 font-mono">
+                  Ping-pong feedback motion trails & compositing
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsTemplateSelectorOpen(true)}
+                className="px-2.5 py-1 text-xs font-mono rounded border border-purple-500/40 bg-purple-950/30 text-purple-300 hover:bg-purple-900/40 transition-colors"
+              >
+                Template: {getTemplateById(selectedTemplateId)?.name ?? 'Custom'}
+              </button>
+            </div>
+
+            <div className="space-y-3 bg-black/30 p-3 rounded-lg border border-white/5">
+              {/* Feedback Toggle */}
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-slate-300 font-mono">Feedback Loop</span>
+                <button
+                  type="button"
+                  onClick={() => setFeedbackEnabled(!feedbackEnabled)}
+                  className={`px-3 py-1 text-xs font-mono font-semibold rounded border transition-colors ${
+                    feedbackEnabled
+                      ? 'bg-cyan-500/20 border-cyan-400 text-cyan-300'
+                      : 'bg-white/5 border-white/10 text-slate-400'
+                  }`}
+                >
+                  {feedbackEnabled ? 'ENABLED' : 'DISABLED'}
+                </button>
+              </div>
+
+              {/* Blend Mode */}
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-slate-300 font-mono">Blend Mode</span>
+                <select
+                  aria-label="Feedback blend mode"
+                  value={feedbackBlendMode}
+                  onChange={(e) => setFeedbackBlendMode(e.target.value)}
+                  className="bg-slate-900 border border-white/15 text-xs text-slate-200 rounded px-2 py-1 font-mono focus:border-cyan-400 focus:outline-none"
+                >
+                  <option value="replace">replace</option>
+                  <option value="additive">additive</option>
+                  <option value="maximum">maximum</option>
+                  <option value="minimum">minimum</option>
+                  <option value="subtractive">subtractive</option>
+                  <option value="multiplicative">multiplicative</option>
+                </select>
+              </div>
+
+              {/* Opacity Slider */}
+              {typeof feedbackOpacity === 'number' && (
+                <div>
+                  <div className="flex justify-between text-[11px] font-mono text-slate-400 mb-1">
+                    <span>Decay Persistence</span>
+                    <span>{(feedbackOpacity * 100).toFixed(0)}%</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="0"
+                    max="1"
+                    step="0.01"
+                    value={feedbackOpacity}
+                    onChange={(e) => setFeedbackOpacity(parseFloat(e.target.value))}
+                    aria-label="Feedback opacity"
+                    className="w-full h-1 bg-white/10 rounded appearance-none cursor-pointer accent-cyber-cyan"
+                  />
+                </div>
+              )}
+
+              {/* Scale Slider */}
+              {typeof feedbackScale === 'number' && (
+                <div>
+                  <div className="flex justify-between text-[11px] font-mono text-slate-400 mb-1">
+                    <span>Feedback Zoom</span>
+                    <span>{feedbackScale.toFixed(2)}x</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="0.5"
+                    max="1.5"
+                    step="0.01"
+                    value={feedbackScale}
+                    onChange={(e) => setFeedbackScale(parseFloat(e.target.value))}
+                    aria-label="Feedback scale"
+                    className="w-full h-1 bg-white/10 rounded appearance-none cursor-pointer accent-cyber-cyan"
+                  />
+                </div>
+              )}
             </div>
           </div>
         </div>

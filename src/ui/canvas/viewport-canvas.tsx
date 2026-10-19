@@ -1,6 +1,8 @@
 import React, { useEffect, useRef } from 'react'
 import { RenderEngine } from '../../engine/render-engine'
 import { TestVisualNode } from '../../engine/visual-node'
+import { FrameBufferNode } from '../../engine/frame-buffer/frame-buffer-node'
+import { ExpressionEngine } from '../../engine/expressions/expression-engine'
 import { useAppStore } from '../store/app-store'
 
 export interface ViewportCanvasProps {
@@ -12,11 +14,22 @@ export function ViewportCanvas({
 }: ViewportCanvasProps): React.ReactElement {
   const containerRef = useRef<HTMLDivElement>(null)
   const engineRef = useRef<RenderEngine | null>(null)
+  const masterBufferRef = useRef<FrameBufferNode | null>(null)
+  const exprEngineRef = useRef<ExpressionEngine>(new ExpressionEngine())
   const resizeTimeoutRef = useRef<number | null>(null)
 
   const targetFps = useAppStore((state) => state.targetFps)
   const resolutionScale = useAppStore((state) => state.resolutionScale)
   const setCurrentFps = useAppStore((state) => state.setCurrentFps)
+
+  const feedbackEnabled = useAppStore((state) => state.feedbackEnabled)
+  const feedbackBlendMode = useAppStore((state) => state.feedbackBlendMode)
+  const feedbackOpacity = useAppStore((state) => state.feedbackOpacity)
+  const feedbackScale = useAppStore((state) => state.feedbackScale)
+  const feedbackRotation = useAppStore((state) => state.feedbackRotation)
+  const feedbackPositionX = useAppStore((state) => state.feedbackPositionX)
+  const feedbackPositionY = useAppStore((state) => state.feedbackPositionY)
+
   const onEngineReadyRef = useRef(onEngineReady)
   useEffect(() => {
     onEngineReadyRef.current = onEngineReady
@@ -44,9 +57,25 @@ export function ViewportCanvas({
       },
     })
 
-    const visualNode = new TestVisualNode()
-    engine.addNode(visualNode)
+    const masterBuffer = new FrameBufferNode({
+      id: 'master-frame-buffer',
+      name: 'Master Output',
+      isMaster: true,
+      feedback: initialSettings.feedbackEnabled,
+      blendMode: initialSettings.feedbackBlendMode,
+      opacity: initialSettings.feedbackOpacity,
+      scale: initialSettings.feedbackScale,
+      rotation: initialSettings.feedbackRotation,
+      positionX: initialSettings.feedbackPositionX,
+      positionY: initialSettings.feedbackPositionY,
+      expressionEngine: exprEngineRef.current,
+    })
 
+    const visualNode = new TestVisualNode()
+    masterBuffer.addChild(visualNode)
+    engine.addNode(masterBuffer)
+
+    masterBufferRef.current = masterBuffer
     engineRef.current = engine
     if (onEngineReadyRef.current) {
       onEngineReadyRef.current(engine)
@@ -94,6 +123,27 @@ export function ViewportCanvas({
       })
     }
   }, [targetFps, resolutionScale])
+
+  // Synchronize dynamic frame buffer & feedback changes
+  useEffect(() => {
+    if (masterBufferRef.current) {
+      masterBufferRef.current.setFeedback(feedbackEnabled)
+      masterBufferRef.current.blendMode = feedbackBlendMode
+      masterBufferRef.current.bindExpression('opacity', feedbackOpacity, exprEngineRef.current)
+      masterBufferRef.current.bindExpression('scale', feedbackScale, exprEngineRef.current)
+      masterBufferRef.current.bindExpression('rotation', feedbackRotation, exprEngineRef.current)
+      masterBufferRef.current.bindExpression('positionX', feedbackPositionX, exprEngineRef.current)
+      masterBufferRef.current.bindExpression('positionY', feedbackPositionY, exprEngineRef.current)
+    }
+  }, [
+    feedbackEnabled,
+    feedbackBlendMode,
+    feedbackOpacity,
+    feedbackScale,
+    feedbackRotation,
+    feedbackPositionX,
+    feedbackPositionY,
+  ])
 
   return (
     <div

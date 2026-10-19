@@ -50,14 +50,14 @@
 
 ## Phase 4: UI Integration, Template Selector & Manual Verification (TDD)
 
-- [ ] Task: Frame Buffer Template Selector UI Component (TDD)
-  - [ ] Write component tests for `FrameBufferTemplateSelector`: popover rendering, template selection, dirty-state confirmation guard, and Zustand state updates.
-  - [ ] Implement `FrameBufferTemplateSelector` popover modal with cyberpunk theme styling.
-- [ ] Task: Toolbar & Settings Integration
-  - [ ] Add Frame Buffer / Feedback controls to the top toolbar and preset settings modal.
-  - [ ] Provide immediate UI sliders and `f(x)` expression buttons for live feedback tuning (`opacity`, `scale`, `rotation`, `blend_mode`).
-- [ ] Task: Phase 4 Manual Verification Checkpoint
-  - [ ] Verify all 6 templates in browser with audio running: confirm phosphor trails, feedback vortex, 4-corner quads, and shockwave expansions.
+- [x] Task: Frame Buffer Template Selector UI Component (TDD)
+  - [x] Write component tests for `FrameBufferTemplateSelector`: popover rendering, template selection, dirty-state confirmation guard, and Zustand state updates.
+  - [x] Implement `FrameBufferTemplateSelector` popover modal with cyberpunk theme styling.
+- [x] Task: Toolbar & Settings Integration
+  - [x] Add Frame Buffer / Feedback controls to the top toolbar and preset settings modal.
+  - [x] Provide immediate UI sliders and `f(x)` expression buttons for live feedback tuning (`opacity`, `scale`, `rotation`, `blend_mode`).
+- [x] Task: Phase 4 Manual Verification Checkpoint
+  - [x] Verify all 6 templates in browser with audio running: confirm phosphor trails, feedback vortex, 4-corner quads, and shockwave expansions.
 
 ---
 
