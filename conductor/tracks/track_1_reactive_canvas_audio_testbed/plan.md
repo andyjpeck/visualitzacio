@@ -41,6 +41,6 @@
   - [x] Write tests for play/pause/seek/loop controls, microphone toggle with permission error notice, FPS badge visibility switch, FPS badge color shift (cyan when $\ge$ `targetFps`, **amber immediately when `fps < targetFps`**, red when $< 50\%$ of `targetFps`), and clicking the FPS badge to open the Preset-Wide Settings popover
   - [x] Write tests verifying that changing `targetFps` or `resolutionScale` (`1.0`, `0.75`, `0.5`, `0.25`) in the Preset-Wide Settings popover updates `useAppStore` and reconfigures `RenderEngine`
   - [x] Implement the top toolbar, clickable glassmorphic FPS badge, and Preset-Wide Performance Settings popover
-- [~] Task: Track Verification & Milestone Demonstration Checkpoint
+- [x] Task: Track Verification & Milestone Demonstration Checkpoint (edaf44e)
   - [x] Verify clean production build via `npm run build` and 100% passing test suite via `npm test`
-  - [ ] Launch browser via `npm run dev` and verify 60 FPS audio-reactive visuals, amber FPS badge state when under target, and interactive `target_fps` / `resolution_scale` controls
+  - [x] Launch browser via `npm run dev` and verify 60 FPS audio-reactive visuals, amber FPS badge state when under target, and interactive `target_fps` / `resolution_scale` controls
