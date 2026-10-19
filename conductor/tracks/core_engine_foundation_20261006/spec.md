@@ -37,8 +37,9 @@ This bootstrap track establishes Visualització's foundational architecture: a h
       - `channel`: `0` = Left + Right (default mono mix), `1` = Left channel, `2` = Right channel.
     - **`#BEAT([decay_seconds = 0.2])` / `#BEAT_SECONDS([decay_seconds = 0.2])`:**
       - Transient attack pulse: Jumps to `1.0` on a detected beat, exponentially decaying to `0.0` over `decay_seconds` (default: 0.2s).
-    - **`#BEAT_FRAMES([decay_frames = 12])`:**
-      - Transient attack pulse: Jumps to `1.0` on a detected beat, exponentially decaying to `0.0` over `decay_frames` frames (default: 12 frames).
+    - **`#BEAT_FRAMES([decay_frames = 12], [curve = "exponential"])`:**
+      - Transient attack pulse: Jumps to `1.0` on a detected beat, decaying to `0.0` over `decay_frames` frames.
+      - `curve`: `"exponential"` (default natural curve), `"linear"` (steady constant fade), or `"logarithmic"` (sharp initial drop with long tail).
 - **Universal Parameter Binding:**
   - All component parameters (e.g., Frame Buffer `scale`, `rotation`, `opacity`, `positionX`, `positionY`, `blend_mode`) can be set to a static literal value or bound to a dynamic expression (e.g., `opacity: #FFT(0, 0.3, 1) * 0.5`, `scale: 1.0 + #BEAT(0.25) * 0.4`).
 - **Fault-Tolerant Sandboxing:**
@@ -112,7 +113,7 @@ This bootstrap track establishes Visualització's foundational architecture: a h
 1. The web app builds and runs cleanly via `npm run dev` and passes `npm test`.
 2. Audio plays from bundled sample or mic, populating special values (`$BASS`, `$MID`, `$TREBLE`, `$RMS`, binary `$BEAT`).
 3. Binary `$BEAT` evaluates to `1.0` on beat frames and `0.0` on non-beat frames.
-4. `#BEAT()`, `#BEAT_SECONDS(decay)`, and `#BEAT_FRAMES(decay)` decay smoothly from `1.0` to `0.0` following exponential curves.
+4. `#BEAT()` and `#BEAT_SECONDS(decay)` decay smoothly from `1.0` to `0.0` following exponential curves; `#BEAT_FRAMES(decay, curve)` decays according to the specified curve mechanism (`exponential`, `logarithmic`, `linear`, defaulting to `exponential`).
 5. System function `#FFT(lower_band, band_width, channel)` evaluates correctly with logarithmic frequency scaling and stereo channel selection.
 6. Standard mathematical operators and functions evaluate correctly alongside `#FUNCTION(...)` system calls and `$VARIABLE` tokens.
 7. The Static Image component loads and displays an image inside a Frame Buffer container.

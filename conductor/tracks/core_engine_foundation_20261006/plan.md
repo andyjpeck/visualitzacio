@@ -30,7 +30,7 @@
   - [ ] Write unit tests for `ExpressionPreprocessor` token rewriting (`#FUNC(` $\to$ `__fn_FUNC(`, `$VAR` $\to$ `__var_VAR`)
   - [ ] Write unit tests for `$SPECIAL_VALUE` token extraction (`$BASS`, `$MID`, `$TREBLE`, `$BPM`, `$RMS`, `$TIME`, binary `$BEAT`, `$FRAME`)
   - [ ] Write unit tests for `#FFT(lower_band, band_width, channel)` system function evaluation with logarithmic frequency mapping ($20\text{Hz}-20000\text{Hz}$)
-  - [ ] Write unit tests for `#BEAT()`, `#BEAT_SECONDS(decay_seconds)`, and `#BEAT_FRAMES(decay_frames)` exponential decay envelopes
+  - [ ] Write unit tests for `#BEAT()` and `#BEAT_SECONDS(decay_seconds)` exponential decay envelopes, and `#BEAT_FRAMES(decay_frames, curve)` supporting `exponential`, `logarithmic`, and `linear` decay curves
   - [ ] Write unit tests for mathematical expression compilation, NaN/Infinity fallback, Frame 0 initial literal fallback, and zero-allocation per-frame evaluation
   - [ ] Implement `ExpressionEngine` wrapping `expr-eval` with preprocessor, pre-allocated evaluation scope, function bindings, and safe numeric clamping
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)

@@ -54,11 +54,20 @@ Generates a transient beat attack pulse with a smooth exponential decay calculat
 
 ---
 
-### 4. `#BEAT_FRAMES([decay_frames = 12])`
-Generates a transient beat attack pulse with a smooth exponential decay calculated over frame count.
+### 4. `#BEAT_FRAMES([decay_frames = 12], [curve = "exponential"])`
+Generates a transient beat attack pulse that decays toward `0.0` over a specified frame count, supporting multiple decay curve mechanisms.
 
 - **Arguments:**
   - `decay_frames` (`int`, optional, default `12`): The number of render frames over which the pulse decays toward `0.0`.
+  - `curve` (`string` or identifier, optional, default `"exponential"`): The mathematical decay curve to apply:
+    - `"exponential"` (default): Smooth natural analog decay ($e^{-k \cdot t}$), starting steep and tapering off softly.
+    - `"linear"`: Constant rate decay ($(1 - f / \text{decay\_frames})$), producing a mechanical, steady fade to zero.
+    - `"logarithmic"`: Inverted logarithmic decay (rapid initial drop followed by an elongated tail).
+- **Behavior:**
+  - When an instantaneous beat transient occurs, the pulse resets to `1.0`.
+  - On subsequent render frames, it attenuates according to the selected `curve` until reaching `0.0` at frame `decay_frames`.
 - **Returns:** `float` in range `0.0` to `1.0`.
-- **Example:**
-  - `#BEAT_FRAMES(10)`: Decays over exactly 10 frames (~166ms at 60 FPS).
+- **Examples:**
+  - `#BEAT_FRAMES(12)`: Decays exponentially over 12 frames (~200ms at 60 FPS).
+  - `#BEAT_FRAMES(24, "linear")`: Decays linearly over 24 frames (~400ms at 60 FPS).
+  - `#BEAT_FRAMES(8, "logarithmic")`: Drops sharply over 8 frames with a logarithmic tail.
