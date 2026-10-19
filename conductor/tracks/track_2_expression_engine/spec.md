@@ -86,17 +86,35 @@ The parser must support custom functions defined in [`conductor/system_functions
 - If `raw` is a numeric literal or constant string, bypass AST evaluation for immediate return.
 
 ### FR-5: Interactive Formula Testbed HUD
-- **UI Modal / Popover:** Accessible from the top toolbar (via a new `f(x)` button) or keyboard shortcut.
-- **Input & Feedback:**
-  - Text input for testing formulas with immediate syntax highlighting / validation badge.
-  - Live 60 FPS numerical output readout with variable preview tags (`$BASS`, `$MID`, `$TREBLE`, `$BEAT`, `$TIME`).
-  - History of recent evaluated expressions.
-  - Quick-preset chips to load example formulas:
-    - *Bass Pulsar:* `1.0 + $BASS * 0.8`
-    - *Beat Shockwave:* `#BEAT(0.2) * 2.0`
-    - *Harmonic Oscillator:* `sin($TIME * 2) * 0.5 + 0.5`
-    - *Tri-Band Composite:* `$BASS * 0.5 + $MID * 0.3 + $TREBLE * 0.2`
-    - *Custom FFT Slice:* `#FFT(0.1, 0.05, 0)`
+- **Draggable Viewport Dialog:** Accessible from the top toolbar (via the `f(x)` button) or keyboard shortcut (`Escape` to dismiss). Draggable via header handle with pointer capture (`setPointerCapture`) and automatic viewport edge clamping on drag and window resize.
+- **Strict Syntax Validation & Feedback:**
+  - Real-time syntax checking on every keystroke with status badge (`Syntax Valid` check or `Syntax Error` cross).
+  - Strict AST and token validation: rejects misspelled function signatures (e.g. `#BEAzT(...)`) or unknown variable identifiers with explicit, actionable error messaging.
+- **60 FPS Real-Time Evaluation & Dynamic Line Chart:**
+  - Direct DOM text ticker updating at 60 FPS with zero React re-render overhead.
+  - Real-time `<canvas>` line chart plotting a 180-frame sliding window (~3 seconds of real-time history) with cyan line stroke and gradient fill.
+  - Dynamic Y-axis scaling displaying both live `min:` and `max:` values with adaptive headroom.
+  - Zero-leak lifecycle management: history data is strictly tracked only while the panel is open and is immediately cleared (`length = 0`) on close or expression change.
+- **Collapsible Guidance & Quick Reference:**
+  - Ordered with **Quick Reference** guide positioned above **Example Formula Presets**.
+  - Interactive clickable chips with rich hover tooltips explaining variables (`$BASS`, `$MID`, etc.) and functions (`#BEAT(...)`, `#FFT(...)`, etc.).
+  - One-click token insertion appending into the formula expression input.
+  - State persistence for open/collapsed section preferences.
+
+### FR-6: Standard UI Specification for Dynamic Expression Controls
+When individual visual components (e.g. crystal scale, lighting intensity, mesh deformers) expose dynamic expression inputs in future tracks, they must adhere to the standardized UI patterns established by the testbed:
+1. **Input & Validation Anatomy:**
+   - Monospace font input with cyberpunk cyan active styling and crimson error borders.
+   - Immediate syntax status indicator with explicit error diagnostics for unknown variables and functions.
+2. **Real-Time Visual Feedback:**
+   - Dual-readout display: real-time numeric value accompanied by the 180-frame sliding-window `<canvas>` line chart.
+   - Dynamic scaling showing both `min:` and `max:` values with zero React re-render overhead.
+3. **Memory Safeguards for Multi-Component Expressions:**
+   - Expression history buffers must only be maintained for the currently active/expanded inspector or dialog.
+   - When an expression input/popover is closed or collapsed, all history arrays must be cleared and their requestAnimationFrame loops terminated to ensure zero performance degradation across dozens of simultaneous component expressions.
+4. **Token Quick Reference & Discovery:**
+   - Accessible quick reference chips with tooltips detailing expected ranges and signatures.
+
 
 ---
 
@@ -112,11 +130,14 @@ The parser must support custom functions defined in [`conductor/system_functions
 
 ## 4. Acceptance Criteria
 
-- [ ] `ExpressionEngine` compiles valid formulas with all `$VARIABLE` and `#FUNCTION` bindings.
-- [ ] In-memory AST caching prevents re-parsing.
-- [ ] Safe fallback values returned on division by zero or invalid variables.
-- [ ] `#BEAT()` and `#BEAT_FRAMES()` produce smooth decay curves keyed to audio transients.
-- [ ] `#FFT()` and `#WAVEFORM()` accurately sample active audio analyzer buffers.
-- [ ] Interactive Formula Testbed HUD renders live evaluations at 60 FPS without React re-render lag.
-- [ ] All unit and component tests pass (`npm test`).
-- [ ] Linter checks pass cleanly (`oxlint`).
+- [x] `ExpressionEngine` compiles valid formulas with all `$VARIABLE` and `#FUNCTION` bindings.
+- [x] In-memory AST caching prevents re-parsing.
+- [x] Safe fallback values returned on division by zero or invalid variables.
+- [x] `#BEAT()` and `#BEAT_FRAMES()` produce smooth decay curves keyed to audio transients.
+- [x] `#FFT()` and `#WAVEFORM()` accurately sample active audio analyzer buffers.
+- [x] Interactive Formula Testbed HUD renders live evaluations at 60 FPS without React re-render lag.
+- [x] Draggable HUD dialog with edge-clamping and collapsible section persistence.
+- [x] Real-time `<canvas>` line chart with dynamic `min:` and `max:` scaling and isolated memory lifecycle.
+- [x] Strict token and signature syntax validation with actionable error feedback.
+- [x] All unit and component tests pass (`npm test`).
+- [x] Linter checks pass cleanly (`oxlint`).
