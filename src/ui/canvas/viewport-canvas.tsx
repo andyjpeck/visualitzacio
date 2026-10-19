@@ -17,6 +17,10 @@ export function ViewportCanvas({
   const targetFps = useAppStore((state) => state.targetFps)
   const resolutionScale = useAppStore((state) => state.resolutionScale)
   const setCurrentFps = useAppStore((state) => state.setCurrentFps)
+  const onEngineReadyRef = useRef(onEngineReady)
+  useEffect(() => {
+    onEngineReadyRef.current = onEngineReady
+  }, [onEngineReady])
 
   // Initialize engine once
   useEffect(() => {
@@ -43,8 +47,8 @@ export function ViewportCanvas({
     engine.addNode(visualNode)
 
     engineRef.current = engine
-    if (onEngineReady) {
-      onEngineReady(engine)
+    if (onEngineReadyRef.current) {
+      onEngineReadyRef.current(engine)
     }
 
     // Initial resize
@@ -78,7 +82,7 @@ export function ViewportCanvas({
       }
       engineRef.current = null
     }
-  }, [setCurrentFps, onEngineReady])
+  }, [setCurrentFps])
 
   // Synchronize preset settings changes
   useEffect(() => {

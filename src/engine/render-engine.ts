@@ -19,6 +19,7 @@ export interface RenderEngineOptions {
   scheduler?: Scheduler
   presetSettings?: PresetSettings
   onFpsUpdate?: (fps: number) => void
+  onBeforeUpdate?: (frameContext: FrameContext, timestamp: number) => void
 }
 
 export class RenderEngine {
@@ -29,6 +30,7 @@ export class RenderEngine {
 
   private presetSettings: PresetSettings
   private onFpsUpdate?: (fps: number) => void
+  private onBeforeUpdate?: (frameContext: FrameContext, timestamp: number) => void
 
   private animationFrameId: number | null = null
   private running = false
@@ -45,6 +47,7 @@ export class RenderEngine {
       ...DEFAULT_PRESET_SETTINGS,
     }
     this.onFpsUpdate = options.onFpsUpdate
+    this.onBeforeUpdate = options.onBeforeUpdate
 
     // Default scheduler for browser environment
     this.scheduler = options.scheduler ?? {
@@ -128,6 +131,10 @@ export class RenderEngine {
     this.applySize()
   }
 
+  setBeforeUpdate(cb?: (frameContext: FrameContext, timestamp: number) => void): void {
+    this.onBeforeUpdate = cb
+  }
+
   addNode(node: VisualNode): void {
     this.nodes.push(node)
     if (node.init) {
@@ -195,6 +202,10 @@ export class RenderEngine {
     this.frameContext.$FRAME++
     this.frameContext.$DT = dt
     this.frameContext.$TIME += dt
+
+    if (this.onBeforeUpdate) {
+      this.onBeforeUpdate(this.frameContext, timestamp)
+    }
 
     // Update nodes
     for (const node of this.nodes) {

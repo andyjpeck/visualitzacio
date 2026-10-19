@@ -145,4 +145,29 @@ describe('RenderEngine (TDD)', () => {
     // Renderer receives dimensions scaled by resolution_scale (0.5 * 1920 = 960, 0.5 * 1080 = 540)
     expect(mockRenderer.setSize).toHaveBeenCalledWith(960, 540, false)
   })
+
+  it('invokes onBeforeUpdate callback before node updates', () => {
+    const mockRenderer = createMockRenderer()
+    const mockScheduler = createMockScheduler(1000)
+    const onBeforeUpdate = vi.fn((ctx) => {
+      ctx.$BASS = 0.88
+    })
+
+    const nodeUpdate = vi.fn()
+    const mockNode: VisualNode = { update: nodeUpdate }
+
+    const engine = new RenderEngine({
+      renderer: mockRenderer,
+      scheduler: mockScheduler,
+      onBeforeUpdate,
+    })
+    engine.addNode(mockNode)
+
+    engine.start()
+    mockScheduler.triggerFrame(1016)
+
+    expect(onBeforeUpdate).toHaveBeenCalledTimes(1)
+    expect(nodeUpdate).toHaveBeenCalledTimes(1)
+    expect(engine.getFrameContext().$BASS).toBe(0.88)
+  })
 })

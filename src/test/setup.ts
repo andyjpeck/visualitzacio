@@ -15,3 +15,8 @@ class MockResizeObserver {
 }
 
 globalThis.ResizeObserver = MockResizeObserver as unknown as typeof ResizeObserver
+
+// Mock AudioContext for jsdom
+import { createMockAudioContext } from './fixtures/audio-context-mock'
+globalThis.AudioContext = vi.fn().mockImplementation(() => createMockAudioContext().audioContext) as unknown as typeof AudioContext
+
