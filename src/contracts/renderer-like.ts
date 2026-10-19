@@ -8,6 +8,9 @@ export interface RendererLike {
   setSize(width: number, height: number, updateStyle?: boolean): void
   setPixelRatio(pixelRatio: number): void
   render(scene: unknown, camera: unknown): void
+  setRenderTarget?(target: unknown): void
+  getRenderTarget?(): unknown
+  clear?(): void
   dispose(): void
 }
 
@@ -25,7 +28,7 @@ export interface Scheduler {
  */
 export interface VisualNode {
   init?(renderer: RendererLike): void
-  resize?(width: number, height: number, pixelRatio: number): void
+  resize?(width: number, height: number, pixelRatio: number, resolutionScale?: number): void
   update(ctx: FrameContext): void
   dispose?(): void
 }

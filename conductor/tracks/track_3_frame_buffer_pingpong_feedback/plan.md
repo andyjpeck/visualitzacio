@@ -2,14 +2,14 @@
 
 ## Phase 1: Frame Buffer Core & Dual-FBO Ping-Pong Pipeline (TDD)
 
-- [ ] Task: Frame Buffer Node & Render Target Lifecycle (TDD)
-  - [ ] Write unit tests for `FrameBufferNode` verifying texture allocation, canvas resize handling, resolution scale multiplication, and child node execution.
-  - [ ] Implement `FrameBufferNode` extending `VisualNode` with `THREE.WebGLRenderTarget` management and transform uniforms (`scale`, `rotation`, `position_x`, `position_y`, `opacity`).
-- [ ] Task: Dual-FBO Ping-Pong Swap Mechanism (TDD)
-  - [ ] Write unit tests verifying ping-pong buffer allocation, read/write pointer swapping, and clean slate clearing.
-  - [ ] Implement dual-FBO ping-pong texture swapping in `FrameBufferNode` with zero per-frame garbage collection allocations.
-- [ ] Task: Phase 1 Checkpoint & Unit Test Verification
-  - [ ] Run test suite (`npm test`) to ensure all render target and ping-pong tests pass.
+- [x] Task: Frame Buffer Node & Render Target Lifecycle (TDD)
+  - [x] Write unit tests for `FrameBufferNode` verifying texture allocation, canvas resize handling, resolution scale multiplication, and child node execution.
+  - [x] Implement `FrameBufferNode` extending `VisualNode` with `THREE.WebGLRenderTarget` management and transform uniforms (`scale`, `rotation`, `position_x`, `position_y`, `opacity`).
+- [x] Task: Dual-FBO Ping-Pong Swap Mechanism (TDD)
+  - [x] Write unit tests verifying ping-pong buffer allocation, read/write pointer swapping, and clean slate clearing.
+  - [x] Implement dual-FBO ping-pong texture swapping in `FrameBufferNode` with zero per-frame garbage collection allocations.
+- [x] Task: Phase 1 Checkpoint & Unit Test Verification
+  - [x] Run test suite (`npm test`) to ensure all render target and ping-pong tests pass.
 
 ---
 

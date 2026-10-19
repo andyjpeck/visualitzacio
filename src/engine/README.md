@@ -24,3 +24,8 @@ The `engine` directory contains the high-frequency WebGL rendering orchestrator 
   - Zero-allocation per-frame scope bindings for all system variables (`$TIME`, `$BASS`, etc.).
   - System functions library (`#BEAT`, `#BEAT_FRAMES`, `#FFT`, `#WAVEFORM`, `#TRI`, `#SAW`, `#SQR`).
   - `DynamicParam<T>` parameter binding abstraction.
+
+- [**`frame-buffer/`**](file:///C:/Users/andyj/Documents/visualitzacio/src/engine/frame-buffer/README.md):
+  - Modular container and render-to-texture buffer architecture (`FrameBufferNode`).
+  - Dual-FBO ping-pong feedback texture swapping with zero per-frame GC allocations.
+  - Hierarchical child component execution and layer transform modulation.

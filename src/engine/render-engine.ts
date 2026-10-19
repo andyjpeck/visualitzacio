@@ -160,6 +160,11 @@ export class RenderEngine {
       ...settings,
     }
     this.applySize()
+    for (const node of this.nodes) {
+      if (node.resize) {
+        node.resize(this.width, this.height, this.pixelRatio, this.presetSettings.resolution_scale)
+      }
+    }
   }
 
   /**
@@ -183,7 +188,7 @@ export class RenderEngine {
       node.init(this.renderer)
     }
     if (node.resize) {
-      node.resize(this.width, this.height, this.pixelRatio)
+      node.resize(this.width, this.height, this.pixelRatio, this.presetSettings.resolution_scale)
     }
   }
 
@@ -230,7 +235,7 @@ export class RenderEngine {
 
     for (const node of this.nodes) {
       if (node.resize) {
-        node.resize(width, height, this.pixelRatio)
+        node.resize(width, height, this.pixelRatio, this.presetSettings.resolution_scale)
       }
     }
   }
