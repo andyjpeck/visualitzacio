@@ -15,11 +15,11 @@ This registry tracks the planned, active, and completed workstreams across Visua
   *Status: Planned (Spec & Plan to follow Track 1)*
 
 - [ ] **Track 3: Modular Frame Buffer, Ping-Pong Feedback & Named Buffers**
-  *Goal: Master Frame Buffer root lifecycle, dual-FBO ping-pong feedback motion trails, 6 GLSL blend modes, `@NAME` buffer pool, and Static Image component.*  
+  *Goal: Master Frame Buffer root lifecycle, dual-FBO ping-pong feedback motion trails, 6 GLSL blend modes, `@NAME` buffer pool, Built-in Frame Buffer Preset Selector, and Static Image component.*  
   *Status: Planned (Spec & Plan to follow Track 2)*
 
 - [ ] **Track 4: Visual Studio Shell, Node Graph & Preset Import/Export**
-  *Goal: Split-view UI, `@xyflow/react` node graph with auto-layout, universal `f(x)` inspector with inline autocomplete dropdown, and JSON preset serializer.*  
+  *Goal: Split-view UI, `@xyflow/react` node graph with auto-layout, universal `f(x)` inspector with inline autocomplete dropdown, component preset selector with overwrite confirmation dialog, 100-step Undo/Redo JSON history buffer, and JSON preset serializer.*  
   *Status: Planned (Spec & Plan to follow Track 3)*
 
 ---
@@ -27,7 +27,7 @@ This registry tracks the planned, active, and completed workstreams across Visua
 ## Advanced Creative Capabilities (Tracks 5 – 8)
 
 - [ ] **Track 5: Generative Visual Synthesis & Duperscope**
-  *Goal: JIT-compiled procedural script runner (`init`, `frame`, `beat`, `point`), 3 draw modes, and classic generative curve presets.*  
+  *Goal: JIT-compiled procedural script runner (`init`, `frame`, `beat`, `point`), 3 draw modes, and Built-in Duperscope Preset Selector with classic generative curve templates.*  
   *Status: Planned*
 
 - [ ] **Track 6: Custom GLSL Shader Passes & Post-Processing Pipeline**

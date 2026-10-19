@@ -128,7 +128,12 @@ Static buffer routing identifiers (`save_to`, `load_from`) are stored as plain s
 
 ---
 
-## 8. Classic Example Presets
+## 8. Built-in Component Preset Selector & Classic Templates
+
+To help users discover multi-buffer routing (`@BUFFER_NAME`) and feedback loops, the Frame Buffer inspector header includes a **Load Component Preset** selector populated with the built-in templates below:
+
+- **Immediate Load on Clean State:** If the Frame Buffer instance is in its unmodified default state with no custom child nodes, selecting a preset applies its parameters and child hierarchy immediately.
+- **Overwrite Confirmation Dialog on Modified State:** If the Frame Buffer already has modified parameters or existing child components, selecting a preset triggers a confirmation dialog warning that loading the preset will overwrite its current parameters and child hierarchy. Upon confirmation, the prior state is pushed to the 100-step Undo buffer (`Ctrl+Z`) and the template is applied.
 
 ### Example A: 4-Corner Scaled Replication
 A master scene renders a visual element into `@BUFFER_A`, and four child buffers sample `@BUFFER_A` scaled down to 50% and positioned in each screen corner:

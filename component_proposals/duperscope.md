@@ -137,7 +137,12 @@ Multi-line script properties (`code_init`, `code_frame`, `code_beat`, `code_poin
 
 ---
 
-## 8. Classic Example Presets
+## 8. Built-in Component Preset Selector & Classic Templates
+
+To help users discover how Duperscope works and jumpstart new visualizations, the Duperscope inspector header includes a **Load Component Preset** selector populated with the built-in templates below:
+
+- **Immediate Load on Clean State:** If the Duperscope instance is still in its unmodified default state, selecting a preset from the dropdown loads its parameters and code blocks (`init`, `frame`, `beat`, `point`) immediately.
+- **Overwrite Confirmation Dialog on Modified State:** If the user has already customized any parameter or script block on the component, selecting a preset opens a confirmation dialog warning that loading the preset will replace their current Duperscope changes. Upon confirmation, the prior state is pushed to the 100-step Undo buffer (`Ctrl+Z`) and the template is applied.
 
 ### Example A: Oscilloscope Tunnel (Circular Reactive Waveform)
 - **Audio Mode:** `Waveform`

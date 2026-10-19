@@ -111,6 +111,9 @@ To guarantee uncompromised 60+ FPS rendering while providing rich interactive UI
 - **Graph Representation & Pure Tree Schema:**
   - Presets serialize only the execution hierarchy (`root` and nested `children`) and preset-wide `settings`.
   - Upon preset import or file load, the editor's node graph uses automatic hierarchical tree layout to place nodes cleanly on canvas, keeping preset files compact, human-readable, and free from fragile coordinate metadata.
+- **100-Step Undo / Redo History Ring Buffer:**
+  - Because the entire preset tree and `settings` are stored as compact JSON (typically ~2–15 KB per snapshot, referencing textures and audio assets by URL/ID rather than inline binary data), the Zustand State Plane maintains a bounded ring buffer of up to **100 historical snapshots** (~1–3 MB total RAM footprint).
+  - **Input Coalescing:** Continuous interactions (slider/knob drags, text/formula typing) mutate live state immediately for 60 FPS visual feedback, while history snapshots are coalesced and committed on pointer release (`onPointerUp`) or after a 500ms typing debounce.
 - **Local Persistence (MVP):** IndexedDB (via `idb-keyval`) and LocalStorage for preset storage and theme preferences, paired with `.json` file upload/download.
 - **Roadmap / Future:** Backend cloud sync (PostgreSQL/Supabase or Firebase) for user accounts and community preset sharing.
 

@@ -25,14 +25,20 @@
   - The node graph visually anchors the **Master Frame Buffer** as the permanent root container with a distinctive header/crown badge and subtle glowing boundary.
   - The Master Frame Buffer cannot be deleted, but selecting it opens its inspector (see [Frame Buffer Proposal](../component_proposals/frame_buffer.md)).
   - Presets serialize the component tree hierarchy without manual canvas coordinates; upon import, the graph executes clean automatic hierarchical layout.
+- **Undo / Redo History & Input Coalescing (100 States):**
+  - The Studio / Editor toolbar provides **Undo** (`Ctrl+Z` / `Cmd+Z`) and **Redo** (`Ctrl+Y` / `Ctrl+Shift+Z`) actions backed by a 100-snapshot JSON history stack.
+  - **Continuous Input Coalescing:** Dragging a slider/knob or typing in a formula/code editor updates the live visualizer immediately at 60 FPS, but coalesces the history commit until pointer release (`onPointerUp`) or a 500ms typing debounce so a single drag gesture records exactly one undo step.
 - **Screen Coordinate System (Winamp AVS Standard):**
   - All visual elements, canvas quads, and spatial transformations operate in a normalized Cartesian coordinate space from `-1.0` to `1.0` with `(0.0, 0.0)` at screen center:
     - `x` spans `-1.0` (left edge) to `1.0` (right edge).
     - `y` spans `-1.0` (bottom edge) to `1.0` (top edge).
   - Position parameters (`position_x`, `position_y`) throughout all inspectors and components map directly to this normalized space.
 
-## 3. Universal Parameter Pattern: The `f(x)` Expression Switcher
-To maintain a unified, predictable visual language across all components when switching between fixed controls and dynamic formulas:
+## 3. Component Inspector & The `f(x)` Expression Switcher
+To maintain a unified, predictable visual language across all components when exploring presets or switching between fixed controls and dynamic formulas:
+- **Component Preset Selector & Overwrite Confirmation Guard:**
+  - Components with curated built-in examples (such as [Duperscope](../component_proposals/duperscope.md) and [Frame Buffer](../component_proposals/frame_buffer.md)) display a **Load Component Preset** dropdown in the inspector header.
+  - **Dirty-State Confirmation Dialog:** If the component is still in its untouched default state, selecting a component preset applies it immediately. If the user has already modified parameters, edited script blocks, or added child nodes inside the component, attempting to load a component preset triggers a confirmation modal warning that loading the template will overwrite their current component configuration. Confirming pushes the previous state onto the 100-step Undo stack before applying the template.
 - **The `f(x)` Mode Toggle:** Every modulatable parameter row in a component inspector features an `f(x)` button adjacent to the parameter label. (Static string, asset URL, buffer target `@NAME`, and multi-line code fields do not use the `f(x)` toggle).
 - **Fixed Mode (Default) — Maps to Schema `"mode": "fixed"`:**
   - Displays standard tactile controls tailored to the data type: rotary knobs, linear faders, binary toggles, or dropdown selectors.

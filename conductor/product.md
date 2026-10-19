@@ -15,6 +15,7 @@ The platform is designed to serve two complementary environments:
 - **Modular Component Pipeline & Visual Hierarchy:**
   - Dynamic visualizer trees built from composable visual components and containers (such as [Frame Buffer](../component_proposals/frame_buffer.md), [Static Image](../component_proposals/static_image.md), and [Duperscope](../component_proposals/duperscope.md)).
   - Universal parameter architecture: modulatable component parameters can exist either as a fixed value (knob, slider, switch, dropdown) or bind dynamically to a mathematical expression.
+  - **Built-in Component Preset Selector:** Components with rich creative possibilities (such as `Frame Buffer` and `Duperscope`) include an in-inspector **Component Preset Selector** pre-loaded with curated example templates so users can immediately explore how they work. If the component already contains user modifications or child nodes, a confirmation dialog protects the user before overwriting their changes.
 - **Dynamic Expression Engine & Universal Parameter Binding:**
   - Mathematical formulas evaluated once per frame inside the Render Data Plane, supporting standard mathematical operators and functions.
   - **Special Values (`$VARIABLE`):** Real-time reactive variables representing audio energy, timing, and engine state (e.g., `$BASS`, `$TIME`, `$BEAT`). See the complete [System Variables Reference](./system_variables.md).
@@ -26,8 +27,9 @@ The platform is designed to serve two complementary environments:
   - Three.js + WebGL 2.0 graphics pipeline supporting 2D/3D geometry, particle systems, and customizable GLSL vertex and fragment post-processing shader passes.
 - **MIDI & Performance Controls:**
   - Web MIDI API integration allowing instant MIDI Learn / CC knob mapping to any component parameter for tactile physical control.
-- **Preset Management & Per-Preset Performance Settings:**
+- **Preset Management, Undo/Redo History & Per-Preset Performance Settings:**
   - Declarative JSON-based preset schema enabling seamless import, export, and sharing of modular visualization setups and preset libraries.
+  - **100-Step Undo / Redo History:** Because the entire preset hierarchy and parameters are represented as lightweight JSON (~2–15 KB per snapshot), the editor maintains an in-memory ring buffer of up to **100 history states** (<5 MB RAM total), enabling instant undo/redo across parameter tweaks, component preset loads, and node graph edits.
   - **Preset-Wide Performance Settings:** Each preset stores its own configurable **Target FPS** (`target_fps`, default `60`) and **Render Resolution Scale** (`resolution_scale`, default `1.0`), allowing users to trade off resolution or frame rate for heavy visualizations.
 - **User Experience & Presentation:**
   - **MVP:** Sleek, responsive single-window interface with a collapsible floating HUD for parameter tweaking, preset switching, and full-screen canvas mode.
