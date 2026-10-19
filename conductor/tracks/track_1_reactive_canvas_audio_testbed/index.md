@@ -1,4 +1,4 @@
-# Track Context: Core Engine Foundation & Modular Frame Buffer MVP
+# Track 1 Context: Minimal Reactive Canvas & Audio Testbed
 
 ## Documents
 
