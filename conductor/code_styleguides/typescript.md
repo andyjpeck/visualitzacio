@@ -33,8 +33,7 @@ Style Guide, which is enforced by the `gts` tool.
 -   **`any` Type:** **Avoid `any`**. Prefer `unknown` or a more specific type.
 -   **Wrapper Objects:** Do not instantiate `String`, `Boolean`, or `Number`
     wrapper classes.
--   **Automatic Semicolon Insertion (ASI):** Do not rely on it. **Explicitly end
-    all statements with a semicolon.**
+-   **Semicolon Convention:** Omit trailing semicolons consistently across all statements (semicolon-free style). Never mix styles. Standard ASI safety rules apply (e.g. prefixing leading `[` or `(` with a semicolon if ever starting a line).
 -   **`const enum`:** Do not use `const enum`. Use plain `enum` instead.
 -   **`eval()` and `Function(...string)`:** Forbidden.
 

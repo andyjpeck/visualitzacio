@@ -10,6 +10,10 @@ import { AudioAnalyzer } from './audio/audio-analyzer'
 import type { RenderEngine } from './engine/render-engine'
 import { useAppStore } from './ui/store/app-store'
 
+/**
+ * Root Application component integrating the WebGL RenderEngine canvas,
+ * Web Audio DSP pipeline, and responsive floating HUD interface.
+ */
 export function App(): React.ReactElement {
   const [engine, setEngine] = useState<RenderEngine | null>(null)
   const [audioManager] = useState(() => new AudioManager())
@@ -43,11 +47,7 @@ export function App(): React.ReactElement {
           )
         } else {
           // Smoothly decay transient audio telemetry when paused
-          frameContext.$BASS *= 0.92
-          frameContext.$MID *= 0.92
-          frameContext.$TREBLE *= 0.92
-          frameContext.$RMS *= 0.85
-          frameContext.$BEAT = 0.0
+          audioAnalyzer.decayIdle(frameContext)
         }
       })
     },
@@ -72,5 +72,3 @@ export function App(): React.ReactElement {
     </div>
   )
 }
-
-export default App

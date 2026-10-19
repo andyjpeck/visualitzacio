@@ -196,4 +196,23 @@ describe('AudioAnalyzer DSP Utilities', () => {
       expect(frameContext.$BPM).toBeGreaterThan(120.0)
     })
   })
+
+  describe('decayIdle', () => {
+    it('smoothly decays audio telemetry when paused or idle', () => {
+      frameContext.$BASS = 1.0
+      frameContext.$MID = 0.8
+      frameContext.$TREBLE = 0.6
+      frameContext.$RMS = 0.5
+      frameContext.$BEAT = 1.0
+
+      analyzer.decayIdle(frameContext)
+
+      expect(frameContext.$BASS).toBeCloseTo(0.92, 2)
+      expect(frameContext.$MID).toBeCloseTo(0.736, 2)
+      expect(frameContext.$TREBLE).toBeCloseTo(0.552, 2)
+      expect(frameContext.$RMS).toBeCloseTo(0.425, 2)
+      expect(frameContext.$BEAT).toBe(0.0)
+    })
+  })
 })
+

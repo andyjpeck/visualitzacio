@@ -248,6 +248,19 @@ export class AudioAnalyzer {
   }
 
   /**
+   * Smoothly decays transient audio telemetry variables when audio playback is paused or inactive.
+   *
+   * @param frameContext - Target frame context containing real-time telemetry variables
+   */
+  decayIdle(frameContext: FrameContext): void {
+    frameContext.$BASS *= 0.92
+    frameContext.$MID *= 0.92
+    frameContext.$TREBLE *= 0.92
+    frameContext.$RMS *= 0.85
+    frameContext.$BEAT = 0.0
+  }
+
+  /**
    * Resets internal DSP filter states, history buffers, and tempo tracking to baseline.
    */
   reset(): void {
@@ -258,3 +271,4 @@ export class AudioAnalyzer {
     this.prevBass = 0
   }
 }
+
