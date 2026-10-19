@@ -61,13 +61,23 @@ Style Guide, which is enforced by the `gts` tool.
     unknown>`, or `object`.
 
 ## 5. Comments and Documentation
-
--   **JSDoc:** Use `/** JSDoc */` for documentation, `//` for implementation
+ 
+-   **Mandatory Class & Public Method Comments:** Every class and every public
+    method must have a descriptive JSDoc block detailing its purpose,
+    parameters, and return value.
+-   **Directory README Mandate:** Every directory in the repository must contain
+    a `README.md` file explaining its role. Higher-level directories with
+    subdirectories must provide navigational summaries of all child directories
+    to keep the tree easy to navigate.
+-   **Continuous Documentation Sync:** Always update documentation concurrently
+    when making code changes. Code changes and documentation updates must be
+    reviewed side-by-side with identical rigor.
+-   **JSDoc Format:** Use `/** JSDoc */` for documentation, `//` for implementation
     comments.
 -   **Redundancy:** **Do not declare types in `@param` or `@return` blocks**
-    (e.g., `/** @param {string} user */`). This is redundant in TypeScript.
--   **Add Information:** Comments must add information, not just restate the
-    code.
+    (e.g., `/** @param user */`). TypeScript types are already self-documenting.
+-   **Add Information:** Comments must add architecture, rationale, and context,
+    not just restate the code.
 
 *Source:
 [Google TypeScript Style Guide](https://google.github.io/styleguide/tsguide.html)*

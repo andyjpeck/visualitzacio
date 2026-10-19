@@ -11,6 +11,11 @@
 5.  **User Experience First:** Every decision should prioritize user experience
 6.  **Non-Interactive & CI-Aware:** Prefer non-interactive commands. Use
     `CI=true` for watch-mode tools (tests, linters) to ensure single execution.
+7.  **Documentation In-Sync & Peer-Reviewed:** Code changes are never complete
+    without corresponding documentation updates. Every class must be commented,
+    every public method must be commented with JSDoc, and every directory must
+    have a `README.md` describing its purpose and subdirectories. Documentation
+    must ALWAYS be reviewed with the exact same rigor and depth as code changes.
 
 ## Task Workflow
 
@@ -47,9 +52,7 @@ All tasks follow a strict lifecycle:
     -   Rerun tests to ensure they still pass after refactoring.
 
 6.  **Verify Coverage:** Run coverage reports using the project's chosen tools.
-    For example, in a Python project, this might look like: `bash pytest
-    --cov=app --cov-report=html` Target: >80% coverage for new code. The
-    specific tools and commands will vary by language and framework.
+    Target: >80% coverage for new code.
 
 7.  **Document Deviations:** If implementation differs from tech stack:
 
@@ -58,33 +61,41 @@ All tasks follow a strict lifecycle:
     -   Add dated note explaining the change
     -   Resume implementation
 
-8.  **Commit Code Changes:**
+8.  **Update Documentation & Directory READMEs:**
 
-    -   Stage all code changes related to the task.
-    -   Propose a clear, concise commit message e.g, `feat(ui): Create basic
-        HTML structure for calculator`.
+    -   **ALWAYS** update documentation concurrently when making code changes.
+    -   Every new or modified class must have a comprehensive JSDoc comment.
+    -   Every new or modified public method must have a clear JSDoc comment.
+    -   Every new or modified directory must have an up-to-date `README.md`
+        describing its purpose, and parent directories must describe any child
+        directories to keep the tree easy to navigate.
+    -   Review this documentation with the exact same scrutiny as the code changes.
+
+9.  **Commit Code & Documentation Changes:**
+
+    -   Stage all code and documentation changes related to the task.
+    -   Propose a clear, concise commit message following Conventional Commits
+        (e.g., `feat(ui): create basic HTML structure (#1)`).
     -   Perform the commit.
 
-9.  **Attach Task Summary with Git Notes:**
+10. **Attach Task Summary with Git Notes:**
 
-    -   **Step 9.1: Get Commit Hash:** Obtain the hash of the *just-completed
+    -   **Step 10.1: Get Commit Hash:** Obtain the hash of the *just-completed
         commit* (`git log -1 --format="%H"`).
-    -   **Step 9.2: Draft Note Content:** Create a detailed summary for the
-        completed task. This should include the task name, a summary of changes,
-        a list of all created/modified files, and the core "why" for the change.
-    -   **Step 9.3: Attach Note:** Use the `git notes` command to attach the
-        summary to the commit. `bash # The note content from the previous step
-        is passed via the -m flag. git notes add -m "<note content>"
-        <commit_hash>`
+    -   **Step 10.2: Draft Note Content:** Create a detailed summary for the
+        completed task, including changes made, files modified, and documentation
+        updates.
+    -   **Step 10.3: Attach Note:** Use `git notes add -m "<note content>"
+        <commit_hash>`.
 
-10. **Get and Record Task Commit SHA:**
+11. **Get and Record Task Commit SHA:**
 
-    -   **Step 10.1: Update Plan:** Read `plan.md`, find the line for the
+    -   **Step 11.1: Update Plan:** Read `plan.md`, find the line for the
         completed task, update its status from `[~]` to `[x]`, and append the
         first 7 characters of the *just-completed commit's* commit hash.
-    -   **Step 10.2: Write Plan:** Write the updated content back to `plan.md`.
+    -   **Step 11.2: Write Plan:** Write the updated content back to `plan.md`.
 
-11. **Commit Plan Update:**
+12. **Commit Plan Update:**
 
     -   **Action:** Stage the modified `plan.md` file.
     -   **Action:** Commit this change with a descriptive message (e.g.,

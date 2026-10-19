@@ -1,0 +1,39 @@
+{
+  "name": "visualitzacio",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "lint": "oxlint"
+  },
+  "dependencies": {
+    "lucide-react": "^0.475.0",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "three": "^0.182.0",
+    "zustand": "^5.0.3"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.2.0",
+    "@types/node": "^24.13.3",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.7",
+    "@types/three": "^0.182.0",
+    "@vitejs/plugin-react": "^6.1.1",
+    "autoprefixer": "^10.4.20",
+    "jsdom": "^26.0.0",
+    "oxlint": "^1.81.0",
+    "postcss": "^8.5.1",
+    "tailwindcss": "^3.4.17",
+    "typescript": "~6.0.2",
+    "vite": "^8.3.0",
+    "vitest": "^3.0.5"
+  }
+}

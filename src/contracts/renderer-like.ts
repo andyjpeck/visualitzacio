@@ -1,0 +1,31 @@
+import type { FrameContext } from './frame-context'
+
+/**
+ * Minimal abstraction over Three.js WebGLRenderer for dependency injection and testing.
+ */
+export interface RendererLike {
+  domElement: HTMLCanvasElement
+  setSize(width: number, height: number, updateStyle?: boolean): void
+  setPixelRatio(pixelRatio: number): void
+  render(scene: unknown, camera: unknown): void
+  dispose(): void
+}
+
+/**
+ * Scheduler interface abstracting requestAnimationFrame / cancelAnimationFrame for headless unit tests.
+ */
+export interface Scheduler {
+  now(): number
+  requestFrame(callback: (timestamp: number) => void): number
+  cancelFrame(handle: number): void
+}
+
+/**
+ * Minimal node interface implemented by visual passes and components in the render pipeline.
+ */
+export interface VisualNode {
+  init?(renderer: RendererLike): void
+  resize?(width: number, height: number, pixelRatio: number): void
+  update(ctx: FrameContext): void
+  dispose?(): void
+}
