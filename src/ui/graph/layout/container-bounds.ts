@@ -5,6 +5,8 @@ export const LEAF_NODE_HEIGHT = 56
 export const CONTAINER_PADDING = 20
 export const CONTAINER_HEADER_HEIGHT = 65
 export const CHILD_GAP = 15
+export const MIN_CHILD_X = 15
+export const MIN_CHILD_Y = 60
 
 export interface NodeDimensions {
   width: number

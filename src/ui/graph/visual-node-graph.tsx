@@ -18,6 +18,11 @@ import { LayoutDashboard, Trash2 } from 'lucide-react'
 import { nodeTypes } from './nodes/node-types'
 import { validateConnection } from './validation/connection-validator'
 import { autoLayoutGraph } from './layout/auto-layout'
+import {
+  MIN_CHILD_X,
+  MIN_CHILD_Y,
+  recalculateContainerBounds,
+} from './layout/container-bounds'
 import { useAppStore } from '../store/app-store'
 
 export interface VisualNodeGraphProps {
@@ -38,9 +43,30 @@ function InnerVisualNodeGraph({
   const [connectionWarning, setConnectionWarning] = useState<string | null>(null)
 
   // Sync node changes (drag, selection, dimension changes)
+  // Enforces that child nodes inside containers cannot be dragged over the container header
   const onNodesChange = useCallback(
     (changes: NodeChange[]) => {
-      setGraphNodes((nds) => applyNodeChanges(changes, nds))
+      setGraphNodes((prevNodes) => {
+        const sanitizedChanges = changes.map((change) => {
+          if (change.type === 'position' && change.position) {
+            const node = prevNodes.find((n) => n.id === change.id)
+            if (node?.parentId) {
+              return {
+                ...change,
+                position: {
+                  x: Math.max(MIN_CHILD_X, change.position.x),
+                  y: Math.max(MIN_CHILD_Y, change.position.y),
+                },
+              }
+            }
+          }
+          return change
+        })
+
+        const updated = applyNodeChanges(sanitizedChanges, prevNodes)
+        const hasPositionChange = changes.some((c) => c.type === 'position')
+        return hasPositionChange ? recalculateContainerBounds(updated) : updated
+      })
     },
     [setGraphNodes],
   )

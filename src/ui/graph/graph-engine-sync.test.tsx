@@ -107,4 +107,12 @@ describe('VisualNodeGraph Component & Store Synchronization', () => {
     expect(success).toBe(false)
     expect(useAppStore.getState().graphNodes.find((n) => n.id === 'master-frame-buffer')).toBeDefined()
   })
+
+  it('ensures child node position does not cover the parent container header', () => {
+    render(<VisualNodeGraph />)
+
+    const child = useAppStore.getState().graphNodes.find((n) => n.id === 'test-visual-1')!
+    expect(child.position.y).toBeGreaterThanOrEqual(60)
+    expect(child.position.x).toBeGreaterThanOrEqual(15)
+  })
 })
