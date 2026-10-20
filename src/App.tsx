@@ -64,6 +64,15 @@ export function App(): React.ReactElement {
         isLive && !isHudVisible ? 'cursor-none' : ''
       }`}
     >
+      {/* Top Floating Controls Toolbar (on top of all panes and canvas) */}
+      <div
+        className={`transition-opacity duration-300 relative z-50 ${
+          isHudVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'
+        }`}
+      >
+        <Toolbar audioManager={audioManager} />
+      </div>
+
       {/* Resizable Studio Split-View Workspace */}
       <StudioSplitView
         preview={
@@ -79,7 +88,6 @@ export function App(): React.ReactElement {
             >
               <FpsBadge />
               <AudioTelemetryOverlay engine={engine} />
-              <Toolbar audioManager={audioManager} />
             </div>
           </div>
         }
