@@ -14,7 +14,7 @@ The `engine` directory contains the high-frequency WebGL rendering orchestrator 
 
 - [**`visual-node.ts`**](file:///C:/Users/andyj/Documents/visualitzacio/src/engine/visual-node.ts):
   - Contains `TestVisualNode`, the primary audio-reactive 3D scene.
-  - Features a prominent multifaceted icosahedron crystal with neon emissive glow, an outer wireframe lattice, an orbiting cyberpunk halo ring, and dynamic multi-point neon lighting (cyan, magenta, amber).
+  - Features a prominent multifaceted icosahedron crystal with neon emissive glow, an outer wireframe lattice, and dynamic multi-point neon lighting (cyan, magenta, amber).
   - Modulates rotation with `$TIME`, scale with `$BASS` and `$BEAT`, wireframe colors with `$TREBLE`, and emissive brilliance with `$RMS`.
 
 ## Subdirectories

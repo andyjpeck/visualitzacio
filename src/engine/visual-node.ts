@@ -6,7 +6,7 @@ import type { ExpressionEngine } from './expressions/expression-engine'
 
 /**
  * 3D visual testbed node featuring an audio-reactive cyberpunk faceted crystal,
- * outer wireframe lattice, orbiting halo ring, and multi-point neon lighting.
+ * outer wireframe lattice, and multi-point neon lighting.
  * Implements the VisualNode contract with dynamic geometry shape morphing.
  */
 export class TestVisualNode implements VisualNode {
@@ -17,7 +17,6 @@ export class TestVisualNode implements VisualNode {
   readonly mesh: THREE.Mesh<THREE.BufferGeometry, THREE.MeshStandardMaterial>
   private readonly outerWireframe: THREE.Mesh<THREE.BufferGeometry, THREE.MeshBasicMaterial>
   private readonly wireMaterial: THREE.MeshBasicMaterial
-  private readonly haloRing: THREE.Mesh<THREE.TorusGeometry, THREE.MeshBasicMaterial>
   private renderer?: RendererLike
   private scaleParam: DynamicParam<number> | null = null
   private baseScale = 1.0
@@ -59,17 +58,6 @@ export class TestVisualNode implements VisualNode {
     })
     this.outerWireframe = new THREE.Mesh(wireGeometry, this.wireMaterial)
     this.mesh.add(this.outerWireframe)
-
-    // Orbiting cyberpunk halo ring
-    const ringGeometry = new THREE.TorusGeometry(1.5, 0.02, 16, 64)
-    const ringMaterial = new THREE.MeshBasicMaterial({
-      color: 0xff007f,
-      transparent: true,
-      opacity: 0.75,
-    })
-    this.haloRing = new THREE.Mesh(ringGeometry, ringMaterial)
-    this.haloRing.rotation.x = Math.PI / 2.5
-    this.scene.add(this.haloRing)
 
     // Vibrant neon multi-point lighting
     const ambientLight = new THREE.AmbientLight(0x303060, 2.0)
@@ -239,14 +227,6 @@ export class TestVisualNode implements VisualNode {
       this.wireMaterial.color.setHex(0x00ffff)
     }
 
-    // Orbiting halo ring counter-rotates and scales with midrange energy
-    if (this.haloRing) {
-      this.haloRing.rotation.z = -ctx.$TIME * 0.3
-      this.haloRing.rotation.x = Math.PI / 2.5 + Math.sin(ctx.$TIME * 0.5) * 0.2
-      const ringScale = isReactive ? 1.0 + ctx.$MID * 0.4 + ctx.$BEAT * 0.25 : 1.0
-      this.haloRing.scale.set(ringScale, ringScale, ringScale)
-    }
-
     if (this.renderer) {
       this.renderer.render(this.scene, this.camera)
     }
@@ -260,7 +240,5 @@ export class TestVisualNode implements VisualNode {
     this.mesh.material.dispose()
     this.outerWireframe.geometry.dispose()
     this.wireMaterial.dispose()
-    this.haloRing.geometry.dispose()
-    this.haloRing.material.dispose()
   }
 }
