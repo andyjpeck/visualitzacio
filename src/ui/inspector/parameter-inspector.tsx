@@ -65,7 +65,6 @@ export function ParameterInspector({
   const graphNodes = useAppStore((state) => state.graphNodes)
   const updateGraphNodeData = useAppStore((state) => state.updateGraphNodeData)
   const setNodeParent = useAppStore((state) => state.setNodeParent)
-  const isPlaying = useAppStore((state) => state.isPlaying)
 
   // Preset-wide fallback settings
   const targetFps = useAppStore((state) => state.targetFps)
@@ -451,22 +450,6 @@ export function ParameterInspector({
               isFocused={focusedParamKey === 'shape'}
               onChange={(val) => handleUpdate('shape', val)}
             />
-
-            <div className="flex flex-col gap-1">
-              <ParameterRow
-                label="Audio Reactivity"
-                value={data.reactive !== undefined ? Boolean(data.reactive) : true}
-                type="toggle"
-                allowExpression={false}
-                isFocused={focusedParamKey === 'reactive'}
-                onChange={(val) => handleUpdate('reactive', val)}
-              />
-              {!isPlaying && Boolean(data.reactive ?? true) && (
-                <div className="text-[10px] font-mono text-amber-300 bg-amber-500/10 border border-amber-500/20 rounded px-2 py-1">
-                  ⚠️ Audio is paused. Press PLAY in top toolbar to start audio reactivity.
-                </div>
-              )}
-            </div>
 
             <ParameterRow
               label="Scale"

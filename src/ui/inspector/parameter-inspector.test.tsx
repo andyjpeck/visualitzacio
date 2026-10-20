@@ -45,7 +45,6 @@ describe('ParameterInspector Component', () => {
     expect(screen.getByText(/testVisual/i)).toBeInTheDocument()
 
     expect(screen.getByText('Shape')).toBeInTheDocument()
-    expect(screen.getByText('Audio Reactivity')).toBeInTheDocument()
     expect(screen.getByText('Scale')).toBeInTheDocument()
 
     // Adjust scale slider
