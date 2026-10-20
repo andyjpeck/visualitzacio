@@ -130,24 +130,10 @@ function saveInspectorVerticalRatioToStorage(ratio: number): void {
 
 export const DEFAULT_GRAPH_NODES: Node[] = [
   {
-    id: 'test-visual-1',
-    type: 'testVisual',
-    position: { x: 220, y: 40 },
-    data: {
-      label: 'Crystal Synth',
-      shape: 'Crystal',
-      reactive: true,
-      scale: 1.0,
-      offsetX: 0.0,
-      offsetY: 0.0,
-      positionX: 0.0,
-      positionY: 0.0,
-    },
-  },
-  {
     id: 'master-frame-buffer',
     type: 'masterFrameBuffer',
-    position: { x: 220, y: 220 },
+    position: { x: 120, y: 30 },
+    style: { width: 340, height: 440 },
     data: {
       label: 'Master Output',
       blendMode: 'replace',
@@ -159,19 +145,26 @@ export const DEFAULT_GRAPH_NODES: Node[] = [
       positionY: 0.0,
     },
   },
-]
-
-export const DEFAULT_GRAPH_EDGES: Edge[] = [
   {
-    id: 'e-visual-master',
-    source: 'test-visual-1',
-    target: 'master-frame-buffer',
-    sourceHandle: 'exec-out',
-    targetHandle: 'exec-in',
-    animated: true,
-    style: { stroke: '#00f0ff', strokeWidth: 2 },
+    id: 'test-visual-1',
+    type: 'testVisual',
+    parentId: 'master-frame-buffer',
+    extent: 'parent',
+    position: { x: 20, y: 195 },
+    data: {
+      label: 'Crystal Synth',
+      shape: 'Crystal',
+      reactive: true,
+      scale: 1.0,
+      offsetX: 0.0,
+      offsetY: 0.0,
+      positionX: 0.0,
+      positionY: 0.0,
+    },
   },
 ]
+
+export const DEFAULT_GRAPH_EDGES: Edge[] = []
 
 export type DialogId = 'preset-settings' | 'formula-testbed' | 'template-selector'
 

@@ -57,8 +57,10 @@ describe('VisualNodeGraph Component & Store Synchronization', () => {
     const master = state.graphNodes.find((n) => n.id === 'master-frame-buffer')!
     const synth = state.graphNodes.find((n) => n.id === 'test-visual-1')!
 
-    // In Dagre top-to-bottom layout, synth (source) is above master (target)
-    expect(master.position.y).toBeGreaterThan(synth.position.y)
+    // Crystal synth is structurally nested as a child of master frame buffer
+    expect(synth.parentId).toBe('master-frame-buffer')
+    expect(master).toBeDefined()
+    expect(synth.position.y).toBeGreaterThanOrEqual(120)
   })
 
   it('deletes a selected non-master node and cleans up its edges', () => {

@@ -30,6 +30,9 @@ export function autoLayoutGraph<T extends Record<string, unknown>>(
     return { nodes: [], edges }
   }
 
+  const topLevelNodes = nodes.filter((n) => !n.parentId)
+  const childNodes = nodes.filter((n) => Boolean(n.parentId))
+
   const dagreGraph = new dagre.graphlib.Graph()
   dagreGraph.setDefaultEdgeLabel(() => ({}))
   dagreGraph.setGraph({
@@ -38,33 +41,50 @@ export function autoLayoutGraph<T extends Record<string, unknown>>(
     nodesep: nodeSep,
   })
 
-  // Register nodes with bounding box dimensions
-  for (const node of nodes) {
+  // Register top-level nodes with bounding box dimensions
+  for (const node of topLevelNodes) {
+    const w = (node.style?.width as number) || nodeWidth
+    const h = (node.style?.height as number) || nodeHeight
     dagreGraph.setNode(node.id, {
-      width: nodeWidth,
-      height: nodeHeight,
+      width: w,
+      height: h,
     })
   }
 
-  // Register edges
+  // Register edges connecting top-level nodes
+  const topLevelIds = new Set(topLevelNodes.map((n) => n.id))
   for (const edge of edges) {
-    dagreGraph.setEdge(edge.source, edge.target)
+    if (topLevelIds.has(edge.source) && topLevelIds.has(edge.target)) {
+      dagreGraph.setEdge(edge.source, edge.target)
+    }
   }
 
   // Compute layout
   dagre.layout(dagreGraph)
 
-  // Map nodes to new positions (offset by half width/height so top-left matches React Flow coordinate space)
-  const layoutedNodes: Node<T>[] = nodes.map((node) => {
+  // Map top-level nodes to new positions (offset by half width/height so top-left matches React Flow coordinate space)
+  const layoutedTopNodes: Node<T>[] = topLevelNodes.map((node) => {
     const nodeWithPosition = dagreGraph.node(node.id)
+    if (!nodeWithPosition) return node
+    const w = (node.style?.width as number) || nodeWidth
+    const h = (node.style?.height as number) || nodeHeight
     return {
       ...node,
       position: {
-        x: Math.round(nodeWithPosition.x - nodeWidth / 2),
-        y: Math.round(nodeWithPosition.y - nodeHeight / 2),
+        x: Math.round(nodeWithPosition.x - w / 2),
+        y: Math.round(nodeWithPosition.y - h / 2),
       },
     }
   })
 
-  return { nodes: layoutedNodes, edges }
+  // For child nodes, preserve their relative position inside their parent
+  const layoutedChildNodes: Node<T>[] = childNodes.map((node) => ({
+    ...node,
+    position: {
+      x: node.position.x || 20,
+      y: node.position.y || 195,
+    },
+  }))
+
+  return { nodes: [...layoutedTopNodes, ...layoutedChildNodes], edges }
 }

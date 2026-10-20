@@ -23,6 +23,11 @@ export function MasterFrameBufferNodeComponent({
   const setSelectedNodeId = useAppStore((state) => state.setSelectedNodeId)
   const setFocusedParamKey = useAppStore((state) => state.setFocusedParamKey)
 
+  const childCount = useAppStore(
+    (state) => state.graphNodes.filter((n) => n.parentId === id).length,
+  )
+  const hasChildren = childCount > 0 || Boolean(data.isContainer)
+
   const handleSelectParam = (paramKey: string) => {
     setSelectedNodeId(id)
     setFocusedParamKey(paramKey)
@@ -31,7 +36,13 @@ export function MasterFrameBufferNodeComponent({
   return (
     <div
       data-testid="master-frame-buffer-node"
-      className={`relative rounded-xl border px-4 py-3 min-w-[220px] bg-gradient-to-b from-[#1b1509] to-[#0c0d14] shadow-2xl transition-all select-none ${
+      className={`relative rounded-2xl border px-4 py-3 transition-all select-none ${
+        hasChildren ? 'min-w-[340px] min-h-[440px]' : 'min-w-[220px]'
+      } ${
+        hasChildren
+          ? 'bg-gradient-to-b from-[#1b1407]/90 via-[#100d07]/90 to-[#07070c]/95 shadow-[0_0_35px_rgba(245,158,11,0.12)]'
+          : 'bg-gradient-to-b from-[#1b1509] to-[#0c0d14] shadow-2xl'
+      } ${
         selected
           ? 'border-amber-400 ring-2 ring-amber-400/50 shadow-amber-500/20'
           : 'border-amber-500/40 hover:border-amber-400/80 shadow-black/80'
@@ -62,6 +73,11 @@ export function MasterFrameBufferNodeComponent({
           <div>
             <div className="text-xs font-mono font-bold text-amber-300 uppercase tracking-wider flex items-center gap-1.5">
               <span>{data.label || 'Master Output'}</span>
+              {hasChildren && (
+                <span className="text-[9px] px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 font-mono border border-amber-500/30">
+                  {childCount} NESTED
+                </span>
+              )}
             </div>
             <div className="text-[10px] text-amber-500/80 font-mono">
               Root Frame Buffer
@@ -148,6 +164,15 @@ export function MasterFrameBufferNodeComponent({
           </button>
         </div>
       </div>
+
+      {hasChildren && (
+        <div className="flex items-center gap-2 mt-3 mb-1">
+          <div className="text-[9px] font-mono text-amber-400/70 uppercase tracking-widest">
+            Scene Visual Children
+          </div>
+          <div className="flex-1 h-px bg-amber-500/20" />
+        </div>
+      )}
     </div>
   )
 }
