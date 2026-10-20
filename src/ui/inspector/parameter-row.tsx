@@ -53,13 +53,15 @@ export function ParameterRow({
         typeof value === 'string' &&
         (value.includes('$') || value.includes('#'))))
 
+  const [typedFormula, setTypedFormula] = useState<string | null>(null)
   const [prevValue, setPrevValue] = useState(value)
-  const [localFormula, setLocalFormula] = useState(String(value))
 
   if (value !== prevValue) {
     setPrevValue(value)
-    setLocalFormula(String(value))
+    setTypedFormula(null)
   }
+
+  const activeFormula = typedFormula !== null ? typedFormula : String(value)
 
   useEffect(() => {
     if (isFocused && rowRef.current) {
@@ -70,6 +72,7 @@ export function ParameterRow({
   const exprEngine = getDefaultExpressionEngine()
 
   const handleToggleMode = () => {
+    setTypedFormula(null)
     if (isExpression) {
       // Revert to fixed mode with numeric fallback
       const num = Number(value)
@@ -78,17 +81,16 @@ export function ParameterRow({
     } else {
       // Morph to expression mode
       onChange(String(value), 'expression')
-      setLocalFormula(String(value))
     }
   }
 
   const handleFormulaChange = (newFormula: string) => {
-    setLocalFormula(newFormula)
+    setTypedFormula(newFormula)
     onChange(newFormula, 'expression')
   }
 
   const validation = isExpression
-    ? exprEngine.validate(localFormula)
+    ? exprEngine.validate(activeFormula)
     : { isValid: true, error: undefined }
 
   return (
@@ -149,14 +151,14 @@ export function ParameterRow({
             <ExpressionInput
               id={`formula-input-${label.toLowerCase().replace(/\s+/g, '-')}`}
               label=""
-              value={localFormula}
+              value={activeFormula}
               onChange={handleFormulaChange}
               isValid={validation.isValid}
               error={validation.error}
               placeholder="e.g. 1.0 + $BASS * 0.8"
             />
             <ExpressionAutocomplete
-              value={localFormula}
+              value={activeFormula}
               onChange={handleFormulaChange}
               inputRef={inputRef}
             />
@@ -166,7 +168,7 @@ export function ParameterRow({
           <ExpressionSparkline
             engine={engine}
             expressionEngine={exprEngine}
-            formula={localFormula}
+            formula={activeFormula}
             isValid={validation.isValid}
             isActive={true}
           />

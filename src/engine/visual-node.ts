@@ -7,22 +7,27 @@ import type { ExpressionEngine } from './expressions/expression-engine'
 /**
  * 3D visual testbed node featuring an audio-reactive cyberpunk faceted crystal,
  * outer wireframe lattice, orbiting halo ring, and multi-point neon lighting.
- * Implements the VisualNode contract.
+ * Implements the VisualNode contract with dynamic geometry shape morphing.
  */
 export class TestVisualNode implements VisualNode {
+  readonly id: string
+  bypassed = false
   readonly scene: THREE.Scene
   readonly camera: THREE.PerspectiveCamera
-  readonly mesh: THREE.Mesh<THREE.IcosahedronGeometry, THREE.MeshStandardMaterial>
-  private readonly outerWireframe: THREE.Mesh<THREE.IcosahedronGeometry, THREE.MeshBasicMaterial>
+  readonly mesh: THREE.Mesh<THREE.BufferGeometry, THREE.MeshStandardMaterial>
+  private readonly outerWireframe: THREE.Mesh<THREE.BufferGeometry, THREE.MeshBasicMaterial>
   private readonly wireMaterial: THREE.MeshBasicMaterial
   private readonly haloRing: THREE.Mesh<THREE.TorusGeometry, THREE.MeshBasicMaterial>
   private renderer?: RendererLike
   private scaleParam: DynamicParam<number> | null = null
+  private currentShape = 'Crystal'
+  private isAudioReactive = true
 
   /**
    * Constructs the 3D scene, perspective camera, faceted geometry, and neon lighting rig.
    */
-  constructor() {
+  constructor(id = 'test-visual-1') {
+    this.id = id
     this.scene = new THREE.Scene()
     this.camera = new THREE.PerspectiveCamera(60, 16 / 9, 0.1, 100)
     this.camera.position.z = 3
@@ -83,6 +88,67 @@ export class TestVisualNode implements VisualNode {
   }
 
   /**
+   * Modifies the 3D geometry of the mesh and outer wireframe cage.
+   * Supports 'Crystal' (Icosahedron), 'Cube' (Box), 'Torus', and 'Sphere'.
+   *
+   * @param shape - Shape identifier string.
+   */
+  setShape(shape: string): void {
+    if (this.currentShape === shape) return
+    this.currentShape = shape
+
+    this.mesh.geometry.dispose()
+    this.outerWireframe.geometry.dispose()
+
+    let newGeo: THREE.BufferGeometry
+    let newWireGeo: THREE.BufferGeometry
+
+    switch (shape) {
+      case 'Cube':
+        newGeo = new THREE.BoxGeometry(1.3, 1.3, 1.3)
+        newWireGeo = new THREE.BoxGeometry(1.32, 1.32, 1.32)
+        break
+      case 'Torus':
+        newGeo = new THREE.TorusGeometry(0.85, 0.35, 16, 40)
+        newWireGeo = new THREE.TorusGeometry(0.87, 0.36, 16, 40)
+        break
+      case 'Sphere':
+        newGeo = new THREE.SphereGeometry(1.1, 24, 24)
+        newWireGeo = new THREE.SphereGeometry(1.12, 24, 24)
+        break
+      case 'Crystal':
+      default:
+        newGeo = new THREE.IcosahedronGeometry(1, 1)
+        newWireGeo = new THREE.IcosahedronGeometry(1.02, 1)
+        break
+    }
+
+    this.mesh.geometry = newGeo
+    this.outerWireframe.geometry = newWireGeo
+  }
+
+  /**
+   * Returns current active 3D geometry shape identifier.
+   */
+  getShape(): string {
+    return this.currentShape
+  }
+
+  /**
+   * Enables or disables dynamic audio spectrum modulation of scale and colors.
+   */
+  setAudioReactive(reactive: boolean): void {
+    this.isAudioReactive = reactive
+  }
+
+  /**
+   * Returns whether audio reactivity is currently active.
+   */
+  getAudioReactive(): boolean {
+    return this.isAudioReactive
+  }
+
+  /**
    * Initializes the node with the active renderer context.
    *
    * @param renderer - Renderer instance implementing RendererLike.
@@ -122,31 +188,40 @@ export class TestVisualNode implements VisualNode {
    * @param ctx - Real-time FrameContext containing telemetry ($TIME, $BASS, $MID, $TREBLE, $BEAT, $RMS).
    */
   update(ctx: FrameContext): void {
+    if (this.bypassed) return
+
     // Rotation driven by $TIME (matches test contracts)
     this.mesh.rotation.x = ctx.$TIME * 0.4
     this.mesh.rotation.y = ctx.$TIME * 0.6
 
     // Scale pulses with $BASS and instantaneous $BEAT flash, or dynamic expression if bound
-    const defaultScale = 1.0 + ctx.$BASS * 0.5 + ctx.$BEAT * 0.3
+    const isReactive = this.isAudioReactive
+    const defaultScale = isReactive ? 1.0 + ctx.$BASS * 0.5 + ctx.$BEAT * 0.3 : 1.0
     const baseScale = this.scaleParam ? this.scaleParam.evaluate(ctx, defaultScale) : defaultScale
     this.mesh.scale.set(baseScale, baseScale, baseScale)
 
-    // Color shifts with $MID and $TREBLE energy
-    const hue = 0.5 + ctx.$MID * 0.3 // Shifts from cyan towards magenta
-    const lightness = 0.5 + ctx.$TREBLE * 0.3
-    this.mesh.material.color.setHSL(hue % 1.0, 1.0, Math.min(lightness, 0.9))
+    if (isReactive) {
+      // Color shifts with $MID and $TREBLE energy
+      const hue = 0.5 + ctx.$MID * 0.3 // Shifts from cyan towards magenta
+      const lightness = 0.5 + ctx.$TREBLE * 0.3
+      this.mesh.material.color.setHSL(hue % 1.0, 1.0, Math.min(lightness, 0.9))
 
-    // Emissive brilliance explodes on beats and transients
-    this.mesh.material.emissiveIntensity = 0.6 + ctx.$BEAT * 2.2 + ctx.$RMS * 1.2
+      // Emissive brilliance explodes on beats and transients
+      this.mesh.material.emissiveIntensity = 0.6 + ctx.$BEAT * 2.2 + ctx.$RMS * 1.2
 
-    // Outer wireframe hue reacts to high frequencies
-    this.wireMaterial.color.setHSL((0.85 + ctx.$TREBLE * 0.3) % 1.0, 1.0, 0.6)
+      // Outer wireframe hue reacts to high frequencies
+      this.wireMaterial.color.setHSL((0.85 + ctx.$TREBLE * 0.3) % 1.0, 1.0, 0.6)
+    } else {
+      this.mesh.material.color.setHex(0x00f0ff)
+      this.mesh.material.emissiveIntensity = 0.6
+      this.wireMaterial.color.setHex(0x00ffff)
+    }
 
     // Orbiting halo ring counter-rotates and scales with midrange energy
     if (this.haloRing) {
       this.haloRing.rotation.z = -ctx.$TIME * 0.3
       this.haloRing.rotation.x = Math.PI / 2.5 + Math.sin(ctx.$TIME * 0.5) * 0.2
-      const ringScale = 1.0 + ctx.$MID * 0.4 + ctx.$BEAT * 0.25
+      const ringScale = isReactive ? 1.0 + ctx.$MID * 0.4 + ctx.$BEAT * 0.25 : 1.0
       this.haloRing.scale.set(ringScale, ringScale, ringScale)
     }
 

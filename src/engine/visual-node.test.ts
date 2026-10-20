@@ -48,4 +48,44 @@ describe('TestVisualNode', () => {
     // 1.0 + 0.5 * 2.0 = 2.0
     expect(node.mesh.scale.x).toBeCloseTo(2.0, 2)
   })
+
+  it('switches geometry shapes dynamically (Cube, Torus, Sphere, Crystal)', () => {
+    const node = new TestVisualNode()
+    expect(node.getShape()).toBe('Crystal')
+
+    node.setShape('Cube')
+    expect(node.getShape()).toBe('Cube')
+    expect(node.mesh.geometry.type).toBe('BoxGeometry')
+
+    node.setShape('Torus')
+    expect(node.getShape()).toBe('Torus')
+    expect(node.mesh.geometry.type).toBe('TorusGeometry')
+
+    node.setShape('Sphere')
+    expect(node.getShape()).toBe('Sphere')
+    expect(node.mesh.geometry.type).toBe('SphereGeometry')
+
+    node.setShape('Crystal')
+    expect(node.getShape()).toBe('Crystal')
+    expect(node.mesh.geometry.type).toBe('IcosahedronGeometry')
+
+    node.dispose()
+  })
+
+  it('toggles audio reactivity', () => {
+    const node = new TestVisualNode()
+    expect(node.getAudioReactive()).toBe(true)
+
+    node.setAudioReactive(false)
+    expect(node.getAudioReactive()).toBe(false)
+
+    const ctx = createDefaultFrameContext()
+    ctx.$BASS = 0.9
+    ctx.$BEAT = 1.0
+    node.update(ctx)
+
+    // When audio reactive is disabled, scale remains base 1.0 without bass/beat pump
+    expect(node.mesh.scale.x).toBe(1.0)
+    node.dispose()
+  })
 })

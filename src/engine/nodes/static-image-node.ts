@@ -24,7 +24,8 @@ export interface StaticImageNodeOptions {
  */
 export class StaticImageNode implements VisualNode {
   readonly id: string
-  readonly url: string
+  url: string
+  bypassed = false
   private fitMode: ImageFitMode
   private opacityVal = 1.0
   readonly saveTo: string | null
@@ -120,6 +121,22 @@ export class StaticImageNode implements VisualNode {
     this.recalculateAspect()
   }
 
+  setUrl(url: string): void {
+    if (this.url === url) return
+    this.url = url
+    this.loadTexture(url)
+  }
+
+  setOpacity(opacity: number | string, engine?: ExpressionEngine): void {
+    if (typeof opacity === 'number') {
+      this.opacityVal = opacity
+      this.opacityParam = null
+      this.material.opacity = opacity
+    } else if (engine && typeof opacity === 'string') {
+      this.opacityParam = createDynamicParam(opacity, engine)
+    }
+  }
+
   setImageDimensions(width: number, height: number): void {
     this.imageWidth = Math.max(1, width)
     this.imageHeight = Math.max(1, height)
@@ -194,6 +211,8 @@ export class StaticImageNode implements VisualNode {
   }
 
   update(ctx: FrameContext): void {
+    if (this.bypassed) return
+
     if (this.opacityParam) {
       this.opacityVal = this.opacityParam.evaluate(ctx, this.opacityVal)
       this.material.opacity = this.opacityVal

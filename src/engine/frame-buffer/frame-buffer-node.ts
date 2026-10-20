@@ -43,6 +43,7 @@ export class FrameBufferNode implements VisualNode {
   feedback: boolean
   saveTo: string | null
   loadFrom: string | null
+  bypassed = false
 
   private opacityVal = 1.0
   private scaleVal = 1.0
@@ -382,7 +383,7 @@ export class FrameBufferNode implements VisualNode {
    * and composites to the parent target or screen.
    */
   update(ctx: FrameContext): void {
-    if (!this.renderer) return
+    if (!this.renderer || this.bypassed) return
 
     // Evaluate dynamic parameters
     if (this.opacityParam) this.opacityVal = this.opacityParam.evaluate(ctx, this.opacityVal)
@@ -405,7 +406,9 @@ export class FrameBufferNode implements VisualNode {
         this.renderer.clear()
       }
       for (const child of this.children) {
-        child.update(ctx)
+        if (!child.bypassed) {
+          child.update(ctx)
+        }
       }
 
       // Step B: Render feedbackScene quad into writeTarget combining feedback history and child render
@@ -451,7 +454,9 @@ export class FrameBufferNode implements VisualNode {
       }
 
       for (const child of this.children) {
-        child.update(ctx)
+        if (!child.bypassed) {
+          child.update(ctx)
+        }
       }
     }
 
