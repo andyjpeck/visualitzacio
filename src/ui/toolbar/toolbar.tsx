@@ -3,7 +3,6 @@ import {
   Activity,
   Disc,
   FileAudio,
-  Layers,
   Loader2,
   Maximize2,
   Mic,
@@ -43,9 +42,6 @@ export function Toolbar({ audioManager }: ToolbarProps): React.ReactElement {
   const showFpsOverlay = useAppStore((state) => state.showFpsOverlay)
   const toggleFpsOverlay = useAppStore((state) => state.toggleFpsOverlay)
   const toggleDialog = useAppStore((state) => state.toggleDialog)
-  const isFormulaTestbedOpen = useAppStore((state) => state.isFormulaTestbedOpen)
-  const isTemplateSelectorOpen = useAppStore((state) => state.isTemplateSelectorOpen)
-  const feedbackEnabled = useAppStore((state) => state.feedbackEnabled)
   const studioMode = useAppStore((state) => state.studioMode)
   const toggleStudioMode = useAppStore((state) => state.toggleStudioMode)
   const isAudioLoading = useAppStore((state) => state.isAudioLoading)
@@ -303,38 +299,6 @@ export function Toolbar({ audioManager }: ToolbarProps): React.ReactElement {
           }`}
         >
           <Activity className="w-4 h-4" />
-        </button>
-
-        {/* Dynamic Formula Testbed f(x) Button */}
-        <button
-          type="button"
-          onClick={() => toggleDialog('formula-testbed')}
-          aria-label="Open Dynamic Expression Testbed"
-          title="Open Dynamic Expression Testbed f(x)"
-          className={`px-2.5 py-1.5 rounded-lg border transition-colors cursor-pointer font-mono font-bold text-xs select-none ${
-            isFormulaTestbedOpen
-              ? 'bg-cyber-cyan/20 border-cyber-cyan text-cyber-cyan shadow-md shadow-cyber-cyan/20'
-              : 'bg-white/5 border-transparent text-slate-300 hover:text-white hover:bg-white/10 hover:border-white/10'
-          }`}
-        >
-          f(x)
-        </button>
-
-        {/* Frame Buffer & Ping-Pong Feedback Templates Button */}
-        <button
-          type="button"
-          onClick={() => toggleDialog('template-selector')}
-          aria-label="Open Frame Buffer Templates"
-          title="Open Frame Buffer & Ping-Pong Feedback Templates"
-          className={`p-2 rounded-lg border transition-colors cursor-pointer ${
-            feedbackEnabled
-              ? 'bg-purple-950/40 border-purple-400/60 text-purple-300 shadow-sm shadow-purple-500/20'
-              : isTemplateSelectorOpen
-                ? 'bg-white/15 border-white/30 text-white'
-                : 'bg-white/5 border-transparent text-slate-300 hover:text-white hover:bg-white/10'
-          }`}
-        >
-          <Layers className="w-4 h-4" />
         </button>
 
         {/* Preset Settings Modal Button */}

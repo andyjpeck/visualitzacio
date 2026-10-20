@@ -215,11 +215,13 @@ export function ViewportCanvas({
         if (gNode.data.rotation !== undefined) {
           vNode.bindExpression('rotation', gNode.data.rotation as string | number, exprEngine)
         }
-        if (gNode.data.positionX !== undefined) {
-          vNode.bindExpression('positionX', gNode.data.positionX as string | number, exprEngine)
+        const posX = gNode.data.offsetX !== undefined ? gNode.data.offsetX : gNode.data.positionX
+        if (posX !== undefined) {
+          vNode.bindExpression('positionX', posX as string | number, exprEngine)
         }
-        if (gNode.data.positionY !== undefined) {
-          vNode.bindExpression('positionY', gNode.data.positionY as string | number, exprEngine)
+        const posY = gNode.data.offsetY !== undefined ? gNode.data.offsetY : gNode.data.positionY
+        if (posY !== undefined) {
+          vNode.bindExpression('positionY', posY as string | number, exprEngine)
         }
       } else if (vNode instanceof StaticImageNode) {
         if (gNode.data.imageUrl) {

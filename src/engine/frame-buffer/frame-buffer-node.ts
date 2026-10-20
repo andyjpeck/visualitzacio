@@ -22,6 +22,8 @@ export interface FrameBufferNodeOptions {
   rotation?: number | string
   positionX?: number | string
   positionY?: number | string
+  offsetX?: number | string
+  offsetY?: number | string
   feedback?: boolean
   saveTo?: string | null
   loadFrom?: string | null
@@ -95,18 +97,21 @@ export class FrameBufferNode implements VisualNode {
     this.saveTo = options.saveTo ?? null
     this.loadFrom = options.loadFrom ?? null
 
+    const posX = options.offsetX !== undefined ? options.offsetX : options.positionX
+    const posY = options.offsetY !== undefined ? options.offsetY : options.positionY
+
     if (typeof options.opacity === 'number') this.opacityVal = options.opacity
     if (typeof options.scale === 'number') this.scaleVal = options.scale
     if (typeof options.rotation === 'number') this.rotationVal = options.rotation
-    if (typeof options.positionX === 'number') this.positionXVal = options.positionX
-    if (typeof options.positionY === 'number') this.positionYVal = options.positionY
+    if (typeof posX === 'number') this.positionXVal = posX
+    if (typeof posY === 'number') this.positionYVal = posY
 
     if (options.expressionEngine) {
       if (typeof options.opacity === 'string') this.bindExpression('opacity', options.opacity, options.expressionEngine)
       if (typeof options.scale === 'string') this.bindExpression('scale', options.scale, options.expressionEngine)
       if (typeof options.rotation === 'string') this.bindExpression('rotation', options.rotation, options.expressionEngine)
-      if (typeof options.positionX === 'string') this.bindExpression('positionX', options.positionX, options.expressionEngine)
-      if (typeof options.positionY === 'string') this.bindExpression('positionY', options.positionY, options.expressionEngine)
+      if (typeof posX === 'string') this.bindExpression('positionX', posX, options.expressionEngine)
+      if (typeof posY === 'string') this.bindExpression('positionY', posY, options.expressionEngine)
     }
 
     if (options.children) {
@@ -159,6 +164,14 @@ export class FrameBufferNode implements VisualNode {
   }
 
   get positionY(): number {
+    return this.positionYVal
+  }
+
+  get offsetX(): number {
+    return this.positionXVal
+  }
+
+  get offsetY(): number {
     return this.positionYVal
   }
 
@@ -345,32 +358,33 @@ export class FrameBufferNode implements VisualNode {
    * Binds an optional dynamic expression to modulation parameters.
    */
   bindExpression(
-    param: 'opacity' | 'scale' | 'rotation' | 'positionX' | 'positionY',
+    param: 'opacity' | 'scale' | 'rotation' | 'positionX' | 'positionY' | 'offsetX' | 'offsetY',
     expr: string | number | null,
     engine?: ExpressionEngine,
   ): void {
+    const canonical = param === 'offsetX' ? 'positionX' : param === 'offsetY' ? 'positionY' : param
     if (typeof expr === 'number') {
-      if (param === 'opacity') { this.opacityVal = expr; this.opacityParam = null }
-      if (param === 'scale') { this.scaleVal = expr; this.scaleParam = null }
-      if (param === 'rotation') { this.rotationVal = expr; this.rotationParam = null }
-      if (param === 'positionX') { this.positionXVal = expr; this.positionXParam = null }
-      if (param === 'positionY') { this.positionYVal = expr; this.positionYParam = null }
+      if (canonical === 'opacity') { this.opacityVal = expr; this.opacityParam = null }
+      if (canonical === 'scale') { this.scaleVal = expr; this.scaleParam = null }
+      if (canonical === 'rotation') { this.rotationVal = expr; this.rotationParam = null }
+      if (canonical === 'positionX') { this.positionXVal = expr; this.positionXParam = null }
+      if (canonical === 'positionY') { this.positionYVal = expr; this.positionYParam = null }
       return
     }
 
     if (expr === null || expr === undefined || expr === '') {
-      if (param === 'opacity') this.opacityParam = null
-      if (param === 'scale') this.scaleParam = null
-      if (param === 'rotation') this.rotationParam = null
-      if (param === 'positionX') this.positionXParam = null
-      if (param === 'positionY') this.positionYParam = null
+      if (canonical === 'opacity') this.opacityParam = null
+      if (canonical === 'scale') this.scaleParam = null
+      if (canonical === 'rotation') this.rotationParam = null
+      if (canonical === 'positionX') this.positionXParam = null
+      if (canonical === 'positionY') this.positionYParam = null
     } else if (engine) {
       const dynamic = createDynamicParam(expr, engine)
-      if (param === 'opacity') this.opacityParam = dynamic
-      if (param === 'scale') this.scaleParam = dynamic
-      if (param === 'rotation') this.rotationParam = dynamic
-      if (param === 'positionX') this.positionXParam = dynamic
-      if (param === 'positionY') this.positionYParam = dynamic
+      if (canonical === 'opacity') this.opacityParam = dynamic
+      if (canonical === 'scale') this.scaleParam = dynamic
+      if (canonical === 'rotation') this.rotationParam = dynamic
+      if (canonical === 'positionX') this.positionXParam = dynamic
+      if (canonical === 'positionY') this.positionYParam = dynamic
     }
   }
 

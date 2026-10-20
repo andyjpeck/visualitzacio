@@ -182,18 +182,6 @@ describe('Toolbar Component', () => {
     expect(mockAudioManager.seek).toHaveBeenCalledWith(60)
   })
 
-  it('toggles dynamic expression testbed when f(x) button is clicked', () => {
-    render(<Toolbar audioManager={mockAudioManager} />)
-    const fxBtn = screen.getByRole('button', { name: /open dynamic expression testbed/i })
-    expect(useAppStore.getState().isFormulaTestbedOpen).toBe(false)
-
-    fireEvent.click(fxBtn)
-    expect(useAppStore.getState().isFormulaTestbedOpen).toBe(true)
-
-    fireEvent.click(fxBtn)
-    expect(useAppStore.getState().isFormulaTestbedOpen).toBe(false)
-  })
-
   it('displays audio loading progress bar and stage message when audio file is loading', () => {
     useAppStore.setState({
       isAudioLoading: true,

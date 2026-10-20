@@ -101,8 +101,6 @@ export function BaseModalDialog({
       return state.dialogStack[state.dialogStack.length - 1] === dialogId
     }
     if (dialogId === 'preset-settings') return state.isPresetSettingsOpen
-    if (dialogId === 'formula-testbed') return state.isFormulaTestbedOpen
-    if (dialogId === 'template-selector') return state.isTemplateSelectorOpen
     return false
   })
   const storeCloseDialog = useAppStore((state) => state.closeDialog)

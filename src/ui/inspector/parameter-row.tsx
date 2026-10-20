@@ -1,7 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { RotateCcw } from 'lucide-react'
+import { ChevronDown, ChevronRight, RotateCcw, Sparkles } from 'lucide-react'
 import { ExpressionInput } from '../expressions/expression-input'
 import { ExpressionSparkline } from '../expressions/expression-sparkline'
+import { ExpressionQuickReference } from '../expressions/expression-quick-reference'
+import { PRESET_FORMULAS } from '../expressions/expression-catalog'
 import { ExpressionAutocomplete } from './expression-autocomplete'
 import { getDefaultExpressionEngine } from '../../engine/expressions/expression-engine'
 import type { RenderEngine } from '../../engine/render-engine'
@@ -98,6 +100,16 @@ export function ParameterRow({
     onChange(newFormula, 'expression')
   }
 
+  const [isPresetsOpen, setIsPresetsOpen] = useState(false)
+  const [isRefOpen, setIsRefOpen] = useState(false)
+
+  const handleInsertToken = (token: string) => {
+    const trimmed = activeFormula.trim()
+    const newFormula =
+      trimmed && trimmed !== '0' && trimmed !== '1' ? `${trimmed} + ${token}` : token
+    handleFormulaChange(newFormula)
+  }
+
   const validation = isExpression
     ? exprEngine.validate(activeFormula)
     : { isValid: true, error: undefined }
@@ -180,6 +192,61 @@ export function ParameterRow({
             formula={activeFormula}
             isValid={validation.isValid}
             isActive={true}
+          />
+
+          {/* Example Formula Presets Collapsible Accordion (Closed by default) */}
+          <div className="border border-white/10 rounded-lg bg-black/30 overflow-hidden">
+            <button
+              type="button"
+              onClick={() => setIsPresetsOpen((prev) => !prev)}
+              aria-expanded={isPresetsOpen}
+              className="w-full flex items-center justify-between p-2 text-xs font-mono font-medium text-slate-300 hover:text-white hover:bg-white/5 transition-colors cursor-pointer select-none"
+            >
+              <div className="flex items-center gap-1.5 uppercase tracking-wider text-slate-400">
+                <Sparkles className="w-3.5 h-3.5 text-cyber-amber" />
+                <span>Formula Presets</span>
+              </div>
+              <div className="flex items-center gap-1 text-slate-400">
+                <span className="text-[10px] text-slate-500 font-mono">
+                  {isPresetsOpen ? 'Hide' : `${PRESET_FORMULAS.length} presets`}
+                </span>
+                {isPresetsOpen ? (
+                  <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+                ) : (
+                  <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
+                )}
+              </div>
+            </button>
+
+            {isPresetsOpen && (
+              <div
+                className="p-2 pt-1 border-t border-white/5 grid grid-cols-1 sm:grid-cols-2 gap-1.5 max-h-48 overflow-y-auto"
+                data-testid="formula-presets-list"
+              >
+                {PRESET_FORMULAS.map((preset) => (
+                  <button
+                    key={preset.name}
+                    type="button"
+                    onClick={() => handleFormulaChange(preset.formula)}
+                    className="p-1.5 rounded text-left bg-black/40 border border-white/10 hover:bg-cyber-cyan/10 hover:border-cyber-cyan/40 hover:text-cyber-cyan transition-all group cursor-pointer"
+                  >
+                    <div className="text-[11px] font-semibold text-slate-200 group-hover:text-cyber-cyan">
+                      {preset.name}
+                    </div>
+                    <div className="font-mono text-[10px] text-slate-400 truncate">
+                      {preset.formula}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Quick Reference Collapsible Accordion (Closed by default) */}
+          <ExpressionQuickReference
+            isOpen={isRefOpen}
+            onToggle={() => setIsRefOpen((prev) => !prev)}
+            onInsertToken={handleInsertToken}
           />
         </div>
       ) : (

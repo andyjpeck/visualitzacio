@@ -16,6 +16,9 @@ export function MasterFrameBufferNodeComponent({
 }: NodeProps & { data: MasterFrameBufferNodeData }): React.ReactElement {
   const blendMode = data.blendMode || 'replace'
   const opacity = data.opacity ?? 1.0
+  const scale = data.scale ?? 1.0
+  const offsetX = data.offsetX ?? data.positionX ?? 0.0
+  const offsetY = data.offsetY ?? data.positionY ?? 0.0
 
   const setSelectedNodeId = useAppStore((state) => state.setSelectedNodeId)
   const setFocusedParamKey = useAppStore((state) => state.setFocusedParamKey)
@@ -103,6 +106,47 @@ export function MasterFrameBufferNodeComponent({
           <span className="text-slate-400 text-[10px]">Opacity</span>
           <span className="text-slate-200 text-[10px]">{String(opacity)}</span>
         </button>
+
+        <button
+          type="button"
+          title="Click to inspect Scale in Parameter Inspector"
+          onClick={(e) => {
+            e.stopPropagation()
+            handleSelectParam('scale')
+          }}
+          className="flex items-center justify-between text-slate-300 bg-white/5 hover:bg-white/10 hover:border-amber-400/40 border border-transparent px-2 py-1 rounded cursor-pointer transition-all active:scale-[0.98]"
+        >
+          <span className="text-slate-400 text-[10px]">Scale</span>
+          <span className="text-slate-200 text-[10px]">{String(scale)}</span>
+        </button>
+
+        <div className="grid grid-cols-2 gap-1.5">
+          <button
+            type="button"
+            title="Click to inspect Offset X in Parameter Inspector"
+            onClick={(e) => {
+              e.stopPropagation()
+              handleSelectParam('offsetX')
+            }}
+            className="flex items-center justify-between text-slate-300 bg-white/5 hover:bg-white/10 hover:border-amber-400/40 border border-transparent px-2 py-1 rounded cursor-pointer transition-all active:scale-[0.98]"
+          >
+            <span className="text-slate-400 text-[10px]">Off X</span>
+            <span className="text-slate-200 text-[10px]">{String(offsetX)}</span>
+          </button>
+
+          <button
+            type="button"
+            title="Click to inspect Offset Y in Parameter Inspector"
+            onClick={(e) => {
+              e.stopPropagation()
+              handleSelectParam('offsetY')
+            }}
+            className="flex items-center justify-between text-slate-300 bg-white/5 hover:bg-white/10 hover:border-amber-400/40 border border-transparent px-2 py-1 rounded cursor-pointer transition-all active:scale-[0.98]"
+          >
+            <span className="text-slate-400 text-[10px]">Off Y</span>
+            <span className="text-slate-200 text-[10px]">{String(offsetY)}</span>
+          </button>
+        </div>
       </div>
     </div>
   )
