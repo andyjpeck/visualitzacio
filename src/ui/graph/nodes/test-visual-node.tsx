@@ -1,6 +1,6 @@
 import React from 'react'
 import { Handle, type NodeProps, Position } from '@xyflow/react'
-import { Activity, Eye, EyeOff, Sparkles } from 'lucide-react'
+import { Eye, EyeOff, Sparkles } from 'lucide-react'
 import type { TestVisualNodeData } from './node-data'
 import { useAppStore } from '../../store/app-store'
 
@@ -14,35 +14,17 @@ export function TestVisualNodeComponent({
   selected,
 }: NodeProps & { data: TestVisualNodeData }): React.ReactElement {
   const isBypassed = data.bypassed ?? false
-  const shape = data.shape || 'Crystal'
-  const isReactive = data.reactive ?? true
-
-  const setSelectedNodeId = useAppStore((state) => state.setSelectedNodeId)
-  const setFocusedParamKey = useAppStore((state) => state.setFocusedParamKey)
   const updateGraphNodeData = useAppStore((state) => state.updateGraphNodeData)
-  const isPlaying = useAppStore((state) => state.isPlaying)
-
-  const handleSelectParam = (paramKey: string) => {
-    setSelectedNodeId(id)
-    setFocusedParamKey(paramKey)
-  }
 
   const handleToggleBypass = (e: React.MouseEvent) => {
     e.stopPropagation()
     updateGraphNodeData(id, { bypassed: !isBypassed })
   }
 
-  const handleToggleReactivity = (e: React.MouseEvent) => {
-    e.stopPropagation()
-    setSelectedNodeId(id)
-    updateGraphNodeData(id, { reactive: !isReactive })
-    setFocusedParamKey('reactive')
-  }
-
   return (
     <div
       data-testid="test-visual-node"
-      className={`relative rounded-xl border px-4 py-3 min-w-[220px] bg-gradient-to-b from-[#091724] to-[#0c0d14] shadow-2xl transition-all select-none ${
+      className={`relative rounded-xl border px-3.5 py-2.5 min-w-[200px] bg-gradient-to-b from-[#091724] to-[#0c0d14] shadow-xl transition-all select-none ${
         selected
           ? 'border-cyber-cyan ring-2 ring-cyber-cyan/50 shadow-cyber-cyan/20'
           : 'border-cyan-500/40 hover:border-cyan-400/80 shadow-black/80'
@@ -63,17 +45,19 @@ export function TestVisualNodeComponent({
       />
 
       {/* Header */}
-      <div className="flex items-center justify-between gap-2 border-b border-cyan-500/20 pb-2 mb-2">
+      <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <div className="p-1 rounded-md bg-cyan-500/10 text-cyber-cyan">
             <Sparkles className="w-4 h-4" />
           </div>
           <div>
+            {/* Line 1: User Customizable Display Name */}
             <div className="text-xs font-mono font-bold text-cyan-200 uppercase tracking-wider">
-              {data.label || 'Test Visual'}
+              {data.label || 'Crystal Synth'}
             </div>
+            {/* Line 2: Component Type */}
             <div className="text-[10px] text-cyan-400/70 font-mono">
-              Generative Synth
+              Test Visual Synth
             </div>
           </div>
         </div>
@@ -89,54 +73,6 @@ export function TestVisualNodeComponent({
           ) : (
             <Eye className="w-3.5 h-3.5" />
           )}
-        </button>
-      </div>
-
-      {/* Body / Parameter Chips */}
-      <div className="flex flex-col gap-1.5 text-[11px] font-mono">
-        <button
-          type="button"
-          title="Click to inspect Shape in Parameter Inspector"
-          onClick={(e) => {
-            e.stopPropagation()
-            handleSelectParam('shape')
-          }}
-          className="flex items-center justify-between text-slate-300 bg-white/5 hover:bg-white/10 hover:border-cyan-400/40 border border-transparent px-2 py-1 rounded cursor-pointer transition-all active:scale-[0.98]"
-        >
-          <span className="text-slate-400 text-[10px]">Shape</span>
-          <span className="text-cyan-300 font-semibold uppercase text-[10px]">
-            {shape}
-          </span>
-        </button>
-
-        <button
-          type="button"
-          title={
-            isReactive
-              ? isPlaying
-                ? 'Audio Reactivity Active'
-                : 'Audio Reactivity Armed (Press PLAY in top toolbar to start audio)'
-              : 'Audio Reactivity Disabled (Fixed mode)'
-          }
-          onClick={handleToggleReactivity}
-          className="flex items-center justify-between text-slate-300 bg-white/5 hover:bg-white/10 hover:border-cyan-400/40 border border-transparent px-2 py-1 rounded cursor-pointer transition-all active:scale-[0.98]"
-        >
-          <div className="flex items-center gap-1 text-slate-400 text-[10px]">
-            <Activity className="w-3 h-3 text-cyber-cyan" />
-            <span>Reactivity</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            {isReactive && !isPlaying && (
-              <span className="text-[9px] text-amber-400 font-normal">[PAUSED]</span>
-            )}
-            <span
-              className={`font-semibold text-[10px] ${
-                isReactive ? 'text-cyber-cyan' : 'text-slate-500'
-              }`}
-            >
-              {isReactive ? 'AUDIO-REACTIVE' : 'FIXED'}
-            </span>
-          </div>
         </button>
       </div>
     </div>

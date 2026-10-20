@@ -58,6 +58,21 @@ describe('ParameterInspector Component', () => {
     expect(updatedNode?.data.scale).toBe(2.5)
   })
 
+  it('allows customizing the display name of a selected node', () => {
+    useAppStore.setState({ selectedNodeId: 'test-visual-1' })
+    render(<ParameterInspector />)
+
+    const displayNameInput = screen.getByLabelText('Display Name')
+    expect(displayNameInput).toHaveValue('Crystal Synth')
+
+    fireEvent.change(displayNameInput, { target: { value: 'Cosmic Core' } })
+
+    const updatedNode = useAppStore
+      .getState()
+      .graphNodes.find((n) => n.id === 'test-visual-1')
+    expect(updatedNode?.data.label).toBe('Cosmic Core')
+  })
+
   it('applies built-in template to Frame Buffer node', () => {
     // Add a frame buffer node and select it
     useAppStore.getState().addGraphNode({

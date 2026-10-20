@@ -14,34 +14,20 @@ export function MasterFrameBufferNodeComponent({
   data,
   selected,
 }: NodeProps & { data: MasterFrameBufferNodeData }): React.ReactElement {
-  const blendMode = data.blendMode || 'replace'
-  const opacity = data.opacity ?? 1.0
-  const scale = data.scale ?? 1.0
-  const offsetX = data.offsetX ?? data.positionX ?? 0.0
-  const offsetY = data.offsetY ?? data.positionY ?? 0.0
-
-  const setSelectedNodeId = useAppStore((state) => state.setSelectedNodeId)
-  const setFocusedParamKey = useAppStore((state) => state.setFocusedParamKey)
-
   const childCount = useAppStore(
     (state) => state.graphNodes.filter((n) => n.parentId === id).length,
   )
   const hasChildren = childCount > 0 || Boolean(data.isContainer)
 
-  const handleSelectParam = (paramKey: string) => {
-    setSelectedNodeId(id)
-    setFocusedParamKey(paramKey)
-  }
-
   return (
     <div
       data-testid="master-frame-buffer-node"
-      className={`relative rounded-2xl border px-4 py-3 transition-all select-none ${
-        hasChildren ? 'min-w-[340px] min-h-[440px]' : 'min-w-[220px]'
+      className={`relative rounded-2xl border px-3.5 py-2.5 transition-all select-none ${
+        hasChildren ? 'min-w-[280px] min-h-[170px]' : 'min-w-[200px]'
       } ${
         hasChildren
-          ? 'bg-gradient-to-b from-[#1b1407]/90 via-[#100d07]/90 to-[#07070c]/95 shadow-[0_0_35px_rgba(245,158,11,0.12)]'
-          : 'bg-gradient-to-b from-[#1b1509] to-[#0c0d14] shadow-2xl'
+          ? 'bg-gradient-to-b from-[#1b1407]/90 via-[#100d07]/90 to-[#07070c]/95 shadow-[0_0_30px_rgba(245,158,11,0.12)]'
+          : 'bg-gradient-to-b from-[#1b1509] to-[#0c0d14] shadow-xl'
       } ${
         selected
           ? 'border-amber-400 ring-2 ring-amber-400/50 shadow-amber-500/20'
@@ -65,12 +51,13 @@ export function MasterFrameBufferNodeComponent({
       />
 
       {/* Header */}
-      <div className="flex items-center justify-between gap-2 border-b border-amber-500/20 pb-2 mb-2">
+      <div className="flex items-center justify-between gap-2 border-b border-amber-500/20 pb-1.5 mb-1.5">
         <div className="flex items-center gap-2">
           <div className="p-1 rounded-md bg-amber-400/10 text-amber-400">
             <Crown className="w-4 h-4" />
           </div>
           <div>
+            {/* Line 1: User Customizable Display Name */}
             <div className="text-xs font-mono font-bold text-amber-300 uppercase tracking-wider flex items-center gap-1.5">
               <span>{data.label || 'Master Output'}</span>
               {hasChildren && (
@@ -79,6 +66,7 @@ export function MasterFrameBufferNodeComponent({
                 </span>
               )}
             </div>
+            {/* Line 2: Component Type */}
             <div className="text-[10px] text-amber-500/80 font-mono">
               Root Frame Buffer
             </div>
@@ -92,87 +80,6 @@ export function MasterFrameBufferNodeComponent({
           <Lock className="w-3.5 h-3.5" />
         </div>
       </div>
-
-      {/* Body / Parameter Chips */}
-      <div className="flex flex-col gap-1.5 text-[11px] font-mono">
-        <button
-          type="button"
-          title="Click to inspect Blend Mode in Parameter Inspector"
-          onClick={(e) => {
-            e.stopPropagation()
-            handleSelectParam('blendMode')
-          }}
-          className="flex items-center justify-between text-slate-300 bg-white/5 hover:bg-white/10 hover:border-amber-400/40 border border-transparent px-2 py-1 rounded cursor-pointer transition-all active:scale-[0.98]"
-        >
-          <span className="text-slate-400 text-[10px]">Blend Mode</span>
-          <span className="text-amber-300 font-semibold uppercase text-[10px]">
-            {blendMode}
-          </span>
-        </button>
-
-        <button
-          type="button"
-          title="Click to inspect Opacity in Parameter Inspector"
-          onClick={(e) => {
-            e.stopPropagation()
-            handleSelectParam('opacity')
-          }}
-          className="flex items-center justify-between text-slate-300 bg-white/5 hover:bg-white/10 hover:border-amber-400/40 border border-transparent px-2 py-1 rounded cursor-pointer transition-all active:scale-[0.98]"
-        >
-          <span className="text-slate-400 text-[10px]">Opacity</span>
-          <span className="text-slate-200 text-[10px]">{String(opacity)}</span>
-        </button>
-
-        <button
-          type="button"
-          title="Click to inspect Scale in Parameter Inspector"
-          onClick={(e) => {
-            e.stopPropagation()
-            handleSelectParam('scale')
-          }}
-          className="flex items-center justify-between text-slate-300 bg-white/5 hover:bg-white/10 hover:border-amber-400/40 border border-transparent px-2 py-1 rounded cursor-pointer transition-all active:scale-[0.98]"
-        >
-          <span className="text-slate-400 text-[10px]">Scale</span>
-          <span className="text-slate-200 text-[10px]">{String(scale)}</span>
-        </button>
-
-        <div className="grid grid-cols-2 gap-1.5">
-          <button
-            type="button"
-            title="Click to inspect Offset X in Parameter Inspector"
-            onClick={(e) => {
-              e.stopPropagation()
-              handleSelectParam('offsetX')
-            }}
-            className="flex items-center justify-between text-slate-300 bg-white/5 hover:bg-white/10 hover:border-amber-400/40 border border-transparent px-2 py-1 rounded cursor-pointer transition-all active:scale-[0.98]"
-          >
-            <span className="text-slate-400 text-[10px]">Off X</span>
-            <span className="text-slate-200 text-[10px]">{String(offsetX)}</span>
-          </button>
-
-          <button
-            type="button"
-            title="Click to inspect Offset Y in Parameter Inspector"
-            onClick={(e) => {
-              e.stopPropagation()
-              handleSelectParam('offsetY')
-            }}
-            className="flex items-center justify-between text-slate-300 bg-white/5 hover:bg-white/10 hover:border-amber-400/40 border border-transparent px-2 py-1 rounded cursor-pointer transition-all active:scale-[0.98]"
-          >
-            <span className="text-slate-400 text-[10px]">Off Y</span>
-            <span className="text-slate-200 text-[10px]">{String(offsetY)}</span>
-          </button>
-        </div>
-      </div>
-
-      {hasChildren && (
-        <div className="flex items-center gap-2 mt-3 mb-1">
-          <div className="text-[9px] font-mono text-amber-400/70 uppercase tracking-widest">
-            Scene Visual Children
-          </div>
-          <div className="flex-1 h-px bg-amber-500/20" />
-        </div>
-      )}
     </div>
   )
 }

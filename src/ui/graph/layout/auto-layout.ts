@@ -82,7 +82,7 @@ export function autoLayoutGraph<T extends Record<string, unknown>>(
     ...node,
     position: {
       x: node.position.x || 20,
-      y: node.position.y || 195,
+      y: node.position.y || 65,
     },
   }))
 

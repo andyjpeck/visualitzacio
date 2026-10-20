@@ -132,8 +132,8 @@ export const DEFAULT_GRAPH_NODES: Node[] = [
   {
     id: 'master-frame-buffer',
     type: 'masterFrameBuffer',
-    position: { x: 120, y: 30 },
-    style: { width: 340, height: 440 },
+    position: { x: 140, y: 40 },
+    style: { width: 280, height: 160 },
     data: {
       label: 'Master Output',
       blendMode: 'replace',
@@ -150,7 +150,7 @@ export const DEFAULT_GRAPH_NODES: Node[] = [
     type: 'testVisual',
     parentId: 'master-frame-buffer',
     extent: 'parent',
-    position: { x: 20, y: 195 },
+    position: { x: 20, y: 65 },
     data: {
       label: 'Crystal Synth',
       shape: 'Crystal',

@@ -31,15 +31,13 @@ describe('Custom Node Card Components', () => {
     expect(screen.getByTestId('master-frame-buffer-node')).toBeInTheDocument()
     expect(screen.getByText('Screen Output')).toBeInTheDocument()
     expect(screen.getByText('Root Frame Buffer')).toBeInTheDocument()
-    expect(screen.getByText('add')).toBeInTheDocument()
-    expect(screen.getByText('0.9')).toBeInTheDocument()
 
     // Test selection styling
     const nodeEl = screen.getByTestId('master-frame-buffer-node')
     expect(nodeEl.className).toContain('border-amber-400')
   })
 
-  it('renders FrameBufferNodeComponent with feedback state, blend mode, and handles', () => {
+  it('renders FrameBufferNodeComponent with display name, component type, and handles', () => {
     render(
       <ReactFlowProvider>
         <FrameBufferNodeComponent
@@ -68,13 +66,11 @@ describe('Custom Node Card Components', () => {
 
     expect(screen.getByTestId('frame-buffer-node')).toBeInTheDocument()
     expect(screen.getByText('Feedback Pass')).toBeInTheDocument()
-    expect(screen.getByText('@FEEDBACK_TEX')).toBeInTheDocument()
-    expect(screen.getByText('screen')).toBeInTheDocument()
-    expect(screen.getByText('ON (0.95)')).toBeInTheDocument()
-    expect(screen.getByText('@TEXTURE_1')).toBeInTheDocument()
+    expect(screen.getByText('Frame Buffer')).toBeInTheDocument()
+    expect(screen.getByTitle('Click to disable feedback loop')).toBeInTheDocument()
   })
 
-  it('renders StaticImageNodeComponent with thumbnail and fit mode', () => {
+  it('renders StaticImageNodeComponent with display name, component type, and handles', () => {
     render(
       <ReactFlowProvider>
         <StaticImageNodeComponent
@@ -101,14 +97,11 @@ describe('Custom Node Card Components', () => {
 
     expect(screen.getByTestId('static-image-node')).toBeInTheDocument()
     expect(screen.getByText('Background Art')).toBeInTheDocument()
-    expect(screen.getByText('@ART_LAYER')).toBeInTheDocument()
-    expect(screen.getByText('contain')).toBeInTheDocument()
-
-    const img = screen.getByRole('img')
-    expect(img).toHaveAttribute('src', 'https://example.com/art.png')
+    expect(screen.getByText('Static Image')).toBeInTheDocument()
+    expect(screen.getByTitle('Bypass Node (Disable)')).toBeInTheDocument()
   })
 
-  it('renders TestVisualNodeComponent with shape and audio reactivity status', () => {
+  it('renders TestVisualNodeComponent with display name, component type, and handles', () => {
     render(
       <ReactFlowProvider>
         <TestVisualNodeComponent
@@ -134,20 +127,28 @@ describe('Custom Node Card Components', () => {
 
     expect(screen.getByTestId('test-visual-node')).toBeInTheDocument()
     expect(screen.getByText('Crystal Mesh')).toBeInTheDocument()
-    expect(screen.getByText('Generative Synth')).toBeInTheDocument()
-    expect(screen.getByText('Crystal')).toBeInTheDocument()
-    expect(screen.getByText('AUDIO-REACTIVE')).toBeInTheDocument()
+    expect(screen.getByText('Test Visual Synth')).toBeInTheDocument()
+    expect(screen.getByTitle('Bypass Node (Disable)')).toBeInTheDocument()
   })
 
-  it('selects node and focuses parameter when clicking badges on MasterFrameBuffer', () => {
-    useAppStore.setState({ selectedNodeId: null, focusedParamKey: null })
+  it('toggles bypass and updates store on TestVisualNodeComponent', () => {
+    useAppStore.setState({
+      graphNodes: [
+        {
+          id: 'test-interactive',
+          type: 'testVisual',
+          position: { x: 0, y: 0 },
+          data: { label: 'Synth 1', bypassed: false },
+        },
+      ],
+    })
 
     render(
       <ReactFlowProvider>
-        <MasterFrameBufferNodeComponent
-          id="master-test"
-          type="masterFrameBuffer"
-          data={{ label: 'Master Output', blendMode: 'replace', opacity: 1.0 }}
+        <TestVisualNodeComponent
+          id="test-interactive"
+          type="testVisual"
+          data={{ label: 'Synth 1', bypassed: false }}
           selected={false}
           zIndex={1}
           isConnectable={true}
@@ -155,24 +156,19 @@ describe('Custom Node Card Components', () => {
           positionAbsoluteY={0}
           dragging={false}
           selectable={true}
-          deletable={false}
+          deletable={true}
           draggable={true}
         />
       </ReactFlowProvider>,
     )
 
-    // Click Blend Mode chip
-    const blendChip = screen.getByRole('button', { name: /blend mode/i })
-    fireEvent.click(blendChip)
+    const bypassBtn = screen.getByTitle('Bypass Node (Disable)')
+    fireEvent.click(bypassBtn)
 
-    expect(useAppStore.getState().selectedNodeId).toBe('master-test')
-    expect(useAppStore.getState().focusedParamKey).toBe('blendMode')
-
-    // Click Opacity chip
-    const opacityChip = screen.getByRole('button', { name: /opacity/i })
-    fireEvent.click(opacityChip)
-
-    expect(useAppStore.getState().focusedParamKey).toBe('opacity')
+    const updatedNode = useAppStore
+      .getState()
+      .graphNodes.find((n) => n.id === 'test-interactive')
+    expect(updatedNode?.data.bypassed).toBe(true)
   })
 
   it('toggles feedback and bypass on FrameBufferNodeComponent', () => {
@@ -209,7 +205,7 @@ describe('Custom Node Card Components', () => {
     )
 
     // Toggle feedback directly from card
-    const feedbackChip = screen.getByTitle('Click to toggle Feedback Loop')
+    const feedbackChip = screen.getByTitle('Click to enable feedback loop')
     fireEvent.click(feedbackChip)
 
     const updatedNode = useAppStore
@@ -220,7 +216,7 @@ describe('Custom Node Card Components', () => {
     expect(useAppStore.getState().focusedParamKey).toBe('feedback')
   })
 
-  it('renders Option A Visual Group Container bounds when node has nested child nodes', () => {
+  it('renders nested child count badge when node has nested child nodes', () => {
     useAppStore.setState({
       graphNodes: [
         {
@@ -259,6 +255,7 @@ describe('Custom Node Card Components', () => {
     )
 
     expect(screen.getByText('1 NESTED')).toBeInTheDocument()
-    expect(screen.getByText('Frame Buffer Container Canvas')).toBeInTheDocument()
+    expect(screen.getByText('Nested Stage')).toBeInTheDocument()
+    expect(screen.getByText('Frame Buffer')).toBeInTheDocument()
   })
 })

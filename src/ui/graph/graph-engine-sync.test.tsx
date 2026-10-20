@@ -60,7 +60,7 @@ describe('VisualNodeGraph Component & Store Synchronization', () => {
     // Crystal synth is structurally nested as a child of master frame buffer
     expect(synth.parentId).toBe('master-frame-buffer')
     expect(master).toBeDefined()
-    expect(synth.position.y).toBeGreaterThanOrEqual(120)
+    expect(synth.position.y).toBeGreaterThanOrEqual(50)
   })
 
   it('deletes a selected non-master node and cleans up its edges', () => {

@@ -246,6 +246,15 @@ export function ParameterInspector({
 
       {/* Parameter Rows List */}
       <div className="flex flex-col gap-2.5">
+        <ParameterRow
+          label="Display Name"
+          value={String(data.label || '')}
+          type="text"
+          allowExpression={false}
+          isFocused={focusedParamKey === 'label'}
+          onChange={(val) => handleUpdate('label', String(val))}
+        />
+
         {/* Master & FrameBuffer Parameters */}
         {(isMaster || isFrameBuffer) && (
           <>
