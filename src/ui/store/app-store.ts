@@ -7,6 +7,10 @@ import {
 } from '../../contracts/preset-settings'
 import { getTemplateById } from '../../engine/frame-buffer/frame-buffer-templates'
 import type { AudioSourceType } from '../../audio/audio-manager'
+import {
+  getNextChildPosition,
+  recalculateContainerBounds,
+} from '../graph/layout/container-bounds'
 
 export type { AudioSourceType }
 
@@ -440,39 +444,23 @@ export const useAppStore = create<AppState>((set) => ({
           ? undefined
           : node.parentId || 'master-frame-buffer'
 
-      const existingChildren = resolvedParentId
-        ? state.graphNodes.filter((n) => n.parentId === resolvedParentId)
-        : []
+      const childPos = resolvedParentId
+        ? node.parentId && node.position?.y !== undefined
+          ? node.position
+          : getNextChildPosition(resolvedParentId, state.graphNodes)
+        : node.position
 
       const normalizedNode: Node = resolvedParentId
         ? {
             ...node,
             parentId: resolvedParentId,
-            extent: 'parent',
-            position: node.parentId ? node.position : { x: 20, y: 65 + existingChildren.length * 65 },
+            extent: 'parent' as const,
+            position: childPos,
           }
         : node
 
-      const updatedNodes = [...state.graphNodes]
-      if (normalizedNode.parentId) {
-        const parentIndex = updatedNodes.findIndex((n) => n.id === normalizedNode.parentId)
-        if (parentIndex !== -1) {
-          const parent = updatedNodes[parentIndex]
-          const newChildCount = existingChildren.length + 1
-          const neededHeight = Math.max(160, 75 + newChildCount * 65)
-          const currentHeight = (parent.style?.height as number) || 160
-          if (neededHeight > currentHeight) {
-            updatedNodes[parentIndex] = {
-              ...parent,
-              style: {
-                ...parent.style,
-                height: neededHeight,
-              },
-            }
-          }
-        }
-      }
-      return { graphNodes: [...updatedNodes, normalizedNode] }
+      const updatedNodes = [...state.graphNodes, normalizedNode]
+      return { graphNodes: recalculateContainerBounds(updatedNodes) }
     }),
   removeGraphNode: (nodeId) => {
     const state = useAppStore.getState()
@@ -482,8 +470,9 @@ export const useAppStore = create<AppState>((set) => ({
       return false
     }
 
+    const remainingNodes = state.graphNodes.filter((n) => n.id !== nodeId)
     set({
-      graphNodes: state.graphNodes.filter((n) => n.id !== nodeId),
+      graphNodes: recalculateContainerBounds(remainingNodes),
       graphEdges: state.graphEdges.filter(
         (e) => e.source !== nodeId && e.target !== nodeId,
       ),
@@ -509,32 +498,24 @@ export const useAppStore = create<AppState>((set) => ({
       const parentNode = state.graphNodes.find((n) => n.id === targetParentId)
       if (!parentNode) return state
 
-      const otherChildren = state.graphNodes.filter(
-        (n) => n.parentId === targetParentId && n.id !== nodeId,
+      const newPos = getNextChildPosition(
+        targetParentId,
+        state.graphNodes.filter((n) => n.id !== nodeId),
       )
-      const newChildIndex = otherChildren.length
-      const neededHeight = Math.max(160, 75 + (newChildIndex + 1) * 65)
-      const currentHeight = (parentNode.style?.height as number) || 160
 
-      return {
-        graphNodes: state.graphNodes.map((n) => {
-          if (n.id === targetParentId && neededHeight > currentHeight) {
-            return {
-              ...n,
-              style: { ...n.style, height: neededHeight },
-            }
+      const updatedNodes = state.graphNodes.map((n) => {
+        if (n.id === nodeId) {
+          return {
+            ...n,
+            parentId: targetParentId,
+            extent: 'parent' as const,
+            position: newPos,
           }
-          if (n.id === nodeId) {
-            return {
-              ...n,
-              parentId: targetParentId,
-              extent: 'parent',
-              position: { x: 20, y: 65 + newChildIndex * 65 },
-            }
-          }
-          return n
-        }),
-      }
+        }
+        return n
+      })
+
+      return { graphNodes: recalculateContainerBounds(updatedNodes) }
     }),
   // Dialog Stack Actions
   openDialog: (id: DialogId) =>

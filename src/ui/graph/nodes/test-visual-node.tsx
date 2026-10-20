@@ -24,7 +24,7 @@ export function TestVisualNodeComponent({
   return (
     <div
       data-testid="test-visual-node"
-      className={`relative rounded-xl border px-3.5 py-2.5 min-w-[200px] bg-gradient-to-b from-[#091724] to-[#0c0d14] shadow-xl transition-all select-none ${
+      className={`relative rounded-xl border px-3.5 py-2.5 w-[240px] bg-gradient-to-b from-[#091724] to-[#0c0d14] shadow-xl transition-all select-none ${
         selected
           ? 'border-cyber-cyan ring-2 ring-cyber-cyan/50 shadow-cyber-cyan/20'
           : 'border-cyan-500/40 hover:border-cyan-400/80 shadow-black/80'

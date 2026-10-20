@@ -4,6 +4,7 @@ import { Handle, type Node, type NodeProps, Position } from '@xyflow/react'
 import { Eye, EyeOff, ImageIcon, Layers, Plus, Repeat, Sparkles } from 'lucide-react'
 import type { FrameBufferNodeData } from './node-data'
 import { useAppStore } from '../../store/app-store'
+import { getNextChildPosition } from '../layout/container-bounds'
 
 /**
  * Offscreen Frame Buffer Node.
@@ -27,6 +28,7 @@ export function FrameBufferNodeComponent({
   const setFocusedParamKey = useAppStore((state) => state.setFocusedParamKey)
   const updateGraphNodeData = useAppStore((state) => state.updateGraphNodeData)
   const addGraphNode = useAppStore((state) => state.addGraphNode)
+  const graphNodes = useAppStore((state) => state.graphNodes)
   const childCount = useAppStore(
     (state) => state.graphNodes.filter((n) => n.parentId === id).length,
   )
@@ -94,7 +96,7 @@ export function FrameBufferNodeComponent({
   const handleAddChild = (type: 'testVisual' | 'staticImage' | 'frameBuffer') => {
     setIsAddMenuOpen(false)
     const newId = `${type}-${Date.now().toString(36)}`
-    const yPos = 65 + childCount * 65
+    const childPos = getNextChildPosition(id, graphNodes)
     let childNode: Node
 
     if (type === 'testVisual') {
@@ -103,7 +105,7 @@ export function FrameBufferNodeComponent({
         type: 'testVisual',
         parentId: id,
         extent: 'parent',
-        position: { x: 20, y: yPos },
+        position: childPos,
         data: {
           label: `Synth ${childCount + 1}`,
           shape: 'Crystal',
@@ -116,7 +118,7 @@ export function FrameBufferNodeComponent({
         type: 'staticImage',
         parentId: id,
         extent: 'parent',
-        position: { x: 20, y: yPos },
+        position: childPos,
         data: {
           label: `Image Layer ${childCount + 1}`,
           fitMode: 'contain',
@@ -128,7 +130,7 @@ export function FrameBufferNodeComponent({
         type: 'frameBuffer',
         parentId: id,
         extent: 'parent',
-        position: { x: 20, y: yPos },
+        position: childPos,
         data: {
           label: `Buffer ${childCount + 1}`,
           blendMode: 'screen',
@@ -196,9 +198,7 @@ export function FrameBufferNodeComponent({
   return (
     <div
       data-testid="frame-buffer-node"
-      className={`relative rounded-2xl border px-3.5 py-2.5 transition-all select-none ${
-        hasChildren ? 'min-w-[280px] min-h-[170px]' : 'min-w-[200px]'
-      } ${
+      className={`relative rounded-2xl border px-3.5 py-2.5 transition-all select-none w-full h-full min-w-[240px] min-h-[56px] ${
         hasChildren
           ? 'bg-gradient-to-b from-[#1b1033]/90 to-[#0a0714]/95 shadow-[0_0_30px_rgba(168,85,247,0.15)]'
           : 'bg-gradient-to-b from-[#160e29] to-[#0c0d14] shadow-xl'

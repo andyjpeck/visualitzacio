@@ -25,7 +25,7 @@ export function StaticImageNodeComponent({
   return (
     <div
       data-testid="static-image-node"
-      className={`relative rounded-xl border px-3.5 py-2.5 min-w-[200px] bg-gradient-to-b from-[#0e1f18] to-[#0c0d14] shadow-xl transition-all select-none ${
+      className={`relative rounded-xl border px-3.5 py-2.5 w-[240px] bg-gradient-to-b from-[#0e1f18] to-[#0c0d14] shadow-xl transition-all select-none ${
         selected
           ? 'border-emerald-400 ring-2 ring-emerald-400/50 shadow-emerald-500/20'
           : 'border-emerald-500/40 hover:border-emerald-400/80 shadow-black/80'
