@@ -137,6 +137,7 @@ export const DEFAULT_GRAPH_NODES: Node[] = [
       label: 'Crystal Synth',
       shape: 'Crystal',
       reactive: true,
+      scale: 1.0,
     },
   },
   {

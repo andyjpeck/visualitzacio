@@ -204,8 +204,13 @@ export class TestVisualNode implements VisualNode {
         ? Math.sin(ctx.$TIME * 2.5) * 0.05
         : 0.0
     const defaultScale = this.baseScale * (1.0 + reactivePulse + idleBreath)
-    const baseScale = this.scaleParam ? this.scaleParam.evaluate(ctx, defaultScale) : defaultScale
-    this.mesh.scale.set(baseScale, baseScale, baseScale)
+    const finalScale =
+      !isReactive
+        ? this.baseScale
+        : this.scaleParam
+          ? this.scaleParam.evaluate(ctx, defaultScale)
+          : defaultScale
+    this.mesh.scale.set(finalScale, finalScale, finalScale)
 
     if (isReactive) {
       // Color shifts with $MID and $TREBLE energy

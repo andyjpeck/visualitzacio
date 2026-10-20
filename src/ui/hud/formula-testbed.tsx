@@ -56,14 +56,20 @@ export function FormulaTestbed({ engine, historyLengthRef }: FormulaTestbedProps
     const nodes = typeof engine.getAllNodes === 'function' ? engine.getAllNodes() : engine.getNodes()
     for (const node of nodes) {
       if (node instanceof TestVisualNode) {
-        if (bindFormulaToScene && validation.isValid) {
+        if (isOpen && bindFormulaToScene && validation.isValid) {
           node.setScaleExpression(activeFormula, expressionEngine)
+        } else if (!isOpen) {
+          const graphNodes = useAppStore.getState().graphNodes
+          const gNode = graphNodes.find((n) => n.id === node.id)
+          const scaleVal =
+            gNode?.data.scale !== undefined ? (gNode.data.scale as string | number) : 1.0
+          node.setScaleExpression(scaleVal, expressionEngine)
         } else {
           node.setScaleExpression(null)
         }
       }
     }
-  }, [engine, activeFormula, bindFormulaToScene, validation.isValid, expressionEngine])
+  }, [engine, isOpen, activeFormula, bindFormulaToScene, validation.isValid, expressionEngine])
 
   // Cleanup scene binding when unmounting
   useEffect(() => {
