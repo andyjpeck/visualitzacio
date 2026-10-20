@@ -249,7 +249,7 @@ export interface AppState {
   addGraphNode: (node: Node) => void
   removeGraphNode: (nodeId: string) => boolean
   updateGraphNodeData: (nodeId: string, patch: Record<string, unknown>) => void
-  setNodeParent: (nodeId: string, parentId: string | null) => void
+  setNodeParent: (nodeId: string, parentId: string) => void
 
   // Dialog Stack Navigation Actions
   openDialog: (id: DialogId) => void
@@ -433,12 +433,31 @@ export const useAppStore = create<AppState>((set) => ({
     })),
   addGraphNode: (node) =>
     set((state) => {
+      // The ONLY node allowed at top level is master-frame-buffer.
+      // Any other node must be a child of a buffer.
+      const resolvedParentId =
+        node.id === 'master-frame-buffer' || node.type === 'masterFrameBuffer'
+          ? undefined
+          : node.parentId || 'master-frame-buffer'
+
+      const existingChildren = resolvedParentId
+        ? state.graphNodes.filter((n) => n.parentId === resolvedParentId)
+        : []
+
+      const normalizedNode: Node = resolvedParentId
+        ? {
+            ...node,
+            parentId: resolvedParentId,
+            extent: 'parent',
+            position: node.parentId ? node.position : { x: 20, y: 65 + existingChildren.length * 65 },
+          }
+        : node
+
       const updatedNodes = [...state.graphNodes]
-      if (node.parentId) {
-        const parentIndex = updatedNodes.findIndex((n) => n.id === node.parentId)
+      if (normalizedNode.parentId) {
+        const parentIndex = updatedNodes.findIndex((n) => n.id === normalizedNode.parentId)
         if (parentIndex !== -1) {
           const parent = updatedNodes[parentIndex]
-          const existingChildren = updatedNodes.filter((n) => n.parentId === node.parentId)
           const newChildCount = existingChildren.length + 1
           const neededHeight = Math.max(160, 75 + newChildCount * 65)
           const currentHeight = (parent.style?.height as number) || 160
@@ -453,7 +472,7 @@ export const useAppStore = create<AppState>((set) => ({
           }
         }
       }
-      return { graphNodes: [...updatedNodes, node] }
+      return { graphNodes: [...updatedNodes, normalizedNode] }
     }),
   removeGraphNode: (nodeId) => {
     const state = useAppStore.getState()
@@ -485,55 +504,36 @@ export const useAppStore = create<AppState>((set) => ({
       const targetNode = state.graphNodes.find((n) => n.id === nodeId)
       if (!targetNode || targetNode.id === 'master-frame-buffer') return state
 
-      // If reparenting to a container
-      if (parentId) {
-        const parentNode = state.graphNodes.find((n) => n.id === parentId)
-        if (!parentNode) return state
-        const otherChildren = state.graphNodes.filter(
-          (n) => n.parentId === parentId && n.id !== nodeId,
-        )
-        const newChildIndex = otherChildren.length
-        const neededHeight = Math.max(160, 75 + (newChildIndex + 1) * 65)
-        const currentHeight = (parentNode.style?.height as number) || 160
+      // Fallback to master-frame-buffer if parentId is empty or invalid
+      const targetParentId = parentId || 'master-frame-buffer'
+      const parentNode = state.graphNodes.find((n) => n.id === targetParentId)
+      if (!parentNode) return state
 
-        return {
-          graphNodes: state.graphNodes.map((n) => {
-            if (n.id === parentId && neededHeight > currentHeight) {
-              return {
-                ...n,
-                style: { ...n.style, height: neededHeight },
-              }
+      const otherChildren = state.graphNodes.filter(
+        (n) => n.parentId === targetParentId && n.id !== nodeId,
+      )
+      const newChildIndex = otherChildren.length
+      const neededHeight = Math.max(160, 75 + (newChildIndex + 1) * 65)
+      const currentHeight = (parentNode.style?.height as number) || 160
+
+      return {
+        graphNodes: state.graphNodes.map((n) => {
+          if (n.id === targetParentId && neededHeight > currentHeight) {
+            return {
+              ...n,
+              style: { ...n.style, height: neededHeight },
             }
-            if (n.id === nodeId) {
-              return {
-                ...n,
-                parentId,
-                extent: 'parent',
-                position: { x: 20, y: 65 + newChildIndex * 65 },
-              }
+          }
+          if (n.id === nodeId) {
+            return {
+              ...n,
+              parentId: targetParentId,
+              extent: 'parent',
+              position: { x: 20, y: 65 + newChildIndex * 65 },
             }
-            return n
-          }),
-        }
-      } else {
-        // Unparenting to top level
-        const currentParent = state.graphNodes.find((n) => n.id === targetNode.parentId)
-        const newX = (currentParent?.position.x ?? 100) + 320
-        const newY = currentParent?.position.y ?? 100
-        return {
-          graphNodes: state.graphNodes.map((n) => {
-            if (n.id === nodeId) {
-              const copy = { ...n }
-              delete copy.parentId
-              delete copy.extent
-              return {
-                ...copy,
-                position: { x: newX, y: newY },
-              }
-            }
-            return n
-          }),
-        }
+          }
+          return n
+        }),
       }
     }),
   // Dialog Stack Actions

@@ -14,15 +14,7 @@ import {
   ReactFlow,
   ReactFlowProvider,
 } from '@xyflow/react'
-import {
-  Crown,
-  ImageIcon,
-  Layers,
-  LayoutDashboard,
-  Plus,
-  Sparkles,
-  Trash2,
-} from 'lucide-react'
+import { LayoutDashboard, Trash2 } from 'lucide-react'
 import { nodeTypes } from './nodes/node-types'
 import { validateConnection } from './validation/connection-validator'
 import { autoLayoutGraph } from './layout/auto-layout'
@@ -31,8 +23,6 @@ import { useAppStore } from '../store/app-store'
 export interface VisualNodeGraphProps {
   className?: string
 }
-
-let nextNodeId = 100
 
 function InnerVisualNodeGraph({
   className = '',
@@ -43,10 +33,8 @@ function InnerVisualNodeGraph({
   const setGraphEdges = useAppStore((state) => state.setGraphEdges)
   const selectedNodeId = useAppStore((state) => state.selectedNodeId)
   const setSelectedNodeId = useAppStore((state) => state.setSelectedNodeId)
-  const addGraphNode = useAppStore((state) => state.addGraphNode)
   const removeGraphNode = useAppStore((state) => state.removeGraphNode)
 
-  const [isAddMenuOpen, setIsAddMenuOpen] = useState(false)
   const [connectionWarning, setConnectionWarning] = useState<string | null>(null)
 
   // Sync node changes (drag, selection, dimension changes)
@@ -101,7 +89,6 @@ function InnerVisualNodeGraph({
 
   const handlePaneClick = useCallback(() => {
     setSelectedNodeId(null)
-    setIsAddMenuOpen(false)
   }, [setSelectedNodeId])
 
   // Run Dagre auto-layout
@@ -109,101 +96,6 @@ function InnerVisualNodeGraph({
     const layouted = autoLayoutGraph(graphNodes, graphEdges)
     setGraphNodes(layouted.nodes)
   }, [graphNodes, graphEdges, setGraphNodes])
-
-  // Add custom node
-  const handleAddNode = useCallback(
-    (type: 'frameBuffer' | 'staticImage' | 'testVisual', targetParentId?: string) => {
-      setIsAddMenuOpen(false)
-      const id = `${type}-${++nextNodeId}`
-      let newNode: Node
-
-      if (targetParentId) {
-        const existingChildren = graphNodes.filter((n) => n.parentId === targetParentId)
-        const yPos = 65 + existingChildren.length * 65
-
-        if (type === 'testVisual') {
-          newNode = {
-            id,
-            type: 'testVisual',
-            parentId: targetParentId,
-            extent: 'parent',
-            position: { x: 20, y: yPos },
-            data: {
-              label: `Synth ${nextNodeId}`,
-              shape: 'Crystal',
-              reactive: true,
-              scale: 1.0,
-            },
-          }
-        } else if (type === 'staticImage') {
-          newNode = {
-            id,
-            type: 'staticImage',
-            parentId: targetParentId,
-            extent: 'parent',
-            position: { x: 20, y: yPos },
-            data: {
-              label: `Image Layer ${nextNodeId}`,
-              fitMode: 'contain',
-            },
-          }
-        } else {
-          newNode = {
-            id,
-            type: 'frameBuffer',
-            parentId: targetParentId,
-            extent: 'parent',
-            position: { x: 20, y: yPos },
-            data: {
-              label: `Buffer ${nextNodeId}`,
-              blendMode: 'screen',
-              feedback: true,
-              opacity: 0.9,
-            },
-          }
-        }
-      } else {
-        if (type === 'frameBuffer') {
-          newNode = {
-            id,
-            type: 'frameBuffer',
-            position: { x: 220, y: 150 },
-            data: {
-              label: `Buffer ${nextNodeId}`,
-              blendMode: 'screen',
-              feedback: true,
-              opacity: 0.95,
-            },
-          }
-        } else if (type === 'staticImage') {
-          newNode = {
-            id,
-            type: 'staticImage',
-            position: { x: 50, y: 150 },
-            data: {
-              label: `Image Layer ${nextNodeId}`,
-              fitMode: 'cover',
-            },
-          }
-        } else {
-          newNode = {
-            id,
-            type: 'testVisual',
-            position: { x: 220, y: 20 },
-            data: {
-              label: `Synth ${nextNodeId}`,
-              shape: 'Crystal',
-              reactive: true,
-            },
-          }
-        }
-      }
-
-      addGraphNode(newNode)
-      setSelectedNodeId(id)
-    },
-    [graphNodes, addGraphNode, setSelectedNodeId],
-  )
 
   // Delete currently selected node
   const handleDeleteSelected = useCallback(() => {
@@ -227,91 +119,6 @@ function InnerVisualNodeGraph({
     >
       {/* Top Floating Graph Action Bar */}
       <div className="absolute top-3 left-3 z-30 flex items-center gap-2">
-        {/* Add Node Menu */}
-        <div className="relative">
-          <button
-            type="button"
-            data-testid="graph-add-node-button"
-            onClick={() => setIsAddMenuOpen((open) => !open)}
-            title="Add Node to Graph"
-            aria-label="Add Node to Graph"
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyber-dark/90 hover:bg-cyber-dark border border-white/10 hover:border-cyber-cyan/50 text-slate-200 hover:text-cyber-cyan text-xs font-mono font-semibold shadow-lg shadow-black/60 backdrop-blur-md transition-all cursor-pointer"
-          >
-            <Plus className="w-3.5 h-3.5 text-cyber-cyan" />
-            <span>Add Node</span>
-          </button>
-
-          {isAddMenuOpen && (
-            <div
-              data-testid="graph-add-node-menu"
-              className="absolute left-0 top-full mt-1.5 w-56 rounded-xl bg-cyber-dark/95 border border-white/15 shadow-2xl backdrop-blur-xl p-1.5 z-40 flex flex-col gap-1 text-xs font-mono select-none"
-            >
-              <div className="px-2 py-1 text-[10px] text-amber-400 font-semibold uppercase tracking-wider border-b border-white/10 flex items-center justify-between">
-                <span>Inside Root Buffer</span>
-                <Crown className="w-3 h-3 text-amber-400" />
-              </div>
-              <button
-                type="button"
-                data-testid="add-node-child-test-visual"
-                onClick={() => handleAddNode('testVisual', 'master-frame-buffer')}
-                className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-cyan-950/50 text-slate-300 hover:text-cyber-cyan transition-colors text-left cursor-pointer"
-              >
-                <Sparkles className="w-4 h-4 text-cyber-cyan" />
-                <span>Crystal Synth</span>
-              </button>
-              <button
-                type="button"
-                data-testid="add-node-child-static-image"
-                onClick={() => handleAddNode('staticImage', 'master-frame-buffer')}
-                className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-emerald-950/50 text-slate-300 hover:text-emerald-300 transition-colors text-left cursor-pointer"
-              >
-                <ImageIcon className="w-4 h-4 text-emerald-400" />
-                <span>Static Image</span>
-              </button>
-              <button
-                type="button"
-                data-testid="add-node-child-frame-buffer"
-                onClick={() => handleAddNode('frameBuffer', 'master-frame-buffer')}
-                className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-purple-950/50 text-slate-300 hover:text-purple-300 transition-colors text-left cursor-pointer"
-              >
-                <Layers className="w-4 h-4 text-purple-400" />
-                <span>Nested Frame Buffer</span>
-              </button>
-
-              <div className="px-2 pt-1.5 pb-1 text-[10px] text-slate-400 font-semibold uppercase tracking-wider border-t border-white/10">
-                Top-Level Canvas
-              </div>
-              <button
-                type="button"
-                data-testid="add-node-frame-buffer"
-                onClick={() => handleAddNode('frameBuffer')}
-                className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-purple-950/50 text-slate-300 hover:text-purple-300 transition-colors text-left cursor-pointer"
-              >
-                <Layers className="w-4 h-4 text-purple-400" />
-                <span>Frame Buffer</span>
-              </button>
-              <button
-                type="button"
-                data-testid="add-node-static-image"
-                onClick={() => handleAddNode('staticImage')}
-                className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-emerald-950/50 text-slate-300 hover:text-emerald-300 transition-colors text-left cursor-pointer"
-              >
-                <ImageIcon className="w-4 h-4 text-emerald-400" />
-                <span>Static Image</span>
-              </button>
-              <button
-                type="button"
-                data-testid="add-node-test-visual"
-                onClick={() => handleAddNode('testVisual')}
-                className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-cyan-950/50 text-slate-300 hover:text-cyber-cyan transition-colors text-left cursor-pointer"
-              >
-                <Sparkles className="w-4 h-4 text-cyber-cyan" />
-                <span>Crystal Synth</span>
-              </button>
-            </div>
-          )}
-        </div>
-
         {/* Auto-Layout Button */}
         <button
           type="button"
@@ -341,17 +148,14 @@ function InnerVisualNodeGraph({
         )}
       </div>
 
-      {/* Cycle Warning Toast */}
+      {/* Floating Connection Warning Pill */}
       {connectionWarning && (
-        <div
-          data-testid="graph-connection-warning"
-          className="absolute top-3 right-3 z-40 px-3 py-1.5 rounded-lg bg-red-950/90 border border-red-500/80 text-red-200 text-xs font-mono shadow-xl backdrop-blur-md animate-bounce"
-        >
-          {connectionWarning}
+        <div className="absolute top-3 right-3 z-30 px-3 py-1.5 rounded-lg bg-red-950/90 border border-red-500/50 text-red-200 text-xs font-mono shadow-xl backdrop-blur-md animate-fade-in">
+          ⚠️ {connectionWarning}
         </div>
       )}
 
-      {/* Interactive React Flow Canvas */}
+      {/* React Flow Viewport Canvas */}
       <ReactFlow
         nodes={nodesWithSelection}
         edges={graphEdges}
@@ -362,21 +166,35 @@ function InnerVisualNodeGraph({
         onNodeClick={handleNodeClick}
         onPaneClick={handlePaneClick}
         fitView
-        className="cyberpunk-flow"
+        fitViewOptions={{ padding: 0.2 }}
+        minZoom={0.2}
+        maxZoom={2.0}
+        proOptions={{ hideAttribution: true }}
+        className="bg-[#06060c]"
       >
-        <Background color="#161824" gap={20} size={1.5} />
-        <Controls className="!bg-cyber-dark/90 !border-white/10 !text-slate-200 !shadow-xl !backdrop-blur-md" />
+        <Background color="#161b26" gap={20} size={1} />
+        <Controls
+          showInteractive={false}
+          className="!bg-cyber-dark/80 !border-white/10 !rounded-xl overflow-hidden !shadow-xl fill-slate-300"
+        />
         <MiniMap
-          nodeStrokeColor="#00f0ff"
-          nodeColor="#12131f"
-          maskColor="rgba(6, 6, 12, 0.75)"
-          className="!bg-[#0a0a14]/90 !border-white/10 rounded-xl overflow-hidden !shadow-2xl !backdrop-blur-md"
+          nodeColor={(node) => {
+            if (node.type === 'masterFrameBuffer') return '#f59e0b'
+            if (node.type === 'frameBuffer') return '#a855f7'
+            if (node.type === 'staticImage') return '#10b981'
+            return '#00f0ff'
+          }}
+          maskColor="rgba(6, 6, 12, 0.7)"
+          className="!bg-cyber-dark/80 !border-white/10 !rounded-xl overflow-hidden !shadow-xl"
         />
       </ReactFlow>
     </div>
   )
 }
 
+/**
+ * Visual Node Graph component wrapped in ReactFlowProvider.
+ */
 export function VisualNodeGraph(props: VisualNodeGraphProps): React.ReactElement {
   return (
     <ReactFlowProvider>

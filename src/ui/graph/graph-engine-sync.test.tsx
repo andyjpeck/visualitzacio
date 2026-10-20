@@ -20,7 +20,7 @@ describe('VisualNodeGraph Component & Store Synchronization', () => {
     render(<VisualNodeGraph />)
 
     expect(screen.getByTestId('visual-node-graph')).toBeInTheDocument()
-    expect(screen.getByTestId('graph-add-node-button')).toBeInTheDocument()
+    expect(screen.queryByTestId('graph-add-node-button')).not.toBeInTheDocument()
     expect(screen.getByTestId('graph-auto-layout-button')).toBeInTheDocument()
 
     // Default nodes rendered
@@ -28,15 +28,15 @@ describe('VisualNodeGraph Component & Store Synchronization', () => {
     expect(screen.getByText('Crystal Synth')).toBeInTheDocument()
   })
 
-  it('opens Add Node menu and adds a new Frame Buffer node', () => {
+  it('adds a nested Frame Buffer child node via the Root Frame Buffer + button', () => {
     render(<VisualNodeGraph />)
 
-    const addBtn = screen.getByTestId('graph-add-node-button')
+    const addBtn = screen.getByTestId('master-add-child-button')
     fireEvent.click(addBtn)
 
-    expect(screen.getByTestId('graph-add-node-menu')).toBeInTheDocument()
+    expect(screen.getByTestId('master-add-child-menu')).toBeInTheDocument()
 
-    const addFbBtn = screen.getByTestId('add-node-frame-buffer')
+    const addFbBtn = screen.getByTestId('master-add-child-frame-buffer')
     fireEvent.click(addFbBtn)
 
     const state = useAppStore.getState()
@@ -44,16 +44,17 @@ describe('VisualNodeGraph Component & Store Synchronization', () => {
 
     const addedNode = state.graphNodes.find((n) => n.type === 'frameBuffer')
     expect(addedNode).toBeDefined()
+    expect(addedNode?.parentId).toBe('master-frame-buffer')
     expect(state.selectedNodeId).toBe(addedNode?.id)
   })
 
-  it('adds a child node inside Root Frame Buffer from the Add Node toolbar menu', () => {
+  it('adds a child synth inside Root Frame Buffer via the + button', () => {
     render(<VisualNodeGraph />)
 
-    const addBtn = screen.getByTestId('graph-add-node-button')
+    const addBtn = screen.getByTestId('master-add-child-button')
     fireEvent.click(addBtn)
 
-    const addChildSynthBtn = screen.getByTestId('add-node-child-test-visual')
+    const addChildSynthBtn = screen.getByTestId('master-add-child-synth')
     fireEvent.click(addChildSynthBtn)
 
     const state = useAppStore.getState()

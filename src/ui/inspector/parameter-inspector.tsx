@@ -265,19 +265,15 @@ export function ParameterInspector({
         {!isMaster && (
           <ParameterRow
             label="Parent Container"
-            value={selectedNode.parentId || 'none'}
+            value={selectedNode.parentId || 'master-frame-buffer'}
             type="dropdown"
-            options={[
-              ...containerNodes.map((c) => ({
-                value: c.id,
-                label: `${String(c.data.label || c.id)}${c.id === 'master-frame-buffer' ? ' (Root)' : ''}`,
-              })),
-              { value: 'none', label: 'None (Top-Level Canvas)' },
-            ]}
+            options={containerNodes.map((c) => ({
+              value: c.id,
+              label: `${String(c.data.label || c.id)}${c.id === 'master-frame-buffer' ? ' (Root)' : ''}`,
+            }))}
             allowExpression={false}
             onChange={(val) => {
-              const newParent = val === 'none' ? null : String(val)
-              setNodeParent(selectedNode.id, newParent)
+              setNodeParent(selectedNode.id, String(val))
             }}
           />
         )}

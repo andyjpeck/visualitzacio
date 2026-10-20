@@ -74,19 +74,29 @@ describe('ParameterInspector Component', () => {
   })
 
   it('allows changing parent container of a node via dropdown', () => {
+    // Add another frame buffer to reparent to
+    useAppStore.getState().addGraphNode({
+      id: 'fb-target',
+      type: 'frameBuffer',
+      parentId: 'master-frame-buffer',
+      position: { x: 20, y: 130 },
+      data: { label: 'Target Buffer' },
+    })
+
     useAppStore.setState({ selectedNodeId: 'test-visual-1' })
     render(<ParameterInspector />)
 
     const parentSelect = screen.getByLabelText('Parent Container')
     expect(parentSelect).toHaveValue('master-frame-buffer')
 
-    // Change to 'none' (top-level)
-    fireEvent.change(parentSelect, { target: { value: 'none' } })
+    // Change to 'fb-target'
+    fireEvent.change(parentSelect, { target: { value: 'fb-target' } })
 
     const updatedNode = useAppStore
       .getState()
       .graphNodes.find((n) => n.id === 'test-visual-1')
-    expect(updatedNode?.parentId).toBeUndefined()
+    expect(updatedNode?.parentId).toBe('fb-target')
+    expect(updatedNode?.extent).toBe('parent')
 
     // Change back to 'master-frame-buffer'
     fireEvent.change(parentSelect, { target: { value: 'master-frame-buffer' } })
