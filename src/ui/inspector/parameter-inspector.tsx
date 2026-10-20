@@ -78,6 +78,18 @@ export function ParameterInspector({
     (paramKey: string, value: number | string | boolean) => {
       if (selectedNodeId) {
         const patch: Record<string, unknown> = { [paramKey]: value }
+        if (
+          typeof value === 'string' &&
+          (value.includes('$') ||
+            value.includes('#') ||
+            (value.trim() !== '' && Number.isNaN(Number(value))))
+        ) {
+          patch[`${paramKey}_formula`] = value
+          if (paramKey === 'offsetX') patch.positionX_formula = value
+          if (paramKey === 'offsetY') patch.positionY_formula = value
+          if (paramKey === 'positionX') patch.offsetX_formula = value
+          if (paramKey === 'positionY') patch.offsetY_formula = value
+        }
         if (paramKey === 'blendMode') {
           if (value !== 'replace') {
             patch.feedback = true
@@ -250,6 +262,7 @@ export function ParameterInspector({
             <ParameterRow
               label="Opacity"
               value={data.opacity !== undefined ? (data.opacity as number | string) : 1.0}
+              savedFormula={typeof data.opacity_formula === 'string' ? data.opacity_formula : undefined}
               min={0}
               max={1}
               step={0.01}
@@ -262,6 +275,7 @@ export function ParameterInspector({
             <ParameterRow
               label="Scale"
               value={data.scale !== undefined ? (data.scale as number | string) : 1.0}
+              savedFormula={typeof data.scale_formula === 'string' ? data.scale_formula : undefined}
               min={0.5}
               max={2.0}
               step={0.01}
@@ -279,6 +293,13 @@ export function ParameterInspector({
                   : data.positionX !== undefined
                     ? (data.positionX as number | string)
                     : 0.0
+              }
+              savedFormula={
+                typeof data.offsetX_formula === 'string'
+                  ? data.offsetX_formula
+                  : typeof data.positionX_formula === 'string'
+                    ? data.positionX_formula
+                    : undefined
               }
               min={-1.0}
               max={1.0}
@@ -300,6 +321,13 @@ export function ParameterInspector({
                   : data.positionY !== undefined
                     ? (data.positionY as number | string)
                     : 0.0
+              }
+              savedFormula={
+                typeof data.offsetY_formula === 'string'
+                  ? data.offsetY_formula
+                  : typeof data.positionY_formula === 'string'
+                    ? data.positionY_formula
+                    : undefined
               }
               min={-1.0}
               max={1.0}
@@ -330,6 +358,7 @@ export function ParameterInspector({
             <ParameterRow
               label="Rotation"
               value={data.rotation !== undefined ? (data.rotation as number | string) : 0.0}
+              savedFormula={typeof data.rotation_formula === 'string' ? data.rotation_formula : undefined}
               min={-180}
               max={180}
               step={1}
@@ -366,6 +395,7 @@ export function ParameterInspector({
             <ParameterRow
               label="Opacity"
               value={data.opacity !== undefined ? (data.opacity as number | string) : 1.0}
+              savedFormula={typeof data.opacity_formula === 'string' ? data.opacity_formula : undefined}
               min={0}
               max={1}
               step={0.01}
@@ -409,6 +439,7 @@ export function ParameterInspector({
             <ParameterRow
               label="Scale"
               value={data.scale !== undefined ? (data.scale as number | string) : 1.0}
+              savedFormula={typeof data.scale_formula === 'string' ? data.scale_formula : undefined}
               min={0.1}
               max={3.0}
               step={0.05}
@@ -426,6 +457,13 @@ export function ParameterInspector({
                   : data.positionX !== undefined
                     ? (data.positionX as number | string)
                     : 0.0
+              }
+              savedFormula={
+                typeof data.offsetX_formula === 'string'
+                  ? data.offsetX_formula
+                  : typeof data.positionX_formula === 'string'
+                    ? data.positionX_formula
+                    : undefined
               }
               min={-2.0}
               max={2.0}
@@ -447,6 +485,13 @@ export function ParameterInspector({
                   : data.positionY !== undefined
                     ? (data.positionY as number | string)
                     : 0.0
+              }
+              savedFormula={
+                typeof data.offsetY_formula === 'string'
+                  ? data.offsetY_formula
+                  : typeof data.positionY_formula === 'string'
+                    ? data.positionY_formula
+                    : undefined
               }
               min={-2.0}
               max={2.0}

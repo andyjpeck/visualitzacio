@@ -97,6 +97,47 @@ describe('ParameterRow Component', () => {
     expect(input).toHaveValue('1')
   })
 
+  it('preserves formula when closing and re-opening the f(x) window', () => {
+    const handleChange = vi.fn()
+
+    const { rerender } = render(
+      <ParameterRow
+        label="Scale"
+        value={1.0}
+        type="slider"
+        onChange={handleChange}
+      />,
+    )
+
+    const fxToggle = screen.getByTestId('fx-toggle-scale')
+    fireEvent.click(fxToggle)
+    expect(handleChange).toHaveBeenCalledWith('1', 'expression')
+
+    // Simulate store update with formula
+    rerender(
+      <ParameterRow
+        label="Scale"
+        value="sin($TIME) * 0.5 + 1.0"
+        type="slider"
+        onChange={handleChange}
+      />,
+    )
+
+    expect(screen.getByDisplayValue('sin($TIME) * 0.5 + 1.0')).toBeInTheDocument()
+
+    // Close the f(x) window by clicking Close f(x) Window button
+    const closeBtn = screen.getByTestId('fx-close-button-scale')
+    fireEvent.click(closeBtn)
+
+    // Formula MUST NOT be cleared and collapsed summary is shown
+    expect(screen.getByTestId('fx-collapsed-scale')).toBeInTheDocument()
+    expect(screen.getByText('sin($TIME) * 0.5 + 1.0')).toBeInTheDocument()
+
+    // Re-open f(x) window by clicking the collapsed summary
+    fireEvent.click(screen.getByTestId('fx-collapsed-scale'))
+    expect(screen.getByDisplayValue('sin($TIME) * 0.5 + 1.0')).toBeInTheDocument()
+  })
+
   it('renders dropdown options for dropdown parameter type', () => {
     const handleChange = vi.fn()
     const options = [
