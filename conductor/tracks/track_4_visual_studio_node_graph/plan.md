@@ -42,15 +42,15 @@ This plan implements the complete Studio workspace for Visualització in 5 test-
   - Create `StaticImageNodeComponent`: thumbnail preview, fit mode badge, and `@NAME` publish tag.
   - Create `TestVisualNodeComponent`: audio-reactive wireframe crystal preview node.
   - *Verification:* Write unit tests in `src/ui/graph/nodes/custom-nodes.test.tsx` verifying node rendering and badges.
-- [ ] **Task 2.2: Port Wiring & Connection Handles**
+- [x] **Task 2.2: Port Wiring & Connection Handles**
   - Add top/bottom execution handles (hierarchy flow) and left/right buffer routing handles (`saveTo` $\to$ `loadFrom`).
   - Implement real-time cycle detection and visual warning indicators when an edge would create a loop in `BufferPool`.
   - *Verification:* Write integration tests in `src/ui/graph/graph-edges.test.tsx` testing valid wiring and cycle prevention.
-- [ ] **Task 2.3: Automatic DAG Hierarchical Layout**
+- [x] **Task 2.3: Automatic DAG Hierarchical Layout**
   - Implement `autoLayoutGraph()` utility using Dagre to organize nodes cleanly from top to bottom.
   - Add "Auto-Layout" button to the graph workspace toolbar.
   - *Verification:* Write unit tests in `src/ui/graph/layout/auto-layout.test.ts` verifying node positions and deterministic layout.
-- [ ] **Task 2.4: Graph State Synchronization with `RenderEngine`**
+- [x] **Task 2.4: Graph State Synchronization with `RenderEngine`**
   - Synchronize React Flow nodes/edges with the `RenderEngine` node tree and `BufferPool` in real time.
   - *Verification:* Write integration tests in `src/ui/graph/graph-engine-sync.test.tsx` verifying engine node additions and removals.
 

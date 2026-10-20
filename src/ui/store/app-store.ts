@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import type { Edge, Node } from '@xyflow/react'
 import {
   DEFAULT_AUDIO_BANDS,
   type AudioBandsSettings,
@@ -127,6 +128,41 @@ function saveInspectorVerticalRatioToStorage(ratio: number): void {
   }
 }
 
+export const DEFAULT_GRAPH_NODES: Node[] = [
+  {
+    id: 'test-visual-1',
+    type: 'testVisual',
+    position: { x: 220, y: 40 },
+    data: {
+      label: 'Crystal Synth',
+      shape: 'Crystal',
+      reactive: true,
+    },
+  },
+  {
+    id: 'master-frame-buffer',
+    type: 'masterFrameBuffer',
+    position: { x: 220, y: 220 },
+    data: {
+      label: 'Master Output',
+      blendMode: 'replace',
+      opacity: 1.0,
+    },
+  },
+]
+
+export const DEFAULT_GRAPH_EDGES: Edge[] = [
+  {
+    id: 'e-visual-master',
+    source: 'test-visual-1',
+    target: 'master-frame-buffer',
+    sourceHandle: 'exec-out',
+    targetHandle: 'exec-in',
+    animated: true,
+    style: { stroke: '#00f0ff', strokeWidth: 2 },
+  },
+]
+
 export type DialogId = 'preset-settings' | 'formula-testbed' | 'template-selector'
 
 export interface AppState {
@@ -150,6 +186,11 @@ export interface AppState {
   studioMode: StudioMode
   studioSplitRatio: number
   inspectorVerticalRatio: number
+
+  // Visual Node Graph pipeline state (Track 4)
+  selectedNodeId: string | null
+  graphNodes: Node[]
+  graphEdges: Edge[]
 
   // Preset-wide performance & DSP settings
   targetFps: number
@@ -195,6 +236,13 @@ export interface AppState {
   resetStudioSplitRatio: () => void
   setInspectorVerticalRatio: (ratio: number) => void
   resetInspectorVerticalRatio: () => void
+
+  // Visual Node Graph Pipeline Actions (Track 4)
+  setSelectedNodeId: (id: string | null) => void
+  setGraphNodes: (nodes: Node[] | ((prev: Node[]) => Node[])) => void
+  setGraphEdges: (edges: Edge[] | ((prev: Edge[]) => Edge[])) => void
+  addGraphNode: (node: Node) => void
+  removeGraphNode: (nodeId: string) => boolean
 
   // Dialog Stack Navigation Actions
   openDialog: (id: DialogId) => void
@@ -285,6 +333,10 @@ export const useAppStore = create<AppState>((set) => ({
   studioSplitRatio: loadSplitRatioFromStorage(),
   inspectorVerticalRatio: loadInspectorVerticalRatioFromStorage(),
 
+  selectedNodeId: 'master-frame-buffer',
+  graphNodes: [...DEFAULT_GRAPH_NODES],
+  graphEdges: [...DEFAULT_GRAPH_EDGES],
+
   targetFps: 60,
   resolutionScale: 1.0,
   audioBands: { ...DEFAULT_AUDIO_BANDS },
@@ -349,6 +401,43 @@ export const useAppStore = create<AppState>((set) => ({
   resetInspectorVerticalRatio: () => {
     saveInspectorVerticalRatioToStorage(DEFAULT_INSPECTOR_VERTICAL_RATIO)
     set({ inspectorVerticalRatio: DEFAULT_INSPECTOR_VERTICAL_RATIO })
+  },
+
+  setSelectedNodeId: (selectedNodeId) => set({ selectedNodeId }),
+  setGraphNodes: (nodesOrUpdater) =>
+    set((state) => ({
+      graphNodes:
+        typeof nodesOrUpdater === 'function'
+          ? nodesOrUpdater(state.graphNodes)
+          : nodesOrUpdater,
+    })),
+  setGraphEdges: (edgesOrUpdater) =>
+    set((state) => ({
+      graphEdges:
+        typeof edgesOrUpdater === 'function'
+          ? edgesOrUpdater(state.graphEdges)
+          : edgesOrUpdater,
+    })),
+  addGraphNode: (node) =>
+    set((state) => ({
+      graphNodes: [...state.graphNodes, node],
+    })),
+  removeGraphNode: (nodeId) => {
+    const state = useAppStore.getState()
+    const nodeToRemove = state.graphNodes.find((n) => n.id === nodeId)
+    // Master Output cannot be deleted (Permanent root anchor)
+    if (!nodeToRemove || nodeToRemove.type === 'masterFrameBuffer' || nodeId === 'master-frame-buffer') {
+      return false
+    }
+
+    set({
+      graphNodes: state.graphNodes.filter((n) => n.id !== nodeId),
+      graphEdges: state.graphEdges.filter(
+        (e) => e.source !== nodeId && e.target !== nodeId,
+      ),
+      selectedNodeId: state.selectedNodeId === nodeId ? 'master-frame-buffer' : state.selectedNodeId,
+    })
+    return true
   },
   // Dialog Stack Actions
   openDialog: (id: DialogId) =>
