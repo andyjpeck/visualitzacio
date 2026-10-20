@@ -2,6 +2,7 @@ import React from 'react'
 import { Handle, type NodeProps, Position } from '@xyflow/react'
 import { Eye, EyeOff, ImageIcon } from 'lucide-react'
 import type { StaticImageNodeData } from './node-data'
+import { useAppStore } from '../../store/app-store'
 
 /**
  * Static Image Layer Node.
@@ -9,11 +10,26 @@ import type { StaticImageNodeData } from './node-data'
  * and renders with configurable aspect fit modes.
  */
 export function StaticImageNodeComponent({
+  id,
   data,
   selected,
 }: NodeProps & { data: StaticImageNodeData }): React.ReactElement {
   const isBypassed = data.bypassed ?? false
   const fitMode = data.fitMode || 'cover'
+
+  const setSelectedNodeId = useAppStore((state) => state.setSelectedNodeId)
+  const setFocusedParamKey = useAppStore((state) => state.setFocusedParamKey)
+  const updateGraphNodeData = useAppStore((state) => state.updateGraphNodeData)
+
+  const handleSelectParam = (paramKey: string) => {
+    setSelectedNodeId(id)
+    setFocusedParamKey(paramKey)
+  }
+
+  const handleToggleBypass = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    updateGraphNodeData(id, { bypassed: !isBypassed })
+  }
 
   return (
     <div
@@ -62,16 +78,18 @@ export function StaticImageNodeComponent({
           </div>
         </div>
 
-        <span
-          title={isBypassed ? 'Node bypassed' : 'Node active'}
-          className="p-1 rounded text-slate-400"
+        <button
+          type="button"
+          title={isBypassed ? 'Unbypass Node (Enable)' : 'Bypass Node (Disable)'}
+          onClick={handleToggleBypass}
+          className="p-1 rounded text-slate-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
         >
           {isBypassed ? (
-            <EyeOff className="w-3.5 h-3.5" />
+            <EyeOff className="w-3.5 h-3.5 text-cyber-crimson" />
           ) : (
             <Eye className="w-3.5 h-3.5" />
           )}
-        </span>
+        </button>
       </div>
 
       {/* Body / Thumbnail & Parameter Chips */}
@@ -90,12 +108,20 @@ export function StaticImageNodeComponent({
           </div>
         )}
 
-        <div className="flex items-center justify-between text-slate-300 bg-white/5 px-2 py-1 rounded">
+        <button
+          type="button"
+          title="Click to inspect Fit Mode in Parameter Inspector"
+          onClick={(e) => {
+            e.stopPropagation()
+            handleSelectParam('fitMode')
+          }}
+          className="flex items-center justify-between text-slate-300 bg-white/5 hover:bg-white/10 hover:border-emerald-400/40 border border-transparent px-2 py-1 rounded cursor-pointer transition-all active:scale-[0.98]"
+        >
           <span className="text-slate-400 text-[10px]">Fit Mode</span>
           <span className="text-emerald-300 font-semibold uppercase text-[10px]">
             {fitMode}
           </span>
-        </div>
+        </button>
       </div>
     </div>
   )

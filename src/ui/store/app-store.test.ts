@@ -192,4 +192,30 @@ describe('useAppStore (Zustand State Plane)', () => {
     store.resetInspectorVerticalRatio()
     expect(useAppStore.getState().inspectorVerticalRatio).toBe(0.45)
   })
+
+  it('updates graph node data in real time via updateGraphNodeData', () => {
+    const store = useAppStore.getState()
+    const masterNode = store.graphNodes.find((n) => n.id === 'master-frame-buffer')
+    expect(masterNode?.data.opacity).toBe(1.0)
+
+    store.updateGraphNodeData('master-frame-buffer', { opacity: 0.75, blendMode: 'screen' })
+
+    const updated = useAppStore
+      .getState()
+      .graphNodes.find((n) => n.id === 'master-frame-buffer')
+    expect(updated?.data.opacity).toBe(0.75)
+    expect(updated?.data.blendMode).toBe('screen')
+  })
+
+  it('tracks focused parameter key and clears on node selection switch', () => {
+    const store = useAppStore.getState()
+    expect(store.focusedParamKey).toBeNull()
+
+    store.setFocusedParamKey('blendMode')
+    expect(useAppStore.getState().focusedParamKey).toBe('blendMode')
+
+    store.setSelectedNodeId('test-visual-1')
+    expect(useAppStore.getState().selectedNodeId).toBe('test-visual-1')
+    expect(useAppStore.getState().focusedParamKey).toBeNull()
+  })
 })

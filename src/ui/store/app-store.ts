@@ -189,6 +189,7 @@ export interface AppState {
 
   // Visual Node Graph pipeline state (Track 4)
   selectedNodeId: string | null
+  focusedParamKey: string | null
   graphNodes: Node[]
   graphEdges: Edge[]
 
@@ -239,10 +240,12 @@ export interface AppState {
 
   // Visual Node Graph Pipeline Actions (Track 4)
   setSelectedNodeId: (id: string | null) => void
+  setFocusedParamKey: (key: string | null) => void
   setGraphNodes: (nodes: Node[] | ((prev: Node[]) => Node[])) => void
   setGraphEdges: (edges: Edge[] | ((prev: Edge[]) => Edge[])) => void
   addGraphNode: (node: Node) => void
   removeGraphNode: (nodeId: string) => boolean
+  updateGraphNodeData: (nodeId: string, patch: Record<string, unknown>) => void
 
   // Dialog Stack Navigation Actions
   openDialog: (id: DialogId) => void
@@ -334,6 +337,7 @@ export const useAppStore = create<AppState>((set) => ({
   inspectorVerticalRatio: loadInspectorVerticalRatioFromStorage(),
 
   selectedNodeId: 'master-frame-buffer',
+  focusedParamKey: null,
   graphNodes: [...DEFAULT_GRAPH_NODES],
   graphEdges: [...DEFAULT_GRAPH_EDGES],
 
@@ -403,7 +407,12 @@ export const useAppStore = create<AppState>((set) => ({
     set({ inspectorVerticalRatio: DEFAULT_INSPECTOR_VERTICAL_RATIO })
   },
 
-  setSelectedNodeId: (selectedNodeId) => set({ selectedNodeId }),
+  setSelectedNodeId: (selectedNodeId) =>
+    set({
+      selectedNodeId,
+      focusedParamKey: null,
+    }),
+  setFocusedParamKey: (focusedParamKey) => set({ focusedParamKey }),
   setGraphNodes: (nodesOrUpdater) =>
     set((state) => ({
       graphNodes:
@@ -439,6 +448,14 @@ export const useAppStore = create<AppState>((set) => ({
     })
     return true
   },
+  updateGraphNodeData: (nodeId, patch) =>
+    set((state) => ({
+      graphNodes: state.graphNodes.map((node) =>
+        node.id === nodeId
+          ? { ...node, data: { ...node.data, ...patch } }
+          : node,
+      ),
+    })),
   // Dialog Stack Actions
   openDialog: (id: DialogId) =>
     set((state) => {

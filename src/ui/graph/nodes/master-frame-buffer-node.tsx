@@ -2,6 +2,7 @@ import React from 'react'
 import { Handle, type NodeProps, Position } from '@xyflow/react'
 import { Crown, Lock } from 'lucide-react'
 import type { MasterFrameBufferNodeData } from './node-data'
+import { useAppStore } from '../../store/app-store'
 
 /**
  * Permanent Root Master Frame Buffer Node.
@@ -9,11 +10,20 @@ import type { MasterFrameBufferNodeData } from './node-data'
  * Cannot be deleted or disconnected from screen output.
  */
 export function MasterFrameBufferNodeComponent({
+  id,
   data,
   selected,
 }: NodeProps & { data: MasterFrameBufferNodeData }): React.ReactElement {
   const blendMode = data.blendMode || 'replace'
   const opacity = data.opacity ?? 1.0
+
+  const setSelectedNodeId = useAppStore((state) => state.setSelectedNodeId)
+  const setFocusedParamKey = useAppStore((state) => state.setFocusedParamKey)
+
+  const handleSelectParam = (paramKey: string) => {
+    setSelectedNodeId(id)
+    setFocusedParamKey(paramKey)
+  }
 
   return (
     <div
@@ -66,17 +76,33 @@ export function MasterFrameBufferNodeComponent({
 
       {/* Body / Parameter Chips */}
       <div className="flex flex-col gap-1.5 text-[11px] font-mono">
-        <div className="flex items-center justify-between text-slate-300 bg-white/5 px-2 py-1 rounded">
+        <button
+          type="button"
+          title="Click to inspect Blend Mode in Parameter Inspector"
+          onClick={(e) => {
+            e.stopPropagation()
+            handleSelectParam('blendMode')
+          }}
+          className="flex items-center justify-between text-slate-300 bg-white/5 hover:bg-white/10 hover:border-amber-400/40 border border-transparent px-2 py-1 rounded cursor-pointer transition-all active:scale-[0.98]"
+        >
           <span className="text-slate-400 text-[10px]">Blend Mode</span>
           <span className="text-amber-300 font-semibold uppercase text-[10px]">
             {blendMode}
           </span>
-        </div>
+        </button>
 
-        <div className="flex items-center justify-between text-slate-300 bg-white/5 px-2 py-1 rounded">
+        <button
+          type="button"
+          title="Click to inspect Opacity in Parameter Inspector"
+          onClick={(e) => {
+            e.stopPropagation()
+            handleSelectParam('opacity')
+          }}
+          className="flex items-center justify-between text-slate-300 bg-white/5 hover:bg-white/10 hover:border-amber-400/40 border border-transparent px-2 py-1 rounded cursor-pointer transition-all active:scale-[0.98]"
+        >
           <span className="text-slate-400 text-[10px]">Opacity</span>
           <span className="text-slate-200 text-[10px]">{String(opacity)}</span>
-        </div>
+        </button>
       </div>
     </div>
   )

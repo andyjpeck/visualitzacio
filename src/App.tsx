@@ -8,6 +8,7 @@ import { AudioTelemetryOverlay } from './ui/hud/audio-telemetry-overlay'
 import { FormulaTestbed } from './ui/hud/formula-testbed'
 import { StudioSplitView } from './ui/studio/studio-split-view'
 import { VisualNodeGraph } from './ui/graph/visual-node-graph'
+import { ParameterInspector } from './ui/inspector/parameter-inspector'
 import { useStudioControls } from './ui/studio/use-studio-controls'
 import { AudioManager } from './audio/audio-manager'
 import { AudioAnalyzer } from './audio/audio-analyzer'
@@ -98,11 +99,8 @@ export function App(): React.ReactElement {
           </div>
         }
         inspector={
-          <div
-            data-testid="studio-inspector-container"
-            className="w-full h-full flex flex-col items-center justify-center text-slate-500 font-mono text-xs select-none"
-          >
-            <span>Parameter Inspector</span>
+          <div data-testid="studio-inspector-container" className="w-full h-full relative">
+            <ParameterInspector engine={engine} />
           </div>
         }
       />
