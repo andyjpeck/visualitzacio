@@ -19,7 +19,11 @@ export class TestVisualNode implements VisualNode {
   private readonly wireMaterial: THREE.MeshBasicMaterial
   private renderer?: RendererLike
   private scaleParam: DynamicParam<number> | null = null
+  private positionXParam: DynamicParam<number> | null = null
+  private positionYParam: DynamicParam<number> | null = null
   private baseScale = 1.0
+  private positionXVal = 0.0
+  private positionYVal = 0.0
   private currentShape = 'Crystal'
   private isAudioReactive = true
 
@@ -185,7 +189,75 @@ export class TestVisualNode implements VisualNode {
   }
 
   /**
-   * Animates rotation and modulates scale, emissive intensity, and halo rings based on FrameContext audio telemetry.
+   * Binds an optional dynamic mathematical expression to drive X-axis position.
+   *
+   * @param expr - Numeric constant, formula string, or null to reset.
+   * @param engine - Active ExpressionEngine instance.
+   */
+  setPositionXExpression(expr: string | number | null, engine?: ExpressionEngine): void {
+    if (typeof expr === 'number') {
+      this.positionXVal = expr
+      this.positionXParam = null
+      return
+    }
+
+    if (expr === null || expr === undefined || expr === '') {
+      this.positionXParam = null
+      this.positionXVal = 0.0
+    } else if (engine) {
+      const parsed = Number(String(expr).trim())
+      if (!Number.isNaN(parsed)) {
+        this.positionXVal = parsed
+        this.positionXParam = null
+      } else {
+        this.positionXParam = createDynamicParam(expr, engine)
+      }
+    }
+  }
+
+  /**
+   * Binds an optional dynamic mathematical expression to drive Y-axis position.
+   *
+   * @param expr - Numeric constant, formula string, or null to reset.
+   * @param engine - Active ExpressionEngine instance.
+   */
+  setPositionYExpression(expr: string | number | null, engine?: ExpressionEngine): void {
+    if (typeof expr === 'number') {
+      this.positionYVal = expr
+      this.positionYParam = null
+      return
+    }
+
+    if (expr === null || expr === undefined || expr === '') {
+      this.positionYParam = null
+      this.positionYVal = 0.0
+    } else if (engine) {
+      const parsed = Number(String(expr).trim())
+      if (!Number.isNaN(parsed)) {
+        this.positionYVal = parsed
+        this.positionYParam = null
+      } else {
+        this.positionYParam = createDynamicParam(expr, engine)
+      }
+    }
+  }
+
+  /**
+   * Returns current evaluated X position offset.
+   */
+  getPositionX(): number {
+    return this.positionXVal
+  }
+
+  /**
+   * Returns current evaluated Y position offset.
+   */
+  getPositionY(): number {
+    return this.positionYVal
+  }
+
+  /**
+   * Animates rotation and modulates scale, position, emissive intensity, and halo rings based on FrameContext audio telemetry.
    *
    * @param ctx - Real-time FrameContext containing telemetry ($TIME, $BASS, $MID, $TREBLE, $BEAT, $RMS).
    */
@@ -196,6 +268,15 @@ export class TestVisualNode implements VisualNode {
     this.mesh.rotation.x = ctx.$TIME * 0.4
     this.mesh.rotation.y = ctx.$TIME * 0.6
 
+    // Position driven by dynamic expression or constant
+    const finalPosX = this.positionXParam
+      ? this.positionXParam.evaluate(ctx, this.positionXVal)
+      : this.positionXVal
+    const finalPosY = this.positionYParam
+      ? this.positionYParam.evaluate(ctx, this.positionYVal)
+      : this.positionYVal
+    this.mesh.position.set(finalPosX, finalPosY, 0)
+
     // Scale pulses with $BASS and instantaneous $BEAT flash, or dynamic expression if bound
     const isReactive = this.isAudioReactive
     const reactivePulse = isReactive ? ctx.$BASS * 0.5 + ctx.$BEAT * 0.3 : 0.0
@@ -203,13 +284,10 @@ export class TestVisualNode implements VisualNode {
       isReactive && ctx.$BASS === 0 && ctx.$BEAT === 0
         ? Math.sin(ctx.$TIME * 2.5) * 0.05
         : 0.0
-    const defaultScale = this.baseScale * (1.0 + reactivePulse + idleBreath)
-    const finalScale =
-      !isReactive
-        ? this.baseScale
-        : this.scaleParam
-          ? this.scaleParam.evaluate(ctx, defaultScale)
-          : defaultScale
+    const defaultScale = this.baseScale * (1.0 + (isReactive ? reactivePulse + idleBreath : 0))
+    const finalScale = this.scaleParam
+      ? this.scaleParam.evaluate(ctx, defaultScale)
+      : defaultScale
     this.mesh.scale.set(finalScale, finalScale, finalScale)
 
     if (isReactive) {

@@ -138,6 +138,10 @@ export const DEFAULT_GRAPH_NODES: Node[] = [
       shape: 'Crystal',
       reactive: true,
       scale: 1.0,
+      offsetX: 0.0,
+      offsetY: 0.0,
+      positionX: 0.0,
+      positionY: 0.0,
     },
   },
   {
@@ -148,6 +152,11 @@ export const DEFAULT_GRAPH_NODES: Node[] = [
       label: 'Master Output',
       blendMode: 'replace',
       opacity: 1.0,
+      scale: 1.0,
+      offsetX: 0.0,
+      offsetY: 0.0,
+      positionX: 0.0,
+      positionY: 0.0,
     },
   },
 ]

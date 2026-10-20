@@ -199,6 +199,14 @@ export function ViewportCanvas({
         if (gNode.data.scale !== undefined) {
           vNode.setScaleExpression(gNode.data.scale as string | number, exprEngine)
         }
+        const posX = gNode.data.offsetX !== undefined ? gNode.data.offsetX : gNode.data.positionX
+        if (posX !== undefined) {
+          vNode.setPositionXExpression(posX as string | number, exprEngine)
+        }
+        const posY = gNode.data.offsetY !== undefined ? gNode.data.offsetY : gNode.data.positionY
+        if (posY !== undefined) {
+          vNode.setPositionYExpression(posY as string | number, exprEngine)
+        }
       } else if (vNode instanceof FrameBufferNode) {
         if (gNode.data.blendMode) {
           vNode.setBlendMode(String(gNode.data.blendMode))

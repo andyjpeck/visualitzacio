@@ -396,6 +396,13 @@ export class FrameBufferNode implements VisualNode {
   }
 
   /**
+   * Returns the composite display quad mesh.
+   */
+  getCompositeQuad(): THREE.Mesh | null {
+    return this.compositeQuad
+  }
+
+  /**
    * Resets both ping-pong buffers by clearing their contents to black.
    */
   clearBuffer(): void {
@@ -519,6 +526,11 @@ export class FrameBufferNode implements VisualNode {
     const displayTarget = needsMultiPass ? this.getReadTarget() : writeTarget
     if (displayTarget && this.compositeScene && this.compositeCamera && this.compositeMaterial) {
       if (this.isMaster || prevTarget) {
+        if (this.compositeQuad) {
+          this.compositeQuad.scale.set(this.scaleVal, this.scaleVal, 1)
+          this.compositeQuad.position.set(this.positionXVal, this.positionYVal, 0)
+          this.compositeQuad.rotation.z = (this.rotationVal * Math.PI) / 180
+        }
         this.compositeMaterial.map = displayTarget.texture
         this.compositeMaterial.opacity = this.opacityVal
         this.renderer.render(this.compositeScene, this.compositeCamera)

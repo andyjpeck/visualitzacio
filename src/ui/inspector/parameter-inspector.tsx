@@ -417,6 +417,48 @@ export function ParameterInspector({
               onChange={(val) => handleUpdate('scale', val)}
               engine={engine}
             />
+
+            <ParameterRow
+              label="Offset X"
+              value={
+                data.offsetX !== undefined
+                  ? (data.offsetX as number | string)
+                  : data.positionX !== undefined
+                    ? (data.positionX as number | string)
+                    : 0.0
+              }
+              min={-2.0}
+              max={2.0}
+              step={0.01}
+              type="slider"
+              isFocused={focusedParamKey === 'offsetX' || focusedParamKey === 'positionX'}
+              onChange={(val) => {
+                handleUpdate('offsetX', val)
+                handleUpdate('positionX', val)
+              }}
+              engine={engine}
+            />
+
+            <ParameterRow
+              label="Offset Y"
+              value={
+                data.offsetY !== undefined
+                  ? (data.offsetY as number | string)
+                  : data.positionY !== undefined
+                    ? (data.positionY as number | string)
+                    : 0.0
+              }
+              min={-2.0}
+              max={2.0}
+              step={0.01}
+              type="slider"
+              isFocused={focusedParamKey === 'offsetY' || focusedParamKey === 'positionY'}
+              onChange={(val) => {
+                handleUpdate('offsetY', val)
+                handleUpdate('positionY', val)
+              }}
+              engine={engine}
+            />
           </>
         )}
       </div>

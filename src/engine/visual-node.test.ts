@@ -88,4 +88,34 @@ describe('TestVisualNode', () => {
     expect(node.mesh.scale.x).toBe(1.0)
     node.dispose()
   })
+
+  it('modulates positionX and positionY with dynamic expressions', () => {
+    const node = new TestVisualNode()
+    const engine = new ExpressionEngine()
+    node.setPositionXExpression('sin($TIME)', engine)
+    node.setPositionYExpression('cos($TIME)', engine)
+
+    const ctx = createDefaultFrameContext()
+    ctx.$TIME = Math.PI / 2 // sin(pi/2) = 1, cos(pi/2) = 0
+    node.update(ctx)
+
+    expect(node.mesh.position.x).toBeCloseTo(1.0, 2)
+    expect(node.mesh.position.y).toBeCloseTo(0.0, 2)
+    expect(node.getPositionX()).toBe(0.0) // default base fallback
+    node.dispose()
+  })
+
+  it('evaluates dynamic scale expression when bound even if audio reactivity is disabled', () => {
+    const node = new TestVisualNode()
+    const engine = new ExpressionEngine()
+    node.setAudioReactive(false)
+    node.setScaleExpression('1.5 + sin($TIME) * 0.5', engine)
+
+    const ctx = createDefaultFrameContext()
+    ctx.$TIME = Math.PI / 2 // sin(pi/2) = 1 -> scale = 2.0
+    node.update(ctx)
+
+    expect(node.mesh.scale.x).toBeCloseTo(2.0, 2)
+    node.dispose()
+  })
 })
