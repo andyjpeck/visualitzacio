@@ -133,7 +133,7 @@ export function ParameterInspector({
           </span>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+        <div className="flex flex-col gap-2.5 mb-4">
           <ParameterRow
             label="Target FPS"
             value={targetFps}
@@ -232,8 +232,8 @@ export function ParameterInspector({
         </div>
       </div>
 
-      {/* Parameter Rows Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2.5">
+      {/* Parameter Rows List */}
+      <div className="flex flex-col gap-2.5">
         {/* Master & FrameBuffer Parameters */}
         {(isMaster || isFrameBuffer) && (
           <>
