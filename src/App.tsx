@@ -6,6 +6,8 @@ import { FrameBufferTemplateSelector } from './ui/settings/frame-buffer-template
 import { Toolbar } from './ui/toolbar/toolbar'
 import { AudioTelemetryOverlay } from './ui/hud/audio-telemetry-overlay'
 import { FormulaTestbed } from './ui/hud/formula-testbed'
+import { StudioSplitView } from './ui/studio/studio-split-view'
+import { useStudioControls } from './ui/studio/use-studio-controls'
 import { AudioManager } from './audio/audio-manager'
 import { AudioAnalyzer } from './audio/audio-analyzer'
 import type { RenderEngine } from './engine/render-engine'
@@ -13,13 +15,14 @@ import { useAppStore } from './ui/store/app-store'
 
 /**
  * Root Application component integrating the WebGL RenderEngine canvas,
- * Web Audio DSP pipeline, and responsive floating HUD interface.
+ * Web Audio DSP pipeline, Studio resizable split-view workspace, and responsive floating HUD interface.
  */
 export function App(): React.ReactElement {
   const [engine, setEngine] = useState<RenderEngine | null>(null)
   const [audioManager] = useState(() => new AudioManager())
   const [audioAnalyzer] = useState(() => new AudioAnalyzer())
   const audioBands = useAppStore((state) => state.audioBands)
+  const { isHudVisible, isLive } = useStudioControls()
 
   // Synchronize dynamic frequency band cutoffs to audio analyzer
   useEffect(() => {
@@ -56,18 +59,49 @@ export function App(): React.ReactElement {
   )
 
   return (
-    <div className="relative w-screen h-screen overflow-hidden bg-cyber-void text-slate-100 select-none">
-      {/* 3D Viewport Canvas */}
-      <ViewportCanvas onEngineReady={handleEngineReady} />
+    <div
+      className={`relative w-screen h-screen overflow-hidden bg-cyber-void text-slate-100 select-none ${
+        isLive && !isHudVisible ? 'cursor-none' : ''
+      }`}
+    >
+      {/* Resizable Studio Split-View Workspace */}
+      <StudioSplitView
+        preview={
+          <div className="relative w-full h-full overflow-hidden">
+            {/* 3D Viewport Canvas */}
+            <ViewportCanvas onEngineReady={handleEngineReady} />
 
-      {/* Floating HUD Elements */}
-      <FpsBadge />
-      <AudioTelemetryOverlay engine={engine} />
+            {/* Floating HUD Elements (auto-hide in Live Mode) */}
+            <div
+              className={`transition-opacity duration-300 ${
+                isHudVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'
+              }`}
+            >
+              <FpsBadge />
+              <AudioTelemetryOverlay engine={engine} />
+              <Toolbar audioManager={audioManager} />
+            </div>
+          </div>
+        }
+        graph={
+          <div
+            data-testid="studio-graph-container"
+            className="w-full h-full flex flex-col items-center justify-center text-slate-500 font-mono text-xs select-none"
+          >
+            <span>Node Graph Workspace</span>
+          </div>
+        }
+        inspector={
+          <div
+            data-testid="studio-inspector-container"
+            className="w-full h-full flex flex-col items-center justify-center text-slate-500 font-mono text-xs select-none"
+          >
+            <span>Parameter Inspector</span>
+          </div>
+        }
+      />
 
-      {/* Top Controls Toolbar */}
-      <Toolbar audioManager={audioManager} />
-
-      {/* Modals & Dialogs */}
+      {/* Modals & Dialogs (Stack Managed) */}
       <PresetSettingsModal />
       <FrameBufferTemplateSelector />
       <FormulaTestbed engine={engine} />

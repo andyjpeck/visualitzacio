@@ -209,4 +209,15 @@ describe('Toolbar Component', () => {
     expect(screen.getByText('Decoding audio buffer...')).toBeInTheDocument()
     expect(screen.getAllByText('45%').length).toBeGreaterThanOrEqual(1)
   })
+
+  it('toggles studio and live performance mode on mode button click', () => {
+    useAppStore.setState({ studioMode: 'editor' })
+    render(<Toolbar audioManager={mockAudioManager} />)
+
+    const modeBtn = screen.getByLabelText('Enter Live Performance Mode')
+    expect(modeBtn).toBeInTheDocument()
+
+    fireEvent.click(modeBtn)
+    expect(useAppStore.getState().studioMode).toBe('live')
+  })
 })

@@ -5,7 +5,9 @@ import {
   FileAudio,
   Layers,
   Loader2,
+  Maximize2,
   Mic,
+  Minimize2,
   Pause,
   Play,
   Settings,
@@ -44,6 +46,8 @@ export function Toolbar({ audioManager }: ToolbarProps): React.ReactElement {
   const isFormulaTestbedOpen = useAppStore((state) => state.isFormulaTestbedOpen)
   const isTemplateSelectorOpen = useAppStore((state) => state.isTemplateSelectorOpen)
   const feedbackEnabled = useAppStore((state) => state.feedbackEnabled)
+  const studioMode = useAppStore((state) => state.studioMode)
+  const toggleStudioMode = useAppStore((state) => state.toggleStudioMode)
   const isAudioLoading = useAppStore((state) => state.isAudioLoading)
   const audioLoadingProgress = useAppStore((state) => state.audioLoadingProgress)
   const audioLoadingStage = useAppStore((state) => state.audioLoadingStage)
@@ -342,6 +346,33 @@ export function Toolbar({ audioManager }: ToolbarProps): React.ReactElement {
           className="p-2 rounded-lg bg-white/5 text-slate-300 hover:text-white hover:bg-white/10 transition-colors border border-transparent hover:border-white/10 cursor-pointer"
         >
           <Settings className="w-4 h-4" />
+        </button>
+
+        {/* Studio / Live Performance Mode Toggle Button */}
+        <button
+          type="button"
+          onClick={toggleStudioMode}
+          aria-label={
+            studioMode === 'live'
+              ? 'Exit Live Performance Mode'
+              : 'Enter Live Performance Mode'
+          }
+          title={
+            studioMode === 'live'
+              ? 'Exit Live Performance Mode (F11 / Esc)'
+              : 'Enter Live Performance Mode (F11)'
+          }
+          className={`p-2 rounded-lg border transition-colors cursor-pointer ${
+            studioMode === 'live'
+              ? 'bg-cyber-cyan/20 border-cyber-cyan text-cyber-cyan shadow-sm shadow-cyber-cyan/20'
+              : 'bg-white/5 border-transparent text-slate-300 hover:text-white hover:bg-white/10 hover:border-white/10'
+          }`}
+        >
+          {studioMode === 'live' ? (
+            <Minimize2 className="w-4 h-4" />
+          ) : (
+            <Maximize2 className="w-4 h-4" />
+          )}
         </button>
       </header>
 

@@ -31,5 +31,8 @@ The UI components operate on the **Low-Frequency User Plane** (<10 Hz). They do 
 - [**`store/`**](file:///C:/Users/andyj/Documents/visualitzacio/src/ui/store/README.md)
   Zustand global store (`useAppStore`) managing low-frequency UI states (play state, volume, active audio source, filenames, modal visibility).
 
+- [**`studio/`**](file:///C:/Users/andyj/Documents/visualitzacio/src/ui/studio/README.md)
+  Studio workspace layout engine (`StudioSplitView`) providing resizable 3-pane partitioning (preview, node graph, parameter inspector), Studio vs. Live performance modes, and 3-second mouse inactivity HUD auto-hide.
+
 - [**`toolbar/`**](file:///C:/Users/andyj/Documents/visualitzacio/src/ui/toolbar/README.md)
   Top floating glassmorphic toolbar housing transport controls, audio source selectors (Sample -> File -> Mic), audio seek progress bar, volume control, and settings toggles.

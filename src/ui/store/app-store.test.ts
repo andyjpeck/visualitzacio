@@ -156,4 +156,29 @@ describe('useAppStore (Zustand State Plane)', () => {
     expect(useAppStore.getState().isTemplateSelectorOpen).toBe(false)
     expect(useAppStore.getState().isFormulaTestbedOpen).toBe(false)
   })
+
+  it('manages studio mode switching and persistence', () => {
+    const store = useAppStore.getState()
+    expect(store.studioMode).toBe('editor')
+
+    store.setStudioMode('live')
+    expect(useAppStore.getState().studioMode).toBe('live')
+
+    store.toggleStudioMode()
+    expect(useAppStore.getState().studioMode).toBe('editor')
+
+    store.toggleStudioMode()
+    expect(useAppStore.getState().studioMode).toBe('live')
+  })
+
+  it('manages studio split ratios and reset functionality', () => {
+    const store = useAppStore.getState()
+    expect(store.studioSplitRatios).toEqual([0.35, 0.4, 0.25])
+
+    store.setStudioSplitRatios([0.5, 0.3, 0.2])
+    expect(useAppStore.getState().studioSplitRatios).toEqual([0.5, 0.3, 0.2])
+
+    store.resetStudioSplitRatios()
+    expect(useAppStore.getState().studioSplitRatios).toEqual([0.35, 0.4, 0.25])
+  })
 })

@@ -36,6 +36,72 @@ function saveBoolToStorage(key: string, value: boolean): void {
   }
 }
 
+export type StudioMode = 'editor' | 'live'
+export const DEFAULT_STUDIO_SPLIT_RATIOS: [number, number, number] = [0.35, 0.4, 0.25]
+export const STORAGE_KEY_STUDIO_MODE = 'visualitzacio_studio_mode'
+export const STORAGE_KEY_STUDIO_SPLIT_RATIOS = 'visualitzacio_studio_split_ratios'
+
+function loadStudioModeFromStorage(): StudioMode {
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const stored = window.localStorage.getItem(STORAGE_KEY_STUDIO_MODE)
+      if (stored === 'live' || stored === 'editor') {
+        return stored
+      }
+    }
+  } catch {
+    // ignore
+  }
+  return 'editor'
+}
+
+function saveStudioModeToStorage(mode: StudioMode): void {
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      window.localStorage.setItem(STORAGE_KEY_STUDIO_MODE, mode)
+    }
+  } catch {
+    // ignore
+  }
+}
+
+function loadSplitRatiosFromStorage(): [number, number, number] {
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const stored = window.localStorage.getItem(STORAGE_KEY_STUDIO_SPLIT_RATIOS)
+      if (stored) {
+        const parsed = JSON.parse(stored)
+        if (
+          Array.isArray(parsed) &&
+          parsed.length === 3 &&
+          parsed.every((n) => typeof n === 'number' && !Number.isNaN(n) && n > 0)
+        ) {
+          const sum = parsed[0] + parsed[1] + parsed[2]
+          if (sum > 0) {
+            return [parsed[0] / sum, parsed[1] / sum, parsed[2] / sum]
+          }
+        }
+      }
+    }
+  } catch {
+    // ignore
+  }
+  return [...DEFAULT_STUDIO_SPLIT_RATIOS]
+}
+
+function saveSplitRatiosToStorage(ratios: [number, number, number]): void {
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      window.localStorage.setItem(
+        STORAGE_KEY_STUDIO_SPLIT_RATIOS,
+        JSON.stringify(ratios),
+      )
+    }
+  } catch {
+    // ignore
+  }
+}
+
 export type DialogId = 'preset-settings' | 'formula-testbed' | 'template-selector'
 
 export interface AppState {
@@ -54,6 +120,10 @@ export interface AppState {
   dialogStack: DialogId[]
   isPresetSettingsOpen: boolean
   currentFps: number
+
+  // Studio workspace & mode state (Track 4)
+  studioMode: StudioMode
+  studioSplitRatios: [number, number, number]
 
   // Preset-wide performance & DSP settings
   targetFps: number
@@ -91,6 +161,12 @@ export interface AppState {
 
   setShowFpsOverlay: (show: boolean) => void
   toggleFpsOverlay: () => void
+
+  // Studio Mode & Split-View Actions (Track 4)
+  setStudioMode: (mode: StudioMode) => void
+  toggleStudioMode: () => void
+  setStudioSplitRatios: (ratios: [number, number, number]) => void
+  resetStudioSplitRatios: () => void
 
   // Dialog Stack Navigation Actions
   openDialog: (id: DialogId) => void
@@ -177,6 +253,9 @@ export const useAppStore = create<AppState>((set) => ({
   isPresetSettingsOpen: false,
   currentFps: 60,
 
+  studioMode: loadStudioModeFromStorage(),
+  studioSplitRatios: loadSplitRatiosFromStorage(),
+
   targetFps: 60,
   resolutionScale: 1.0,
   audioBands: { ...DEFAULT_AUDIO_BANDS },
@@ -215,6 +294,25 @@ export const useAppStore = create<AppState>((set) => ({
   setShowFpsOverlay: (showFpsOverlay) => set({ showFpsOverlay }),
   toggleFpsOverlay: () =>
     set((state) => ({ showFpsOverlay: !state.showFpsOverlay })),
+
+  setStudioMode: (studioMode) => {
+    saveStudioModeToStorage(studioMode)
+    set({ studioMode })
+  },
+  toggleStudioMode: () =>
+    set((state) => {
+      const nextMode: StudioMode = state.studioMode === 'editor' ? 'live' : 'editor'
+      saveStudioModeToStorage(nextMode)
+      return { studioMode: nextMode }
+    }),
+  setStudioSplitRatios: (studioSplitRatios) => {
+    saveSplitRatiosToStorage(studioSplitRatios)
+    set({ studioSplitRatios })
+  },
+  resetStudioSplitRatios: () => {
+    saveSplitRatiosToStorage(DEFAULT_STUDIO_SPLIT_RATIOS)
+    set({ studioSplitRatios: [...DEFAULT_STUDIO_SPLIT_RATIOS] })
+  },
   // Dialog Stack Actions
   openDialog: (id: DialogId) =>
     set((state) => {

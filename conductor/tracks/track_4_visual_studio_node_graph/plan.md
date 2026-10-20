@@ -13,15 +13,15 @@ This plan implements the complete Studio workspace for Visualització in 5 test-
 - Implement Studio Mode vs. Live Performance Mode with auto-hiding controls.
 
 ### Tasks
-- [ ] **Task 1.1: Install `@xyflow/react` and `@types/dagre` / `dagre`**
+- [x] **Task 1.1: Install `@xyflow/react` and `@types/dagre` / `dagre`**
   - Add `@xyflow/react` and `dagre` to `package.json`.
   - Import React Flow base stylesheets into `src/index.css` and style for cyberpunk theme.
   - *Verification:* `npm test` and `npm run build` verify clean compilation.
-- [ ] **Task 1.2: Build Resizable Split-View Container (`StudioSplitView`)**
+- [x] **Task 1.2: Build Resizable Split-View Container (`StudioSplitView`)**
   - Create `src/ui/studio/studio-split-view.tsx` with resizable dividers, min-width constraints, and double-click reset.
   - Persist split pane ratios in `localStorage`.
   - *Verification:* Write `src/ui/studio/studio-split-view.test.tsx` verifying divider drag and ratio persistence.
-- [ ] **Task 1.3: Implement Studio vs. Live Performance Mode**
+- [x] **Task 1.3: Implement Studio vs. Live Performance Mode**
   - Add `studioMode: 'editor' | 'live'` to `useAppStore`.
   - Implement fullscreen toggle (`F11` / maximize button) and 3-second mouse inactivity HUD auto-hide.
   - *Verification:* Write tests in `src/ui/studio/studio-mode.test.tsx` validating mode switching and timer dismissal.
