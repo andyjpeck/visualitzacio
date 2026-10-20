@@ -20,6 +20,7 @@ export function TestVisualNodeComponent({
   const setSelectedNodeId = useAppStore((state) => state.setSelectedNodeId)
   const setFocusedParamKey = useAppStore((state) => state.setFocusedParamKey)
   const updateGraphNodeData = useAppStore((state) => state.updateGraphNodeData)
+  const isPlaying = useAppStore((state) => state.isPlaying)
 
   const handleSelectParam = (paramKey: string) => {
     setSelectedNodeId(id)
@@ -110,7 +111,13 @@ export function TestVisualNodeComponent({
 
         <button
           type="button"
-          title="Click to toggle Audio Reactivity"
+          title={
+            isReactive
+              ? isPlaying
+                ? 'Audio Reactivity Active'
+                : 'Audio Reactivity Armed (Press PLAY in top toolbar to start audio)'
+              : 'Audio Reactivity Disabled (Fixed mode)'
+          }
           onClick={handleToggleReactivity}
           className="flex items-center justify-between text-slate-300 bg-white/5 hover:bg-white/10 hover:border-cyan-400/40 border border-transparent px-2 py-1 rounded cursor-pointer transition-all active:scale-[0.98]"
         >
@@ -118,13 +125,18 @@ export function TestVisualNodeComponent({
             <Activity className="w-3 h-3 text-cyber-cyan" />
             <span>Reactivity</span>
           </div>
-          <span
-            className={`font-semibold text-[10px] ${
-              isReactive ? 'text-cyber-cyan' : 'text-slate-500'
-            }`}
-          >
-            {isReactive ? 'AUDIO-REACTIVE' : 'FIXED'}
-          </span>
+          <div className="flex items-center gap-1.5">
+            {isReactive && !isPlaying && (
+              <span className="text-[9px] text-amber-400 font-normal">[PAUSED]</span>
+            )}
+            <span
+              className={`font-semibold text-[10px] ${
+                isReactive ? 'text-cyber-cyan' : 'text-slate-500'
+              }`}
+            >
+              {isReactive ? 'AUDIO-REACTIVE' : 'FIXED'}
+            </span>
+          </div>
         </button>
       </div>
     </div>

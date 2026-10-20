@@ -20,6 +20,7 @@ export class TestVisualNode implements VisualNode {
   private readonly haloRing: THREE.Mesh<THREE.TorusGeometry, THREE.MeshBasicMaterial>
   private renderer?: RendererLike
   private scaleParam: DynamicParam<number> | null = null
+  private baseScale = 1.0
   private currentShape = 'Crystal'
   private isAudioReactive = true
 
@@ -175,10 +176,23 @@ export class TestVisualNode implements VisualNode {
    * @param engine - Active ExpressionEngine instance.
    */
   setScaleExpression(expr: string | number | null, engine?: ExpressionEngine): void {
+    if (typeof expr === 'number') {
+      this.baseScale = expr
+      this.scaleParam = null
+      return
+    }
+
     if (expr === null || expr === undefined || expr === '') {
       this.scaleParam = null
+      this.baseScale = 1.0
     } else if (engine) {
-      this.scaleParam = createDynamicParam(expr, engine)
+      const parsed = Number(String(expr).trim())
+      if (!Number.isNaN(parsed)) {
+        this.baseScale = parsed
+        this.scaleParam = null
+      } else {
+        this.scaleParam = createDynamicParam(expr, engine)
+      }
     }
   }
 
@@ -196,7 +210,12 @@ export class TestVisualNode implements VisualNode {
 
     // Scale pulses with $BASS and instantaneous $BEAT flash, or dynamic expression if bound
     const isReactive = this.isAudioReactive
-    const defaultScale = isReactive ? 1.0 + ctx.$BASS * 0.5 + ctx.$BEAT * 0.3 : 1.0
+    const reactivePulse = isReactive ? ctx.$BASS * 0.5 + ctx.$BEAT * 0.3 : 0.0
+    const idleBreath =
+      isReactive && ctx.$BASS === 0 && ctx.$BEAT === 0
+        ? Math.sin(ctx.$TIME * 2.5) * 0.05
+        : 0.0
+    const defaultScale = this.baseScale * (1.0 + reactivePulse + idleBreath)
     const baseScale = this.scaleParam ? this.scaleParam.evaluate(ctx, defaultScale) : defaultScale
     this.mesh.scale.set(baseScale, baseScale, baseScale)
 
@@ -207,13 +226,16 @@ export class TestVisualNode implements VisualNode {
       this.mesh.material.color.setHSL(hue % 1.0, 1.0, Math.min(lightness, 0.9))
 
       // Emissive brilliance explodes on beats and transients
-      this.mesh.material.emissiveIntensity = 0.6 + ctx.$BEAT * 2.2 + ctx.$RMS * 1.2
+      const beatBoost = ctx.$BEAT * 2.2 + ctx.$RMS * 1.2
+      const idleGlow =
+        ctx.$BEAT === 0 && ctx.$RMS === 0 ? (Math.sin(ctx.$TIME * 2.5) * 0.5 + 0.5) * 0.25 : 0.0
+      this.mesh.material.emissiveIntensity = 0.6 + beatBoost + idleGlow
 
       // Outer wireframe hue reacts to high frequencies
       this.wireMaterial.color.setHSL((0.85 + ctx.$TREBLE * 0.3) % 1.0, 1.0, 0.6)
     } else {
       this.mesh.material.color.setHex(0x00f0ff)
-      this.mesh.material.emissiveIntensity = 0.6
+      this.mesh.material.emissiveIntensity = 0.4
       this.wireMaterial.color.setHex(0x00ffff)
     }
 
