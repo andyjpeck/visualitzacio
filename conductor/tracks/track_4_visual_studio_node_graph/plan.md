@@ -36,7 +36,7 @@ This plan implements the complete Studio workspace for Visualització in 5 test-
 - Implement automatic DAG hierarchical layout.
 
 ### Tasks
-- [ ] **Task 2.1: Custom Node Card Components**
+- [x] **Task 2.1: Custom Node Card Components**
   - Create `MasterFrameBufferNodeComponent`: permanent root anchor with crown badge and glowing boundary.
   - Create `FrameBufferNodeComponent`: feedback decay trails and blend mode indicators.
   - Create `StaticImageNodeComponent`: thumbnail preview, fit mode badge, and `@NAME` publish tag.

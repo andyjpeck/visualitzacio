@@ -19,6 +19,9 @@ The UI components operate on the **Low-Frequency User Plane** (<10 Hz). They do 
 - [**`expressions/`**](file:///C:/Users/andyj/Documents/visualitzacio/src/ui/expressions/README.md)
   Modular dynamic expression UI subcomponents: formula input with validation badge, 60 FPS canvas sparkline with dynamic scaling, quick-reference tooltips, and preset catalog.
 
+- [**`graph/`**](file:///C:/Users/andyj/Documents/visualitzacio/src/ui/graph/README.md)
+  Interactive visual node graph pipeline (`@xyflow/react`) featuring custom cyberpunk node cards, hierarchy execution handles, texture buffer routing, and DAG auto-layout.
+
 - [**`hooks/`**](file:///C:/Users/andyj/Documents/visualitzacio/src/ui/hooks/README.md)
   Reusable UI hooks for pointer-capture viewport dialog dragging (`useDraggableDialog`) and Escape key listeners (`useEscapeKey`).
 
