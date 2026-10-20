@@ -64,6 +64,7 @@ export function ParameterInspector({
   const focusedParamKey = useAppStore((state) => state.focusedParamKey)
   const graphNodes = useAppStore((state) => state.graphNodes)
   const updateGraphNodeData = useAppStore((state) => state.updateGraphNodeData)
+  const setNodeParent = useAppStore((state) => state.setNodeParent)
   const isPlaying = useAppStore((state) => state.isPlaying)
 
   // Preset-wide fallback settings
@@ -181,6 +182,12 @@ export function ParameterInspector({
   const isVisual = type === 'testVisual'
   const isBypassed = Boolean(data.bypassed)
 
+  const containerNodes = graphNodes.filter(
+    (n) =>
+      (n.type === 'masterFrameBuffer' || n.type === 'frameBuffer') &&
+      n.id !== selectedNodeId,
+  )
+
   return (
     <div
       data-testid="parameter-inspector"
@@ -254,6 +261,26 @@ export function ParameterInspector({
           isFocused={focusedParamKey === 'label'}
           onChange={(val) => handleUpdate('label', String(val))}
         />
+
+        {!isMaster && (
+          <ParameterRow
+            label="Parent Container"
+            value={selectedNode.parentId || 'none'}
+            type="dropdown"
+            options={[
+              ...containerNodes.map((c) => ({
+                value: c.id,
+                label: `${String(c.data.label || c.id)}${c.id === 'master-frame-buffer' ? ' (Root)' : ''}`,
+              })),
+              { value: 'none', label: 'None (Top-Level Canvas)' },
+            ]}
+            allowExpression={false}
+            onChange={(val) => {
+              const newParent = val === 'none' ? null : String(val)
+              setNodeParent(selectedNode.id, newParent)
+            }}
+          />
+        )}
 
         {/* Master & FrameBuffer Parameters */}
         {(isMaster || isFrameBuffer) && (

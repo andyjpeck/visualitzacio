@@ -1,6 +1,6 @@
-import React from 'react'
-import { Handle, type NodeProps, Position } from '@xyflow/react'
-import { Crown, Lock } from 'lucide-react'
+import React, { useState } from 'react'
+import { Handle, type Node, type NodeProps, Position } from '@xyflow/react'
+import { Crown, ImageIcon, Layers, Lock, Plus, Sparkles } from 'lucide-react'
 import type { MasterFrameBufferNodeData } from './node-data'
 import { useAppStore } from '../../store/app-store'
 
@@ -14,10 +14,65 @@ export function MasterFrameBufferNodeComponent({
   data,
   selected,
 }: NodeProps & { data: MasterFrameBufferNodeData }): React.ReactElement {
+  const [isAddMenuOpen, setIsAddMenuOpen] = useState(false)
   const childCount = useAppStore(
     (state) => state.graphNodes.filter((n) => n.parentId === id).length,
   )
+  const addGraphNode = useAppStore((state) => state.addGraphNode)
+  const setSelectedNodeId = useAppStore((state) => state.setSelectedNodeId)
   const hasChildren = childCount > 0 || Boolean(data.isContainer)
+
+  const handleAddChild = (type: 'testVisual' | 'staticImage' | 'frameBuffer') => {
+    setIsAddMenuOpen(false)
+    const newId = `${type}-${Date.now().toString(36)}`
+    const yPos = 65 + childCount * 65
+    let childNode: Node
+
+    if (type === 'testVisual') {
+      childNode = {
+        id: newId,
+        type: 'testVisual',
+        parentId: id,
+        extent: 'parent',
+        position: { x: 20, y: yPos },
+        data: {
+          label: `Synth ${childCount + 1}`,
+          shape: 'Crystal',
+          reactive: true,
+          scale: 1.0,
+        },
+      }
+    } else if (type === 'staticImage') {
+      childNode = {
+        id: newId,
+        type: 'staticImage',
+        parentId: id,
+        extent: 'parent',
+        position: { x: 20, y: yPos },
+        data: {
+          label: `Image Layer ${childCount + 1}`,
+          fitMode: 'contain',
+        },
+      }
+    } else {
+      childNode = {
+        id: newId,
+        type: 'frameBuffer',
+        parentId: id,
+        extent: 'parent',
+        position: { x: 20, y: yPos },
+        data: {
+          label: `Buffer ${childCount + 1}`,
+          blendMode: 'screen',
+          feedback: true,
+          opacity: 0.9,
+        },
+      }
+    }
+
+    addGraphNode(childNode)
+    setSelectedNodeId(newId)
+  }
 
   return (
     <div
@@ -73,11 +128,74 @@ export function MasterFrameBufferNodeComponent({
           </div>
         </div>
 
-        <div
-          title="Permanent root container (locked)"
-          className="p-1 rounded text-amber-400/60 hover:text-amber-300 transition-colors"
-        >
-          <Lock className="w-3.5 h-3.5" />
+        <div className="flex items-center gap-1">
+          {/* Add Child Node Button */}
+          <div className="relative">
+            <button
+              type="button"
+              data-testid="master-add-child-button"
+              title="Add Child Node inside Root Frame Buffer"
+              aria-label="Add Child Node inside Root Frame Buffer"
+              onClick={(e) => {
+                e.stopPropagation()
+                setIsAddMenuOpen((open) => !open)
+              }}
+              className="p-1 rounded text-amber-400/80 hover:text-amber-200 hover:bg-amber-400/10 transition-colors cursor-pointer"
+            >
+              <Plus className="w-3.5 h-3.5" />
+            </button>
+
+            {isAddMenuOpen && (
+              <div
+                data-testid="master-add-child-menu"
+                className="absolute right-0 top-full mt-1 w-44 rounded-xl bg-[#140e06]/98 border border-amber-500/30 shadow-2xl backdrop-blur-xl p-1 z-50 flex flex-col gap-0.5 text-xs font-mono select-none"
+              >
+                <button
+                  type="button"
+                  data-testid="master-add-child-synth"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleAddChild('testVisual')
+                  }}
+                  className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-cyan-950/60 text-slate-300 hover:text-cyber-cyan transition-colors text-left cursor-pointer"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-cyber-cyan" />
+                  <span>Crystal Synth</span>
+                </button>
+                <button
+                  type="button"
+                  data-testid="master-add-child-image"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleAddChild('staticImage')
+                  }}
+                  className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-emerald-950/60 text-slate-300 hover:text-emerald-300 transition-colors text-left cursor-pointer"
+                >
+                  <ImageIcon className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Static Image</span>
+                </button>
+                <button
+                  type="button"
+                  data-testid="master-add-child-frame-buffer"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleAddChild('frameBuffer')
+                  }}
+                  className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-purple-950/60 text-slate-300 hover:text-purple-300 transition-colors text-left cursor-pointer"
+                >
+                  <Layers className="w-3.5 h-3.5 text-purple-400" />
+                  <span>Frame Buffer</span>
+                </button>
+              </div>
+            )}
+          </div>
+
+          <div
+            title="Permanent root container (locked)"
+            className="p-1 rounded text-amber-400/60 hover:text-amber-300 transition-colors"
+          >
+            <Lock className="w-3.5 h-3.5" />
+          </div>
         </div>
       </div>
     </div>

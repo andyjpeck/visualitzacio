@@ -15,6 +15,7 @@ import {
   ReactFlowProvider,
 } from '@xyflow/react'
 import {
+  Crown,
   ImageIcon,
   Layers,
   LayoutDashboard,
@@ -111,50 +112,97 @@ function InnerVisualNodeGraph({
 
   // Add custom node
   const handleAddNode = useCallback(
-    (type: 'frameBuffer' | 'staticImage' | 'testVisual') => {
+    (type: 'frameBuffer' | 'staticImage' | 'testVisual', targetParentId?: string) => {
       setIsAddMenuOpen(false)
       const id = `${type}-${++nextNodeId}`
       let newNode: Node
 
-      if (type === 'frameBuffer') {
-        newNode = {
-          id,
-          type: 'frameBuffer',
-          position: { x: 220, y: 150 },
-          data: {
-            label: `Buffer ${nextNodeId}`,
-            blendMode: 'screen',
-            feedback: true,
-            opacity: 0.95,
-          },
-        }
-      } else if (type === 'staticImage') {
-        newNode = {
-          id,
-          type: 'staticImage',
-          position: { x: 50, y: 150 },
-          data: {
-            label: `Image Layer ${nextNodeId}`,
-            fitMode: 'cover',
-          },
+      if (targetParentId) {
+        const existingChildren = graphNodes.filter((n) => n.parentId === targetParentId)
+        const yPos = 65 + existingChildren.length * 65
+
+        if (type === 'testVisual') {
+          newNode = {
+            id,
+            type: 'testVisual',
+            parentId: targetParentId,
+            extent: 'parent',
+            position: { x: 20, y: yPos },
+            data: {
+              label: `Synth ${nextNodeId}`,
+              shape: 'Crystal',
+              reactive: true,
+              scale: 1.0,
+            },
+          }
+        } else if (type === 'staticImage') {
+          newNode = {
+            id,
+            type: 'staticImage',
+            parentId: targetParentId,
+            extent: 'parent',
+            position: { x: 20, y: yPos },
+            data: {
+              label: `Image Layer ${nextNodeId}`,
+              fitMode: 'contain',
+            },
+          }
+        } else {
+          newNode = {
+            id,
+            type: 'frameBuffer',
+            parentId: targetParentId,
+            extent: 'parent',
+            position: { x: 20, y: yPos },
+            data: {
+              label: `Buffer ${nextNodeId}`,
+              blendMode: 'screen',
+              feedback: true,
+              opacity: 0.9,
+            },
+          }
         }
       } else {
-        newNode = {
-          id,
-          type: 'testVisual',
-          position: { x: 220, y: 20 },
-          data: {
-            label: `Synth ${nextNodeId}`,
-            shape: 'Crystal',
-            reactive: true,
-          },
+        if (type === 'frameBuffer') {
+          newNode = {
+            id,
+            type: 'frameBuffer',
+            position: { x: 220, y: 150 },
+            data: {
+              label: `Buffer ${nextNodeId}`,
+              blendMode: 'screen',
+              feedback: true,
+              opacity: 0.95,
+            },
+          }
+        } else if (type === 'staticImage') {
+          newNode = {
+            id,
+            type: 'staticImage',
+            position: { x: 50, y: 150 },
+            data: {
+              label: `Image Layer ${nextNodeId}`,
+              fitMode: 'cover',
+            },
+          }
+        } else {
+          newNode = {
+            id,
+            type: 'testVisual',
+            position: { x: 220, y: 20 },
+            data: {
+              label: `Synth ${nextNodeId}`,
+              shape: 'Crystal',
+              reactive: true,
+            },
+          }
         }
       }
 
       addGraphNode(newNode)
       setSelectedNodeId(id)
     },
-    [addGraphNode, setSelectedNodeId],
+    [graphNodes, addGraphNode, setSelectedNodeId],
   )
 
   // Delete currently selected node
@@ -196,8 +244,43 @@ function InnerVisualNodeGraph({
           {isAddMenuOpen && (
             <div
               data-testid="graph-add-node-menu"
-              className="absolute left-0 top-full mt-1.5 w-48 rounded-xl bg-cyber-dark/95 border border-white/15 shadow-2xl backdrop-blur-xl p-1 z-40 flex flex-col gap-0.5 text-xs font-mono select-none"
+              className="absolute left-0 top-full mt-1.5 w-56 rounded-xl bg-cyber-dark/95 border border-white/15 shadow-2xl backdrop-blur-xl p-1.5 z-40 flex flex-col gap-1 text-xs font-mono select-none"
             >
+              <div className="px-2 py-1 text-[10px] text-amber-400 font-semibold uppercase tracking-wider border-b border-white/10 flex items-center justify-between">
+                <span>Inside Root Buffer</span>
+                <Crown className="w-3 h-3 text-amber-400" />
+              </div>
+              <button
+                type="button"
+                data-testid="add-node-child-test-visual"
+                onClick={() => handleAddNode('testVisual', 'master-frame-buffer')}
+                className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-cyan-950/50 text-slate-300 hover:text-cyber-cyan transition-colors text-left cursor-pointer"
+              >
+                <Sparkles className="w-4 h-4 text-cyber-cyan" />
+                <span>Crystal Synth</span>
+              </button>
+              <button
+                type="button"
+                data-testid="add-node-child-static-image"
+                onClick={() => handleAddNode('staticImage', 'master-frame-buffer')}
+                className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-emerald-950/50 text-slate-300 hover:text-emerald-300 transition-colors text-left cursor-pointer"
+              >
+                <ImageIcon className="w-4 h-4 text-emerald-400" />
+                <span>Static Image</span>
+              </button>
+              <button
+                type="button"
+                data-testid="add-node-child-frame-buffer"
+                onClick={() => handleAddNode('frameBuffer', 'master-frame-buffer')}
+                className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-purple-950/50 text-slate-300 hover:text-purple-300 transition-colors text-left cursor-pointer"
+              >
+                <Layers className="w-4 h-4 text-purple-400" />
+                <span>Nested Frame Buffer</span>
+              </button>
+
+              <div className="px-2 pt-1.5 pb-1 text-[10px] text-slate-400 font-semibold uppercase tracking-wider border-t border-white/10">
+                Top-Level Canvas
+              </div>
               <button
                 type="button"
                 data-testid="add-node-frame-buffer"

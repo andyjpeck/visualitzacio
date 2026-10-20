@@ -258,4 +258,99 @@ describe('Custom Node Card Components', () => {
     expect(screen.getByText('Nested Stage')).toBeInTheDocument()
     expect(screen.getByText('Frame Buffer')).toBeInTheDocument()
   })
+
+  it('adds a child synth inside MasterFrameBufferNodeComponent via + button', () => {
+    useAppStore.setState({
+      graphNodes: [
+        {
+          id: 'master-frame-buffer',
+          type: 'masterFrameBuffer',
+          position: { x: 0, y: 0 },
+          data: { label: 'Master Output' },
+        },
+      ],
+      selectedNodeId: null,
+    })
+
+    render(
+      <ReactFlowProvider>
+        <MasterFrameBufferNodeComponent
+          id="master-frame-buffer"
+          type="masterFrameBuffer"
+          data={{ label: 'Master Output' }}
+          selected={false}
+          zIndex={1}
+          isConnectable={true}
+          positionAbsoluteX={0}
+          positionAbsoluteY={0}
+          dragging={false}
+          selectable={true}
+          deletable={false}
+          draggable={true}
+        />
+      </ReactFlowProvider>,
+    )
+
+    const addBtn = screen.getByTestId('master-add-child-button')
+    fireEvent.click(addBtn)
+
+    expect(screen.getByTestId('master-add-child-menu')).toBeInTheDocument()
+
+    const addSynthBtn = screen.getByTestId('master-add-child-synth')
+    fireEvent.click(addSynthBtn)
+
+    const nodes = useAppStore.getState().graphNodes
+    const addedChild = nodes.find((n) => n.parentId === 'master-frame-buffer')
+    expect(addedChild).toBeDefined()
+    expect(addedChild?.type).toBe('testVisual')
+    expect(addedChild?.extent).toBe('parent')
+    expect(useAppStore.getState().selectedNodeId).toBe(addedChild?.id)
+  })
+
+  it('adds a child image inside FrameBufferNodeComponent via + button', () => {
+    useAppStore.setState({
+      graphNodes: [
+        {
+          id: 'custom-fb',
+          type: 'frameBuffer',
+          position: { x: 0, y: 0 },
+          data: { label: 'Custom FB' },
+        },
+      ],
+      selectedNodeId: null,
+    })
+
+    render(
+      <ReactFlowProvider>
+        <FrameBufferNodeComponent
+          id="custom-fb"
+          type="frameBuffer"
+          data={{ label: 'Custom FB' }}
+          selected={false}
+          zIndex={1}
+          isConnectable={true}
+          positionAbsoluteX={0}
+          positionAbsoluteY={0}
+          dragging={false}
+          selectable={true}
+          deletable={true}
+          draggable={true}
+        />
+      </ReactFlowProvider>,
+    )
+
+    const addBtn = screen.getByTestId('fb-add-child-button')
+    fireEvent.click(addBtn)
+
+    expect(screen.getByTestId('fb-add-child-menu')).toBeInTheDocument()
+
+    const addImageBtn = screen.getByTestId('fb-add-child-image')
+    fireEvent.click(addImageBtn)
+
+    const nodes = useAppStore.getState().graphNodes
+    const addedChild = nodes.find((n) => n.parentId === 'custom-fb')
+    expect(addedChild).toBeDefined()
+    expect(addedChild?.type).toBe('staticImage')
+    expect(addedChild?.extent).toBe('parent')
+  })
 })

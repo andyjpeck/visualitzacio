@@ -73,6 +73,31 @@ describe('ParameterInspector Component', () => {
     expect(updatedNode?.data.label).toBe('Cosmic Core')
   })
 
+  it('allows changing parent container of a node via dropdown', () => {
+    useAppStore.setState({ selectedNodeId: 'test-visual-1' })
+    render(<ParameterInspector />)
+
+    const parentSelect = screen.getByLabelText('Parent Container')
+    expect(parentSelect).toHaveValue('master-frame-buffer')
+
+    // Change to 'none' (top-level)
+    fireEvent.change(parentSelect, { target: { value: 'none' } })
+
+    const updatedNode = useAppStore
+      .getState()
+      .graphNodes.find((n) => n.id === 'test-visual-1')
+    expect(updatedNode?.parentId).toBeUndefined()
+
+    // Change back to 'master-frame-buffer'
+    fireEvent.change(parentSelect, { target: { value: 'master-frame-buffer' } })
+
+    const reparentedNode = useAppStore
+      .getState()
+      .graphNodes.find((n) => n.id === 'test-visual-1')
+    expect(reparentedNode?.parentId).toBe('master-frame-buffer')
+    expect(reparentedNode?.extent).toBe('parent')
+  })
+
   it('applies built-in template to Frame Buffer node', () => {
     // Add a frame buffer node and select it
     useAppStore.getState().addGraphNode({

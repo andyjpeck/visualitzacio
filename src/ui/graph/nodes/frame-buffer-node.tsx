@@ -1,6 +1,6 @@
-import React from 'react'
-import { Handle, type NodeProps, Position } from '@xyflow/react'
-import { Eye, EyeOff, Layers, Repeat } from 'lucide-react'
+import React, { useState } from 'react'
+import { Handle, type Node, type NodeProps, Position } from '@xyflow/react'
+import { Eye, EyeOff, ImageIcon, Layers, Plus, Repeat, Sparkles } from 'lucide-react'
 import type { FrameBufferNodeData } from './node-data'
 import { useAppStore } from '../../store/app-store'
 
@@ -14,13 +14,14 @@ export function FrameBufferNodeComponent({
   data,
   selected,
 }: NodeProps & { data: FrameBufferNodeData }): React.ReactElement {
+  const [isAddMenuOpen, setIsAddMenuOpen] = useState(false)
   const isFeedback = data.feedback ?? false
   const isBypassed = data.bypassed ?? false
 
   const setSelectedNodeId = useAppStore((state) => state.setSelectedNodeId)
   const setFocusedParamKey = useAppStore((state) => state.setFocusedParamKey)
   const updateGraphNodeData = useAppStore((state) => state.updateGraphNodeData)
-
+  const addGraphNode = useAppStore((state) => state.addGraphNode)
   const childCount = useAppStore(
     (state) => state.graphNodes.filter((n) => n.parentId === id).length,
   )
@@ -29,13 +30,65 @@ export function FrameBufferNodeComponent({
   const handleToggleFeedback = (e: React.MouseEvent) => {
     e.stopPropagation()
     setSelectedNodeId(id)
-    updateGraphNodeData(id, { feedback: !isFeedback })
     setFocusedParamKey('feedback')
+    updateGraphNodeData(id, { feedback: !isFeedback })
   }
 
   const handleToggleBypass = (e: React.MouseEvent) => {
     e.stopPropagation()
     updateGraphNodeData(id, { bypassed: !isBypassed })
+  }
+
+  const handleAddChild = (type: 'testVisual' | 'staticImage' | 'frameBuffer') => {
+    setIsAddMenuOpen(false)
+    const newId = `${type}-${Date.now().toString(36)}`
+    const yPos = 65 + childCount * 65
+    let childNode: Node
+
+    if (type === 'testVisual') {
+      childNode = {
+        id: newId,
+        type: 'testVisual',
+        parentId: id,
+        extent: 'parent',
+        position: { x: 20, y: yPos },
+        data: {
+          label: `Synth ${childCount + 1}`,
+          shape: 'Crystal',
+          reactive: true,
+          scale: 1.0,
+        },
+      }
+    } else if (type === 'staticImage') {
+      childNode = {
+        id: newId,
+        type: 'staticImage',
+        parentId: id,
+        extent: 'parent',
+        position: { x: 20, y: yPos },
+        data: {
+          label: `Image Layer ${childCount + 1}`,
+          fitMode: 'contain',
+        },
+      }
+    } else {
+      childNode = {
+        id: newId,
+        type: 'frameBuffer',
+        parentId: id,
+        extent: 'parent',
+        position: { x: 20, y: yPos },
+        data: {
+          label: `Buffer ${childCount + 1}`,
+          blendMode: 'screen',
+          feedback: true,
+          opacity: 0.9,
+        },
+      }
+    }
+
+    addGraphNode(childNode)
+    setSelectedNodeId(newId)
   }
 
   return (
@@ -46,20 +99,22 @@ export function FrameBufferNodeComponent({
       } ${
         hasChildren
           ? 'bg-gradient-to-b from-[#1b1033]/90 to-[#0a0714]/95 shadow-[0_0_30px_rgba(168,85,247,0.15)]'
-          : 'bg-gradient-to-b from-[#160e29] to-[#0c0d16] shadow-xl'
+          : 'bg-gradient-to-b from-[#160e29] to-[#0c0d14] shadow-xl'
       } ${
         selected
           ? 'border-purple-400 ring-2 ring-purple-400/50 shadow-purple-500/20'
           : 'border-purple-500/40 hover:border-purple-400/80 shadow-black/80'
       } ${isBypassed ? 'opacity-50 grayscale' : ''}`}
     >
-      {/* Hierarchy Execution Handles (Top / Bottom) */}
+      {/* Execution Target Handle (Top) */}
       <Handle
         type="target"
         position={Position.Top}
         id="exec-in"
         className="!w-3 !h-3 !bg-purple-400 !border-2 !border-slate-900 transition-transform hover:scale-125"
       />
+
+      {/* Execution Source Handle (Bottom) */}
       <Handle
         type="source"
         position={Position.Bottom}
@@ -67,13 +122,15 @@ export function FrameBufferNodeComponent({
         className="!w-3 !h-3 !bg-purple-400 !border-2 !border-slate-900 transition-transform hover:scale-125"
       />
 
-      {/* Texture Buffer Handles (Left / Right) */}
+      {/* Texture Buffer Input Handle (Left) */}
       <Handle
         type="target"
         position={Position.Left}
         id="buffer-in"
         className="!w-3 !h-3 !bg-cyber-cyan !border-2 !border-slate-900 transition-transform hover:scale-125"
       />
+
+      {/* Texture Buffer Output Handle (Right) */}
       <Handle
         type="source"
         position={Position.Right}
@@ -105,6 +162,67 @@ export function FrameBufferNodeComponent({
         </div>
 
         <div className="flex items-center gap-1">
+          {/* Add Child Node Button */}
+          <div className="relative">
+            <button
+              type="button"
+              data-testid="fb-add-child-button"
+              title="Add Child Node inside this Frame Buffer"
+              aria-label="Add Child Node inside this Frame Buffer"
+              onClick={(e) => {
+                e.stopPropagation()
+                setIsAddMenuOpen((open) => !open)
+              }}
+              className="p-1 rounded text-purple-400/80 hover:text-purple-200 hover:bg-purple-400/10 transition-colors cursor-pointer"
+            >
+              <Plus className="w-3.5 h-3.5" />
+            </button>
+
+            {isAddMenuOpen && (
+              <div
+                data-testid="fb-add-child-menu"
+                className="absolute right-0 top-full mt-1 w-44 rounded-xl bg-[#140e24]/98 border border-purple-500/30 shadow-2xl backdrop-blur-xl p-1 z-50 flex flex-col gap-0.5 text-xs font-mono select-none"
+              >
+                <button
+                  type="button"
+                  data-testid="fb-add-child-synth"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleAddChild('testVisual')
+                  }}
+                  className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-cyan-950/60 text-slate-300 hover:text-cyber-cyan transition-colors text-left cursor-pointer"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-cyber-cyan" />
+                  <span>Crystal Synth</span>
+                </button>
+                <button
+                  type="button"
+                  data-testid="fb-add-child-image"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleAddChild('staticImage')
+                  }}
+                  className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-emerald-950/60 text-slate-300 hover:text-emerald-300 transition-colors text-left cursor-pointer"
+                >
+                  <ImageIcon className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Static Image</span>
+                </button>
+                <button
+                  type="button"
+                  data-testid="fb-add-child-frame-buffer"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleAddChild('frameBuffer')
+                  }}
+                  className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-purple-950/60 text-slate-300 hover:text-purple-300 transition-colors text-left cursor-pointer"
+                >
+                  <Layers className="w-3.5 h-3.5 text-purple-400" />
+                  <span>Frame Buffer</span>
+                </button>
+              </div>
+            )}
+          </div>
+
           <button
             type="button"
             title={isFeedback ? 'Click to disable feedback loop' : 'Click to enable feedback loop'}

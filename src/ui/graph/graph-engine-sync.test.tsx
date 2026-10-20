@@ -47,6 +47,22 @@ describe('VisualNodeGraph Component & Store Synchronization', () => {
     expect(state.selectedNodeId).toBe(addedNode?.id)
   })
 
+  it('adds a child node inside Root Frame Buffer from the Add Node toolbar menu', () => {
+    render(<VisualNodeGraph />)
+
+    const addBtn = screen.getByTestId('graph-add-node-button')
+    fireEvent.click(addBtn)
+
+    const addChildSynthBtn = screen.getByTestId('add-node-child-test-visual')
+    fireEvent.click(addChildSynthBtn)
+
+    const state = useAppStore.getState()
+    const childrenOfMaster = state.graphNodes.filter(
+      (n) => n.parentId === 'master-frame-buffer',
+    )
+    expect(childrenOfMaster.length).toBeGreaterThanOrEqual(2)
+  })
+
   it('runs auto-layout when clicking Auto-Layout button', () => {
     render(<VisualNodeGraph />)
 

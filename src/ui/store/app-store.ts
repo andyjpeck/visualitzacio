@@ -249,6 +249,7 @@ export interface AppState {
   addGraphNode: (node: Node) => void
   removeGraphNode: (nodeId: string) => boolean
   updateGraphNodeData: (nodeId: string, patch: Record<string, unknown>) => void
+  setNodeParent: (nodeId: string, parentId: string | null) => void
 
   // Dialog Stack Navigation Actions
   openDialog: (id: DialogId) => void
@@ -431,9 +432,29 @@ export const useAppStore = create<AppState>((set) => ({
           : edgesOrUpdater,
     })),
   addGraphNode: (node) =>
-    set((state) => ({
-      graphNodes: [...state.graphNodes, node],
-    })),
+    set((state) => {
+      const updatedNodes = [...state.graphNodes]
+      if (node.parentId) {
+        const parentIndex = updatedNodes.findIndex((n) => n.id === node.parentId)
+        if (parentIndex !== -1) {
+          const parent = updatedNodes[parentIndex]
+          const existingChildren = updatedNodes.filter((n) => n.parentId === node.parentId)
+          const newChildCount = existingChildren.length + 1
+          const neededHeight = Math.max(160, 75 + newChildCount * 65)
+          const currentHeight = (parent.style?.height as number) || 160
+          if (neededHeight > currentHeight) {
+            updatedNodes[parentIndex] = {
+              ...parent,
+              style: {
+                ...parent.style,
+                height: neededHeight,
+              },
+            }
+          }
+        }
+      }
+      return { graphNodes: [...updatedNodes, node] }
+    }),
   removeGraphNode: (nodeId) => {
     const state = useAppStore.getState()
     const nodeToRemove = state.graphNodes.find((n) => n.id === nodeId)
@@ -459,6 +480,62 @@ export const useAppStore = create<AppState>((set) => ({
           : node,
       ),
     })),
+  setNodeParent: (nodeId, parentId) =>
+    set((state) => {
+      const targetNode = state.graphNodes.find((n) => n.id === nodeId)
+      if (!targetNode || targetNode.id === 'master-frame-buffer') return state
+
+      // If reparenting to a container
+      if (parentId) {
+        const parentNode = state.graphNodes.find((n) => n.id === parentId)
+        if (!parentNode) return state
+        const otherChildren = state.graphNodes.filter(
+          (n) => n.parentId === parentId && n.id !== nodeId,
+        )
+        const newChildIndex = otherChildren.length
+        const neededHeight = Math.max(160, 75 + (newChildIndex + 1) * 65)
+        const currentHeight = (parentNode.style?.height as number) || 160
+
+        return {
+          graphNodes: state.graphNodes.map((n) => {
+            if (n.id === parentId && neededHeight > currentHeight) {
+              return {
+                ...n,
+                style: { ...n.style, height: neededHeight },
+              }
+            }
+            if (n.id === nodeId) {
+              return {
+                ...n,
+                parentId,
+                extent: 'parent',
+                position: { x: 20, y: 65 + newChildIndex * 65 },
+              }
+            }
+            return n
+          }),
+        }
+      } else {
+        // Unparenting to top level
+        const currentParent = state.graphNodes.find((n) => n.id === targetNode.parentId)
+        const newX = (currentParent?.position.x ?? 100) + 320
+        const newY = currentParent?.position.y ?? 100
+        return {
+          graphNodes: state.graphNodes.map((n) => {
+            if (n.id === nodeId) {
+              const copy = { ...n }
+              delete copy.parentId
+              delete copy.extent
+              return {
+                ...copy,
+                position: { x: newX, y: newY },
+              }
+            }
+            return n
+          }),
+        }
+      }
+    }),
   // Dialog Stack Actions
   openDialog: (id: DialogId) =>
     set((state) => {
