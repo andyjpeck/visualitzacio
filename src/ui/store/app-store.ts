@@ -37,9 +37,10 @@ function saveBoolToStorage(key: string, value: boolean): void {
 }
 
 export type StudioMode = 'editor' | 'live'
-export const DEFAULT_STUDIO_SPLIT_RATIOS: [number, number, number] = [0.35, 0.4, 0.25]
+export const DEFAULT_STUDIO_SPLIT_RATIO = 0.5
 export const STORAGE_KEY_STUDIO_MODE = 'visualitzacio_studio_mode'
-export const STORAGE_KEY_STUDIO_SPLIT_RATIOS = 'visualitzacio_studio_split_ratios'
+export const STORAGE_KEY_STUDIO_SPLIT_RATIO = 'visualitzacio_studio_split_ratio'
+export const STORAGE_KEY_INSPECTOR_OPEN = 'visualitzacio_inspector_open'
 
 function loadStudioModeFromStorage(): StudioMode {
   try {
@@ -65,37 +66,27 @@ function saveStudioModeToStorage(mode: StudioMode): void {
   }
 }
 
-function loadSplitRatiosFromStorage(): [number, number, number] {
+function loadSplitRatioFromStorage(): number {
   try {
     if (typeof window !== 'undefined' && window.localStorage) {
-      const stored = window.localStorage.getItem(STORAGE_KEY_STUDIO_SPLIT_RATIOS)
+      const stored = window.localStorage.getItem(STORAGE_KEY_STUDIO_SPLIT_RATIO)
       if (stored) {
-        const parsed = JSON.parse(stored)
-        if (
-          Array.isArray(parsed) &&
-          parsed.length === 3 &&
-          parsed.every((n) => typeof n === 'number' && !Number.isNaN(n) && n > 0)
-        ) {
-          const sum = parsed[0] + parsed[1] + parsed[2]
-          if (sum > 0) {
-            return [parsed[0] / sum, parsed[1] / sum, parsed[2] / sum]
-          }
+        const val = parseFloat(stored)
+        if (!Number.isNaN(val) && val > 0.1 && val < 0.9) {
+          return val
         }
       }
     }
   } catch {
     // ignore
   }
-  return [...DEFAULT_STUDIO_SPLIT_RATIOS]
+  return DEFAULT_STUDIO_SPLIT_RATIO
 }
 
-function saveSplitRatiosToStorage(ratios: [number, number, number]): void {
+function saveSplitRatioToStorage(ratio: number): void {
   try {
     if (typeof window !== 'undefined' && window.localStorage) {
-      window.localStorage.setItem(
-        STORAGE_KEY_STUDIO_SPLIT_RATIOS,
-        JSON.stringify(ratios),
-      )
+      window.localStorage.setItem(STORAGE_KEY_STUDIO_SPLIT_RATIO, String(ratio))
     }
   } catch {
     // ignore
@@ -123,7 +114,8 @@ export interface AppState {
 
   // Studio workspace & mode state (Track 4)
   studioMode: StudioMode
-  studioSplitRatios: [number, number, number]
+  studioSplitRatio: number
+  isInspectorOpen: boolean
 
   // Preset-wide performance & DSP settings
   targetFps: number
@@ -165,8 +157,10 @@ export interface AppState {
   // Studio Mode & Split-View Actions (Track 4)
   setStudioMode: (mode: StudioMode) => void
   toggleStudioMode: () => void
-  setStudioSplitRatios: (ratios: [number, number, number]) => void
-  resetStudioSplitRatios: () => void
+  setStudioSplitRatio: (ratio: number) => void
+  resetStudioSplitRatio: () => void
+  setIsInspectorOpen: (open: boolean) => void
+  toggleInspector: () => void
 
   // Dialog Stack Navigation Actions
   openDialog: (id: DialogId) => void
@@ -254,7 +248,8 @@ export const useAppStore = create<AppState>((set) => ({
   currentFps: 60,
 
   studioMode: loadStudioModeFromStorage(),
-  studioSplitRatios: loadSplitRatiosFromStorage(),
+  studioSplitRatio: loadSplitRatioFromStorage(),
+  isInspectorOpen: loadBoolFromStorage(STORAGE_KEY_INSPECTOR_OPEN, true),
 
   targetFps: 60,
   resolutionScale: 1.0,
@@ -305,14 +300,24 @@ export const useAppStore = create<AppState>((set) => ({
       saveStudioModeToStorage(nextMode)
       return { studioMode: nextMode }
     }),
-  setStudioSplitRatios: (studioSplitRatios) => {
-    saveSplitRatiosToStorage(studioSplitRatios)
-    set({ studioSplitRatios })
+  setStudioSplitRatio: (studioSplitRatio) => {
+    saveSplitRatioToStorage(studioSplitRatio)
+    set({ studioSplitRatio })
   },
-  resetStudioSplitRatios: () => {
-    saveSplitRatiosToStorage(DEFAULT_STUDIO_SPLIT_RATIOS)
-    set({ studioSplitRatios: [...DEFAULT_STUDIO_SPLIT_RATIOS] })
+  resetStudioSplitRatio: () => {
+    saveSplitRatioToStorage(DEFAULT_STUDIO_SPLIT_RATIO)
+    set({ studioSplitRatio: DEFAULT_STUDIO_SPLIT_RATIO })
   },
+  setIsInspectorOpen: (isInspectorOpen) => {
+    saveBoolToStorage(STORAGE_KEY_INSPECTOR_OPEN, isInspectorOpen)
+    set({ isInspectorOpen })
+  },
+  toggleInspector: () =>
+    set((state) => {
+      const next = !state.isInspectorOpen
+      saveBoolToStorage(STORAGE_KEY_INSPECTOR_OPEN, next)
+      return { isInspectorOpen: next }
+    }),
   // Dialog Stack Actions
   openDialog: (id: DialogId) =>
     set((state) => {

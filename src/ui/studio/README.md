@@ -1,28 +1,33 @@
 # Studio Workspace Module (`src/ui/studio`)
 
 ## Overview
-The Studio Workspace module powers the visual synthesizer interface of Visualització. It provides the resizable 3-pane split-view layout container, dual Studio vs. Live Performance modes, and HUD auto-hiding behavior.
+The Studio Workspace module powers the visual synthesizer interface of Visualització. It provides the resizable 2-pane split-view layout container with a collapsible slide-out parameter inspector drawer, dual Studio vs. Live Performance modes, and HUD auto-hiding behavior.
 
 ## Components & Hooks
 
 | File | Purpose |
 | :--- | :--- |
-| `studio-split-view.tsx` | 3-pane resizable container (`Preview`, `Node Graph`, `Inspector`) with min-width constraints, double-click reset, and `localStorage` persistence. |
+| `studio-split-view.tsx` | 2-pane resizable container (`Preview` and `Node Graph`) with a collapsible slide-out `Parameter Inspector` drawer, min-width constraints, double-click reset, and `localStorage` persistence. |
 | `use-studio-controls.ts` | State machine and event coordinator for Studio vs. Live modes, 3-second mouse inactivity HUD auto-hide, and global `F11` / `Escape` keyboard shortcuts. |
 
 ## Layout Architecture & Minimum Width Constraints
 
 ```
-┌───────────────────────────┬───┬─────────────────────────────────┬───┬───────────────────────────┐
-│     Viewport Preview      │ D │        Visual Node Graph        │ D │     Parameter Inspector   │
-│     (min-width: 320px)    │ 1 │       (min-width: 400px)        │ 2 │     (min-width: 300px)    │
-│     Default ratio: 35%    │   │       Default ratio: 40%        │   │     Default ratio: 25%    │
-└───────────────────────────┴───┴─────────────────────────────────┴───┴───────────────────────────┘
+┌─────────────────────────────────┬───┬───────────────────────────────────────────┐
+│        Viewport Preview         │ D │             Visual Node Graph             │
+│       (min-width: 320px)        │ I │            (min-width: 400px)             │
+│        Default ratio: 50%       │ V │             Default ratio: 50%            │
+│                                 │   │              ┌──────────────────────────┐ │
+│                                 │   │              │   Parameter Inspector    │ │
+│                                 │   │              │     Slide-Out Drawer     │ │
+│                                 │   │              │      (width: 340px)      │ │
+│                                 │   │              └──────────────────────────┘ │
+└─────────────────────────────────┴───┴───────────────────────────────────────────┘
 ```
 
-- **Divider 1:** Controls boundary between Viewport Preview and Node Graph.
-- **Divider 2:** Controls boundary between Node Graph and Parameter Inspector.
-- **Double-Click Reset:** Double-clicking either divider restores default ratio `[0.35, 0.40, 0.25]`.
+- **Divider:** Controls boundary between Viewport Preview (left) and Visual Node Graph (right).
+- **Double-Click Reset:** Double-clicking the divider restores default ratio `0.50` (50% / 50%).
+- **Slide-Out Inspector Drawer:** Anchored on the right edge of the Node Graph. Slides in smoothly when open (`translate-x-0`) or collapses away (`translate-x-full`) with a floating toggle button to maximize graph canvas space.
 - **Live Mode:** Collapses Node Graph and Inspector completely; Viewport Preview expands to 100% width.
 - **Inactivity Auto-Hide:** In Live mode, 3 seconds of mouse inactivity smoothly fades out floating HUD elements; any interaction instantly restores full visibility.
 

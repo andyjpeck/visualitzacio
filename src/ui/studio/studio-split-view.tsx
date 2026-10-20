@@ -1,15 +1,16 @@
 import React, { useCallback, useRef, useState } from 'react'
+import { PanelRightClose, PanelRightOpen, Sliders } from 'lucide-react'
 import {
-  DEFAULT_STUDIO_SPLIT_RATIOS,
+  DEFAULT_STUDIO_SPLIT_RATIO,
   type StudioMode,
   useAppStore,
 } from '../store/app-store'
 
-export { DEFAULT_STUDIO_SPLIT_RATIOS }
+export { DEFAULT_STUDIO_SPLIT_RATIO }
 
 export const MIN_PREVIEW_WIDTH = 320
 export const MIN_GRAPH_WIDTH = 400
-export const MIN_INSPECTOR_WIDTH = 300
+export const DEFAULT_INSPECTOR_WIDTH = 340
 
 export interface StudioSplitViewProps {
   preview: React.ReactNode
@@ -20,15 +21,16 @@ export interface StudioSplitViewProps {
 }
 
 /**
- * Resizable 3-pane split-view container for Visualització Studio.
+ * 2-Pane Resizable Split-View Container with Collapsible Inspector Drawer for Visualització Studio.
  *
- * In Editor mode:
- * - Left pane: Viewport Canvas & Performance HUD (min 320px)
- * - Center pane: Interactive Visual Node Graph Workspace (min 400px)
- * - Right pane: Docked Parameter Inspector (min 300px)
+ * In Editor Mode:
+ * - Left Pane: Live Viewport Canvas & Performance HUD (min 320px)
+ * - Divider: 60 FPS pointer-drag divider with min-width clamping and double-click reset
+ * - Right Pane: Interactive Visual Node Graph Workspace (min 400px)
+ * - Collapsible Slide-Out Drawer: Parameter Inspector on right edge of Node Graph
  *
- * In Live mode:
- * - Fullscreen borderless viewport with node graph and inspector panes collapsed.
+ * In Live Mode:
+ * - Fullscreen borderless viewport canvas with node graph and inspector drawer collapsed.
  */
 export function StudioSplitView({
   preview,
@@ -38,25 +40,26 @@ export function StudioSplitView({
   className = '',
 }: StudioSplitViewProps): React.ReactElement {
   const storeMode = useAppStore((state) => state.studioMode)
-  const storeRatios = useAppStore((state) => state.studioSplitRatios)
-  const setStudioSplitRatios = useAppStore((state) => state.setStudioSplitRatios)
-  const resetStudioSplitRatios = useAppStore((state) => state.resetStudioSplitRatios)
+  const storeRatio = useAppStore((state) => state.studioSplitRatio)
+  const setStudioSplitRatio = useAppStore((state) => state.setStudioSplitRatio)
+  const resetStudioSplitRatio = useAppStore((state) => state.resetStudioSplitRatio)
+  const isInspectorOpen = useAppStore((state) => state.isInspectorOpen)
+  const toggleInspector = useAppStore((state) => state.toggleInspector)
 
   const activeMode = mode ?? storeMode
   const containerRef = useRef<HTMLDivElement>(null)
 
-  // Ephemeral ratios during active dragging for 60 FPS fluidity
-  const [dragRatios, setDragRatios] = useState<[number, number, number] | null>(null)
-  const ratiosRef = useRef<[number, number, number]>(storeRatios)
-  const [isDragging, setIsDragging] = useState<1 | 2 | null>(null)
+  // Ephemeral ratio during active dragging for 60 FPS fluidity
+  const [dragRatio, setDragRatio] = useState<number | null>(null)
+  const ratioRef = useRef<number>(storeRatio)
+  const [isDragging, setIsDragging] = useState<boolean>(false)
 
-  // Drag handler for dividers
   const handlePointerDown = useCallback(
-    (dividerIndex: 1 | 2, e: React.PointerEvent) => {
+    (e: React.PointerEvent) => {
       e.preventDefault()
-      setIsDragging(dividerIndex)
-      ratiosRef.current = [...storeRatios]
-      setDragRatios([...storeRatios])
+      setIsDragging(true)
+      ratioRef.current = storeRatio
+      setDragRatio(storeRatio)
 
       const handlePointerMove = (ev: PointerEvent) => {
         const container = containerRef.current
@@ -67,36 +70,21 @@ export function StudioSplitView({
         if (totalWidth <= 0) return
 
         const clientX = ev.clientX - rect.left
-        const [r0, , r2] = ratiosRef.current
-        let next: [number, number, number]
 
-        if (dividerIndex === 1) {
-          // Dragging Divider 1: between Preview (0) and Graph (1)
-          const minP0 = MIN_PREVIEW_WIDTH
-          const maxP0 = Math.max(minP0, totalWidth - r2 * totalWidth - MIN_GRAPH_WIDTH)
-          const clampedWidth = Math.min(Math.max(clientX, minP0), maxP0)
-          const newR0 = clampedWidth / totalWidth
-          const newR1 = Math.max(0, 1 - newR0 - r2)
-          next = [newR0, newR1, r2]
-        } else {
-          // Dragging Divider 2: between Graph (1) and Inspector (2)
-          const inspectorWidth = totalWidth - clientX
-          const minP2 = MIN_INSPECTOR_WIDTH
-          const maxP2 = Math.max(minP2, totalWidth - r0 * totalWidth - MIN_GRAPH_WIDTH)
-          const clampedWidth = Math.min(Math.max(inspectorWidth, minP2), maxP2)
-          const newR2 = clampedWidth / totalWidth
-          const newR1 = Math.max(0, 1 - r0 - newR2)
-          next = [r0, newR1, newR2]
-        }
+        // Min width clamping: Preview >= 320px, Graph >= 400px
+        const minPreview = MIN_PREVIEW_WIDTH
+        const maxPreview = Math.max(minPreview, totalWidth - MIN_GRAPH_WIDTH)
+        const clampedWidth = Math.min(Math.max(clientX, minPreview), maxPreview)
+        const newRatio = clampedWidth / totalWidth
 
-        ratiosRef.current = next
-        setDragRatios(next)
+        ratioRef.current = newRatio
+        setDragRatio(newRatio)
       }
 
       const handlePointerUp = () => {
-        setIsDragging(null)
-        setDragRatios(null)
-        setStudioSplitRatios(ratiosRef.current)
+        setIsDragging(false)
+        setDragRatio(null)
+        setStudioSplitRatio(ratioRef.current)
         window.removeEventListener('pointermove', handlePointerMove)
         window.removeEventListener('pointerup', handlePointerUp)
         window.removeEventListener('pointercancel', handlePointerUp)
@@ -106,15 +94,15 @@ export function StudioSplitView({
       window.addEventListener('pointerup', handlePointerUp)
       window.addEventListener('pointercancel', handlePointerUp)
     },
-    [setStudioSplitRatios, storeRatios],
+    [setStudioSplitRatio, storeRatio],
   )
 
   const handleReset = useCallback(() => {
-    resetStudioSplitRatios()
-    setDragRatios(null)
-  }, [resetStudioSplitRatios])
+    resetStudioSplitRatio()
+    setDragRatio(null)
+  }, [resetStudioSplitRatio])
 
-  const activeRatios = dragRatios ?? storeRatios
+  const activeRatio = dragRatio ?? storeRatio
   const isLive = activeMode === 'live'
 
   return (
@@ -125,11 +113,11 @@ export function StudioSplitView({
         isDragging ? 'cursor-col-resize' : ''
       } ${className}`}
     >
-      {/* Pane 1: Preview Canvas & Viewport */}
+      {/* Pane 1: Viewport Preview Canvas */}
       <div
         data-testid="studio-pane-preview"
         style={{
-          width: isLive ? '100%' : `${activeRatios[0] * 100}%`,
+          width: isLive ? '100%' : `${activeRatio * 100}%`,
           minWidth: isLive ? '100%' : `${MIN_PREVIEW_WIDTH}px`,
         }}
         className="relative h-full overflow-hidden flex-shrink-0 flex flex-col z-0"
@@ -139,14 +127,14 @@ export function StudioSplitView({
 
       {!isLive && (
         <>
-          {/* Divider 1: Preview <-> Graph */}
+          {/* Resizable Divider: Preview <-> Node Graph */}
           <div
             role="separator"
             aria-orientation="vertical"
             tabIndex={0}
-            data-testid="studio-divider-1"
-            title="Drag to resize pane, double-click to reset"
-            onPointerDown={(e) => handlePointerDown(1, e)}
+            data-testid="studio-divider"
+            title="Drag to resize workspace, double-click to reset"
+            onPointerDown={handlePointerDown}
             onDoubleClick={handleReset}
             className="group relative w-1 h-full bg-slate-800/80 hover:bg-cyber-cyan/70 active:bg-cyber-cyan cursor-col-resize flex-shrink-0 transition-colors z-20"
           >
@@ -154,43 +142,63 @@ export function StudioSplitView({
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-0.5 h-6 rounded-full bg-slate-600 group-hover:bg-cyber-cyan transition-colors" />
           </div>
 
-          {/* Pane 2: Node Graph */}
+          {/* Pane 2: Node Graph Workspace with Collapsible Slide-Out Inspector Drawer */}
           <div
             data-testid="studio-pane-graph"
             style={{
-              width: `${activeRatios[1] * 100}%`,
+              width: `${(1 - activeRatio) * 100}%`,
               minWidth: `${MIN_GRAPH_WIDTH}px`,
             }}
-            className="relative h-full overflow-hidden flex-1 flex flex-col border-r border-white/5 bg-[#080811] z-10"
+            className="relative h-full overflow-hidden flex-1 flex flex-col bg-[#080811] z-10"
           >
-            {graph}
-          </div>
+            {/* Visual Node Graph Content */}
+            <div className="relative w-full h-full overflow-hidden">{graph}</div>
 
-          {/* Divider 2: Graph <-> Inspector */}
-          <div
-            role="separator"
-            aria-orientation="vertical"
-            tabIndex={0}
-            data-testid="studio-divider-2"
-            title="Drag to resize pane, double-click to reset"
-            onPointerDown={(e) => handlePointerDown(2, e)}
-            onDoubleClick={handleReset}
-            className="group relative w-1 h-full bg-slate-800/80 hover:bg-cyber-cyan/70 active:bg-cyber-cyan cursor-col-resize flex-shrink-0 transition-colors z-20"
-          >
-            <div className="absolute inset-y-0 -left-1 -right-1" />
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-0.5 h-6 rounded-full bg-slate-600 group-hover:bg-cyber-cyan transition-colors" />
-          </div>
+            {/* Floating Slide-Out Toggle Pill (Visible when drawer is closed) */}
+            {!isInspectorOpen && (
+              <button
+                type="button"
+                data-testid="studio-inspector-open-button"
+                onClick={toggleInspector}
+                title="Open Parameter Inspector"
+                aria-label="Open Parameter Inspector"
+                className="absolute top-4 right-4 z-30 p-2.5 rounded-xl bg-cyber-dark/90 hover:bg-cyber-dark border border-white/10 hover:border-cyber-cyan/40 text-slate-300 hover:text-cyber-cyan shadow-lg shadow-black/50 backdrop-blur-md transition-all cursor-pointer flex items-center gap-2 group text-xs font-mono"
+              >
+                <Sliders className="w-4 h-4 text-cyber-cyan group-hover:scale-110 transition-transform" />
+                <span className="hidden sm:inline font-semibold">Inspector</span>
+                <PanelRightOpen className="w-3.5 h-3.5 text-slate-400 group-hover:text-cyber-cyan" />
+              </button>
+            )}
 
-          {/* Pane 3: Inspector */}
-          <div
-            data-testid="studio-pane-inspector"
-            style={{
-              width: `${activeRatios[2] * 100}%`,
-              minWidth: `${MIN_INSPECTOR_WIDTH}px`,
-            }}
-            className="relative h-full overflow-hidden flex-shrink-0 flex flex-col bg-cyber-dark/95 border-l border-white/10 z-10"
-          >
-            {inspector}
+            {/* Collapsible Slide-Out Inspector Drawer */}
+            <aside
+              data-testid="studio-inspector-drawer"
+              style={{ width: `${DEFAULT_INSPECTOR_WIDTH}px` }}
+              className={`absolute top-0 right-0 h-full bg-cyber-dark/95 border-l border-white/10 shadow-2xl shadow-black/80 backdrop-blur-xl z-30 flex flex-col transition-transform duration-300 ease-out ${
+                isInspectorOpen ? 'translate-x-0' : 'translate-x-full pointer-events-none'
+              }`}
+            >
+              {/* Drawer Header with Close Button */}
+              <div className="flex items-center justify-between px-3 py-2.5 border-b border-white/10 bg-white/5 select-none">
+                <div className="flex items-center gap-2 text-xs font-mono font-bold uppercase tracking-wider text-slate-300">
+                  <Sliders className="w-3.5 h-3.5 text-cyber-cyan" />
+                  <span>Parameter Inspector</span>
+                </div>
+                <button
+                  type="button"
+                  data-testid="studio-inspector-close-button"
+                  onClick={toggleInspector}
+                  title="Close Inspector Drawer"
+                  aria-label="Close Inspector Drawer"
+                  className="p-1 rounded-md text-slate-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+                >
+                  <PanelRightClose className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Inspector Body */}
+              <div className="flex-1 overflow-y-auto">{inspector}</div>
+            </aside>
           </div>
         </>
       )}

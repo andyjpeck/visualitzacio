@@ -171,14 +171,25 @@ describe('useAppStore (Zustand State Plane)', () => {
     expect(useAppStore.getState().studioMode).toBe('live')
   })
 
-  it('manages studio split ratios and reset functionality', () => {
+  it('manages studio split ratio and reset functionality', () => {
     const store = useAppStore.getState()
-    expect(store.studioSplitRatios).toEqual([0.35, 0.4, 0.25])
+    expect(store.studioSplitRatio).toBe(0.5)
 
-    store.setStudioSplitRatios([0.5, 0.3, 0.2])
-    expect(useAppStore.getState().studioSplitRatios).toEqual([0.5, 0.3, 0.2])
+    store.setStudioSplitRatio(0.6)
+    expect(useAppStore.getState().studioSplitRatio).toBe(0.6)
 
-    store.resetStudioSplitRatios()
-    expect(useAppStore.getState().studioSplitRatios).toEqual([0.35, 0.4, 0.25])
+    store.resetStudioSplitRatio()
+    expect(useAppStore.getState().studioSplitRatio).toBe(0.5)
+  })
+
+  it('manages inspector drawer visibility and toggle action', () => {
+    const store = useAppStore.getState()
+    expect(store.isInspectorOpen).toBe(true)
+
+    store.toggleInspector()
+    expect(useAppStore.getState().isInspectorOpen).toBe(false)
+
+    store.setIsInspectorOpen(true)
+    expect(useAppStore.getState().isInspectorOpen).toBe(true)
   })
 })
