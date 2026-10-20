@@ -65,6 +65,38 @@ describe('ParameterRow Component', () => {
     expect(screen.getByText('Syntax Valid')).toBeInTheDocument()
   })
 
+  it('retains expression mode internally after clicking f(x) even when rerendered with plain string value', () => {
+    const handleChange = vi.fn()
+
+    const { rerender } = render(
+      <ParameterRow
+        label="Scale"
+        value={1.0}
+        type="slider"
+        onChange={handleChange}
+      />,
+    )
+
+    const fxToggle = screen.getByTestId('fx-toggle-scale')
+    fireEvent.click(fxToggle)
+    expect(handleChange).toHaveBeenCalledWith('1', 'expression')
+
+    // Rerender with plain '1' without explicit mode prop
+    rerender(
+      <ParameterRow
+        label="Scale"
+        value="1"
+        type="slider"
+        onChange={handleChange}
+      />,
+    )
+
+    // Formula input should be visible and active
+    const input = screen.getByPlaceholderText('e.g. 1.0 + $BASS * 0.8')
+    expect(input).toBeInTheDocument()
+    expect(input).toHaveValue('1')
+  })
+
   it('renders dropdown options for dropdown parameter type', () => {
     const handleChange = vi.fn()
     const options = [

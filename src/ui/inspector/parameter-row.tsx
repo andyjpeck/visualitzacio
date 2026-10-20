@@ -46,12 +46,16 @@ export function ParameterRow({
   engine = null,
 }: ParameterRowProps): React.ReactElement {
   const rowRef = useRef<HTMLDivElement>(null)
+  const hasExpressionSyntax =
+    typeof value === 'string' && (value.includes('$') || value.includes('#'))
+  const [isExpressionMode, setIsExpressionMode] = useState<boolean>(
+    explicitMode === 'expression' || hasExpressionSyntax,
+  )
+
   const isExpression =
     allowExpression &&
     (explicitMode === 'expression' ||
-      (explicitMode !== 'fixed' &&
-        typeof value === 'string' &&
-        (value.includes('$') || value.includes('#'))))
+      (explicitMode !== 'fixed' && (isExpressionMode || hasExpressionSyntax)))
 
   const [typedFormula, setTypedFormula] = useState<string | null>(null)
   const [prevValue, setPrevValue] = useState(value)
@@ -59,6 +63,9 @@ export function ParameterRow({
   if (value !== prevValue) {
     setPrevValue(value)
     setTypedFormula(null)
+    if (typeof value === 'string' && (value.includes('$') || value.includes('#'))) {
+      setIsExpressionMode(true)
+    }
   }
 
   const activeFormula = typedFormula !== null ? typedFormula : String(value)
@@ -75,11 +82,13 @@ export function ParameterRow({
     setTypedFormula(null)
     if (isExpression) {
       // Revert to fixed mode with numeric fallback
+      setIsExpressionMode(false)
       const num = Number(value)
       const fallbackVal = !Number.isNaN(num) ? num : min
       onChange(fallbackVal, 'fixed')
     } else {
       // Morph to expression mode
+      setIsExpressionMode(true)
       onChange(String(value), 'expression')
     }
   }
