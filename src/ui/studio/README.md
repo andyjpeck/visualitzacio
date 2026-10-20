@@ -1,34 +1,33 @@
 # Studio Workspace Module (`src/ui/studio`)
 
 ## Overview
-The Studio Workspace module powers the visual synthesizer interface of Visualització. It provides the resizable 2-pane split-view layout container with a collapsible slide-out parameter inspector drawer, dual Studio vs. Live Performance modes, and HUD auto-hiding behavior.
+The Studio Workspace module powers the visual synthesizer interface of Visualització. It provides the resizable split-view layout container with the Parameter Inspector stacked on top and the Visual Node Graph on the bottom, dual Studio vs. Live Performance modes, and HUD auto-hiding behavior.
 
 ## Components & Hooks
 
 | File | Purpose |
 | :--- | :--- |
-| `studio-split-view.tsx` | 2-pane resizable container (`Preview` and `Node Graph`) with a collapsible slide-out `Parameter Inspector` drawer, min-width constraints, double-click reset, and `localStorage` persistence. |
+| `studio-split-view.tsx` | Split-view container pairing the Viewport Preview (left) with a vertically stacked right column (Parameter Inspector on top, Node Graph on bottom), featuring both vertical and horizontal 60 FPS pointer dividers, min constraints, double-click reset, and `localStorage` persistence. |
 | `use-studio-controls.ts` | State machine and event coordinator for Studio vs. Live modes, 3-second mouse inactivity HUD auto-hide, and global `F11` / `Escape` keyboard shortcuts. |
 
-## Layout Architecture & Minimum Width Constraints
+## Layout Architecture & Constraints
 
 ```
 ┌─────────────────────────────────┬───┬───────────────────────────────────────────┐
-│        Viewport Preview         │ D │             Visual Node Graph             │
-│       (min-width: 320px)        │ I │            (min-width: 400px)             │
-│        Default ratio: 50%       │ V │             Default ratio: 50%            │
-│                                 │   │              ┌──────────────────────────┐ │
-│                                 │   │              │   Parameter Inspector    │ │
-│                                 │   │              │     Slide-Out Drawer     │ │
-│                                 │   │              │      (width: 340px)      │ │
-│                                 │   │              └──────────────────────────┘ │
+│        Viewport Preview         │ V │            Parameter Inspector            │
+│       (min-width: 320px)        │ E │            (min-height: 180px)            │
+│        Default ratio: 50%       │ R │            Default ratio: 45%             │
+│                                 │ T │─── H O R I Z O N T A L   D I V I D E R ───│
+│                                 │   │             Visual Node Graph             │
+│                                 │ D │            (min-height: 200px)            │
+│                                 │ I │            Default ratio: 55%             │
+│                                 │ V │                                           │
 └─────────────────────────────────┴───┴───────────────────────────────────────────┘
 ```
 
-- **Divider:** Controls boundary between Viewport Preview (left) and Visual Node Graph (right).
-- **Double-Click Reset:** Double-clicking the divider restores default ratio `0.50` (50% / 50%).
-- **Slide-Out Inspector Drawer:** Anchored on the right edge of the Node Graph. Slides in smoothly when open (`translate-x-0`) or collapses away (`translate-x-full`) with a floating toggle button to maximize graph canvas space.
-- **Live Mode:** Collapses Node Graph and Inspector completely; Viewport Preview expands to 100% width.
+- **Vertical Divider:** Controls boundary between Viewport Preview (left) and Right Column (right). Double-clicking resets to `0.50` (50% / 50%).
+- **Horizontal Divider:** Controls boundary between Parameter Inspector (top) and Node Graph (bottom). Double-clicking resets to `0.45` (45% inspector / 55% graph).
+- **Live Mode:** Collapses the entire Right Column (Inspector and Node Graph); Viewport Preview expands to 100% full screen.
 - **Inactivity Auto-Hide:** In Live mode, 3 seconds of mouse inactivity smoothly fades out floating HUD elements; any interaction instantly restores full visibility.
 
 ## Testing

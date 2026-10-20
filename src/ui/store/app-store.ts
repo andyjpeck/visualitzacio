@@ -38,9 +38,11 @@ function saveBoolToStorage(key: string, value: boolean): void {
 
 export type StudioMode = 'editor' | 'live'
 export const DEFAULT_STUDIO_SPLIT_RATIO = 0.5
+export const DEFAULT_INSPECTOR_VERTICAL_RATIO = 0.45
 export const STORAGE_KEY_STUDIO_MODE = 'visualitzacio_studio_mode'
 export const STORAGE_KEY_STUDIO_SPLIT_RATIO = 'visualitzacio_studio_split_ratio'
-export const STORAGE_KEY_INSPECTOR_OPEN = 'visualitzacio_inspector_open'
+export const STORAGE_KEY_INSPECTOR_VERTICAL_RATIO =
+  'visualitzacio_inspector_vertical_ratio'
 
 function loadStudioModeFromStorage(): StudioMode {
   try {
@@ -93,6 +95,38 @@ function saveSplitRatioToStorage(ratio: number): void {
   }
 }
 
+function loadInspectorVerticalRatioFromStorage(): number {
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const stored = window.localStorage.getItem(
+        STORAGE_KEY_INSPECTOR_VERTICAL_RATIO,
+      )
+      if (stored) {
+        const val = parseFloat(stored)
+        if (!Number.isNaN(val) && val >= 0.15 && val <= 0.85) {
+          return val
+        }
+      }
+    }
+  } catch {
+    // ignore
+  }
+  return DEFAULT_INSPECTOR_VERTICAL_RATIO
+}
+
+function saveInspectorVerticalRatioToStorage(ratio: number): void {
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      window.localStorage.setItem(
+        STORAGE_KEY_INSPECTOR_VERTICAL_RATIO,
+        String(ratio),
+      )
+    }
+  } catch {
+    // ignore
+  }
+}
+
 export type DialogId = 'preset-settings' | 'formula-testbed' | 'template-selector'
 
 export interface AppState {
@@ -115,7 +149,7 @@ export interface AppState {
   // Studio workspace & mode state (Track 4)
   studioMode: StudioMode
   studioSplitRatio: number
-  isInspectorOpen: boolean
+  inspectorVerticalRatio: number
 
   // Preset-wide performance & DSP settings
   targetFps: number
@@ -159,8 +193,8 @@ export interface AppState {
   toggleStudioMode: () => void
   setStudioSplitRatio: (ratio: number) => void
   resetStudioSplitRatio: () => void
-  setIsInspectorOpen: (open: boolean) => void
-  toggleInspector: () => void
+  setInspectorVerticalRatio: (ratio: number) => void
+  resetInspectorVerticalRatio: () => void
 
   // Dialog Stack Navigation Actions
   openDialog: (id: DialogId) => void
@@ -249,7 +283,7 @@ export const useAppStore = create<AppState>((set) => ({
 
   studioMode: loadStudioModeFromStorage(),
   studioSplitRatio: loadSplitRatioFromStorage(),
-  isInspectorOpen: loadBoolFromStorage(STORAGE_KEY_INSPECTOR_OPEN, true),
+  inspectorVerticalRatio: loadInspectorVerticalRatioFromStorage(),
 
   targetFps: 60,
   resolutionScale: 1.0,
@@ -308,16 +342,14 @@ export const useAppStore = create<AppState>((set) => ({
     saveSplitRatioToStorage(DEFAULT_STUDIO_SPLIT_RATIO)
     set({ studioSplitRatio: DEFAULT_STUDIO_SPLIT_RATIO })
   },
-  setIsInspectorOpen: (isInspectorOpen) => {
-    saveBoolToStorage(STORAGE_KEY_INSPECTOR_OPEN, isInspectorOpen)
-    set({ isInspectorOpen })
+  setInspectorVerticalRatio: (inspectorVerticalRatio) => {
+    saveInspectorVerticalRatioToStorage(inspectorVerticalRatio)
+    set({ inspectorVerticalRatio })
   },
-  toggleInspector: () =>
-    set((state) => {
-      const next = !state.isInspectorOpen
-      saveBoolToStorage(STORAGE_KEY_INSPECTOR_OPEN, next)
-      return { isInspectorOpen: next }
-    }),
+  resetInspectorVerticalRatio: () => {
+    saveInspectorVerticalRatioToStorage(DEFAULT_INSPECTOR_VERTICAL_RATIO)
+    set({ inspectorVerticalRatio: DEFAULT_INSPECTOR_VERTICAL_RATIO })
+  },
   // Dialog Stack Actions
   openDialog: (id: DialogId) =>
     set((state) => {

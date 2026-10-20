@@ -10,16 +10,18 @@ Track 4 unifies the rendering primitives (Two-Plane RenderEngine, ExpressionEngi
 ### FR-1: Split-View Studio Workspace & Mode Switching
 - **Dual Operating Modes:**
   1. **Studio / Editor Mode (Default):**
-     - Left pane: Live visualizer viewport preview canvas with overlay FPS badge, transport bar, and telemetry meters.
-     - Right pane: Interactive visual node graph workspace (`@xyflow/react`) with a collapsible slide-out Parameter Inspector drawer.
-     - Resizable divider with minimum width constraints (preview min 320px, node graph min 400px) and double-click to reset layout to 50% / 50%.
-     - Collapsible slide-out Parameter Inspector drawer (340px width) anchored on the right edge of the Node Graph with an open/close toggle button.
+     - Left pane: Live visualizer viewport preview canvas with overlay FPS badge, transport bar, and telemetry meters (min 320px).
+     - Vertical Divider: Resizable divider between Viewport Preview and Right Column with double-click reset to 50% / 50%.
+     - Right Column:
+       - Top pane: Parameter Inspector (min height 180px, default 45%) displaying selected node settings, tactile controls, and dynamic `f(x)` expression editors with live readouts and sparkline canvas.
+       - Horizontal Divider: Resizable divider between Parameter Inspector and Node Graph with double-click reset to 45% / 55%.
+       - Bottom pane: Interactive visual node graph workspace (`@xyflow/react`) (min height 200px, default 55%).
   2. **Live Performance Mode:**
      - Fullscreen borderless canvas (via `F11` or toolbar maximize button).
      - Auto-hiding HUD controls on 3 seconds of mouse inactivity, reappearing instantly on mouse motion.
-     - Hides node graph and inspector panes to ensure zero GPU/CPU distraction during live performances.
+     - Hides entire right column (both inspector and node graph) to ensure zero GPU/CPU distraction during live performances.
 - **Persistent Preferences:**
-  - Workspace pane split ratio, inspector open state, and active mode persisted in `localStorage`.
+  - Workspace pane split ratios (vertical and horizontal) and active mode persisted in `localStorage`.
 
 ### FR-2: Interactive Visual Node Graph (`@xyflow/react`)
 - **Integration:** Powered by `@xyflow/react` (React Flow) customized with Visualització's dark cyberpunk aesthetic.

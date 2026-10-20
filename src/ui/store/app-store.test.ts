@@ -182,14 +182,14 @@ describe('useAppStore (Zustand State Plane)', () => {
     expect(useAppStore.getState().studioSplitRatio).toBe(0.5)
   })
 
-  it('manages inspector drawer visibility and toggle action', () => {
+  it('manages inspector vertical ratio and reset functionality', () => {
     const store = useAppStore.getState()
-    expect(store.isInspectorOpen).toBe(true)
+    expect(store.inspectorVerticalRatio).toBe(0.45)
 
-    store.toggleInspector()
-    expect(useAppStore.getState().isInspectorOpen).toBe(false)
+    store.setInspectorVerticalRatio(0.55)
+    expect(useAppStore.getState().inspectorVerticalRatio).toBe(0.55)
 
-    store.setIsInspectorOpen(true)
-    expect(useAppStore.getState().isInspectorOpen).toBe(true)
+    store.resetInspectorVerticalRatio()
+    expect(useAppStore.getState().inspectorVerticalRatio).toBe(0.45)
   })
 })
