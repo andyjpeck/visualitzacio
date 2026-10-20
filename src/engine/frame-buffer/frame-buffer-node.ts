@@ -116,7 +116,7 @@ export class FrameBufferNode implements VisualNode {
     }
 
     this.initCompositeQuad()
-    if (this.feedback) {
+    if (this.feedback || this.blendMode !== 'replace') {
       this.initFeedbackQuad()
     }
   }
@@ -170,7 +170,24 @@ export class FrameBufferNode implements VisualNode {
   setFeedback(feedback: boolean): void {
     if (this.feedback === feedback) return
     this.feedback = feedback
-    if (feedback && !this.feedbackQuad) {
+    const needsMultiPass = feedback || this.blendMode !== 'replace'
+    if (needsMultiPass && !this.feedbackQuad) {
+      this.initFeedbackQuad()
+    }
+    const targetW = Math.max(1, Math.floor(this.width * this.pixelRatio * this.resolutionScale))
+    const targetH = Math.max(1, Math.floor(this.height * this.pixelRatio * this.resolutionScale))
+    this.allocateRenderTargets(targetW, targetH)
+  }
+
+  /**
+   * Sets the active compositing blend mode, dynamically allocating dual-FBO targets
+   * if a non-replace blend mode is selected.
+   */
+  setBlendMode(blendMode: string): void {
+    if (this.blendMode === blendMode) return
+    this.blendMode = blendMode
+    const needsMultiPass = this.feedback || this.blendMode !== 'replace'
+    if (needsMultiPass && !this.feedbackQuad) {
       this.initFeedbackQuad()
     }
     const targetW = Math.max(1, Math.floor(this.width * this.pixelRatio * this.resolutionScale))
@@ -243,7 +260,8 @@ export class FrameBufferNode implements VisualNode {
 
     this.fboA = new THREE.WebGLRenderTarget(targetW, targetH, options)
 
-    if (this.feedback) {
+    const needsMultiPass = this.feedback || this.blendMode !== 'replace'
+    if (needsMultiPass) {
       this.fboB = new THREE.WebGLRenderTarget(targetW, targetH, options)
       this.childTarget = new THREE.WebGLRenderTarget(targetW, targetH, options)
     } else {
@@ -258,7 +276,8 @@ export class FrameBufferNode implements VisualNode {
    * Returns current write render target where rendering operations are directed.
    */
   getWriteTarget(): THREE.WebGLRenderTarget | null {
-    if (!this.feedback || !this.fboB) {
+    const needsMultiPass = this.feedback || this.blendMode !== 'replace'
+    if (!needsMultiPass || !this.fboB) {
       return this.fboA
     }
     return this.pingPongIndex === 0 ? this.fboA : this.fboB
@@ -268,7 +287,8 @@ export class FrameBufferNode implements VisualNode {
    * Returns current read render target containing the completed previous frame.
    */
   getReadTarget(): THREE.WebGLRenderTarget | null {
-    if (!this.feedback || !this.fboB) {
+    const needsMultiPass = this.feedback || this.blendMode !== 'replace'
+    if (!needsMultiPass || !this.fboB) {
       return this.fboA
     }
     return this.pingPongIndex === 0 ? this.fboB : this.fboA
@@ -278,7 +298,8 @@ export class FrameBufferNode implements VisualNode {
    * Swaps read and write render targets for ping-pong feedback.
    */
   swap(): void {
-    if (this.feedback && this.fboB) {
+    const needsMultiPass = this.feedback || this.blendMode !== 'replace'
+    if (needsMultiPass && this.fboB) {
       this.pingPongIndex = this.pingPongIndex === 0 ? 1 : 0
     }
   }
@@ -396,8 +417,10 @@ export class FrameBufferNode implements VisualNode {
     const writeTarget = this.getWriteTarget()
     const readTarget = this.getReadTarget()
 
+    const needsMultiPass = this.feedback || this.blendMode !== 'replace'
+
     // 1. Direct render pass into write FBO
-    if (this.feedback && readTarget && this.childTarget && this.feedbackMaterial && this.feedbackScene && this.feedbackCamera) {
+    if (needsMultiPass && readTarget && this.childTarget && this.feedbackMaterial && this.feedbackScene && this.feedbackCamera) {
       // Step A: Render children isolated into childTarget
       if (this.renderer.setRenderTarget) {
         this.renderer.setRenderTarget(this.childTarget)
@@ -465,21 +488,21 @@ export class FrameBufferNode implements VisualNode {
       this.renderer.setRenderTarget(prevTarget)
     }
 
-    // 3. Swap ping-pong buffers if feedback is active
-    if (this.feedback) {
+    // 3. Swap ping-pong buffers if feedback or multi-pass is active
+    if (needsMultiPass) {
       this.swap()
     }
 
     // Register texture in global BufferPool if saveTo is configured
     if (this.saveTo && this.bufferPool) {
-      const outputTarget = this.feedback ? this.getReadTarget() : writeTarget
+      const outputTarget = needsMultiPass ? this.getReadTarget() : writeTarget
       if (outputTarget) {
         this.bufferPool.register(this.saveTo, outputTarget.texture)
       }
     }
 
     // 4. Composite to display if master root, or onto parent target if nested
-    const displayTarget = this.feedback ? this.getReadTarget() : writeTarget
+    const displayTarget = needsMultiPass ? this.getReadTarget() : writeTarget
     if (displayTarget && this.compositeScene && this.compositeCamera && this.compositeMaterial) {
       if (this.isMaster || prevTarget) {
         this.compositeMaterial.map = displayTarget.texture

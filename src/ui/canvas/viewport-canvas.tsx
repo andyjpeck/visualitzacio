@@ -201,7 +201,7 @@ export function ViewportCanvas({
         }
       } else if (vNode instanceof FrameBufferNode) {
         if (gNode.data.blendMode) {
-          vNode.blendMode = String(gNode.data.blendMode)
+          vNode.setBlendMode(String(gNode.data.blendMode))
         }
         if (gNode.data.feedback !== undefined) {
           vNode.setFeedback(Boolean(gNode.data.feedback))

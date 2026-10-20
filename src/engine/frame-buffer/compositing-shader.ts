@@ -6,10 +6,16 @@ import * as THREE from 'three'
 export const BLEND_MODES = {
   replace: 0,
   additive: 1,
+  add: 1,
   maximum: 2,
+  lighten: 2,
   minimum: 3,
+  darken: 3,
   subtractive: 4,
+  subtract: 4,
   multiplicative: 5,
+  multiply: 5,
+  screen: 6,
 } as const
 
 export type BlendModeName = keyof typeof BLEND_MODES
@@ -84,6 +90,29 @@ export function evaluateBlend(
         bg[2] * (1 - o) + bg[2] * fg[2] * o,
         bg[3] * (1 - o) + bg[3] * fg[3] * o,
       ]
+
+    case 'screen':
+      return [
+        1.0 - (1.0 - bg[0]) * (1.0 - fg[0] * o),
+        1.0 - (1.0 - bg[1]) * (1.0 - fg[1] * o),
+        1.0 - (1.0 - bg[2]) * (1.0 - fg[2] * o),
+        Math.max(bg[3], fg[3] * o),
+      ]
+
+    case 'add':
+      return evaluateBlend(bg, fg, 'additive', opacity)
+
+    case 'multiply':
+      return evaluateBlend(bg, fg, 'multiplicative', opacity)
+
+    case 'subtract':
+      return evaluateBlend(bg, fg, 'subtractive', opacity)
+
+    case 'lighten':
+      return evaluateBlend(bg, fg, 'maximum', opacity)
+
+    case 'darken':
+      return evaluateBlend(bg, fg, 'minimum', opacity)
   }
 }
 
@@ -216,6 +245,9 @@ void main() {
     } else {
       result = vec4(bg.rgb * fg.rgb + fg.rgb * 0.15, max(bg.a, fg.a));
     }
+  } else if (uBlendMode == 6) {
+    // screen: 1.0 - (1.0 - bg) * (1.0 - fg)
+    result = vec4(1.0 - (1.0 - bg.rgb) * (1.0 - fg.rgb), max(bg.a, fg.a));
   }
 
   gl_FragColor = result;

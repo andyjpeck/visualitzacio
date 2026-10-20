@@ -76,10 +76,25 @@ export function ParameterInspector({
   const handleUpdate = useCallback(
     (paramKey: string, value: number | string | boolean) => {
       if (selectedNodeId) {
-        updateGraphNodeData(selectedNodeId, { [paramKey]: value })
+        const patch: Record<string, unknown> = { [paramKey]: value }
+        if (paramKey === 'blendMode') {
+          if (value !== 'replace') {
+            patch.feedback = true
+            const currentNode = graphNodes.find((n) => n.id === selectedNodeId)
+            if (
+              currentNode &&
+              (currentNode.data.opacity === undefined || currentNode.data.opacity === 1.0)
+            ) {
+              patch.opacity = 0.92
+            }
+          } else {
+            patch.feedback = false
+          }
+        }
+        updateGraphNodeData(selectedNodeId, patch)
       }
     },
-    [selectedNodeId, updateGraphNodeData],
+    [selectedNodeId, graphNodes, updateGraphNodeData],
   )
 
   const handleApplyTemplate = useCallback(
