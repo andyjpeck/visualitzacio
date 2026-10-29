@@ -231,6 +231,38 @@ export class FrameBufferNode implements VisualNode {
   }
 
   /**
+   * Configures or clears the destination buffer pool tag (@NAME).
+   */
+  setSaveTo(name: string | null): void {
+    const formatted =
+      name && name.trim() !== ''
+        ? name.trim().startsWith('@')
+          ? name.trim()
+          : `@${name.trim()}`
+        : null
+    this.saveTo = formatted
+    if (this.bufferPool && formatted) {
+      this.bufferPool.recordNodeMapping(this.id, formatted)
+    }
+  }
+
+  /**
+   * Configures or clears the source buffer pool tag (@NAME) to sample from.
+   */
+  setLoadFrom(name: string | null): void {
+    const formatted =
+      name && name.trim() !== ''
+        ? name.trim().startsWith('@')
+          ? name.trim()
+          : `@${name.trim()}`
+        : null
+    this.loadFrom = formatted
+    if (this.bufferPool && formatted) {
+      this.bufferPool.recordDependency(this.id, formatted)
+    }
+  }
+
+  /**
    * Resizes render target textures to match canvas dimensions scaled by resolution multiplier.
    */
   resize(width: number, height: number, pixelRatio = 1.0, resolutionScale = 1.0): void {
@@ -456,6 +488,16 @@ export class FrameBufferNode implements VisualNode {
       if (this.renderer.clear) {
         this.renderer.clear()
       }
+
+      if (this.loadFrom && this.bufferPool && this.compositeScene && this.compositeCamera && this.compositeMaterial) {
+        const loadedTex = this.bufferPool.resolve(this.loadFrom, this.id)
+        if (loadedTex) {
+          this.compositeMaterial.map = loadedTex
+          this.compositeMaterial.opacity = 1.0
+          this.renderer.render(this.compositeScene, this.compositeCamera)
+        }
+      }
+
       let isFirstChild = true
       for (const child of this.children) {
         if (!child.bypassed) {

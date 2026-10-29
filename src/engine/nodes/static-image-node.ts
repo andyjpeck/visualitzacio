@@ -28,7 +28,7 @@ export class StaticImageNode implements VisualNode {
   bypassed = false
   private fitMode: ImageFitMode
   private opacityVal = 1.0
-  readonly saveTo: string | null
+  saveTo: string | null
 
   private opacityParam: DynamicParam<number> | null = null
   private renderer?: RendererLike
@@ -189,6 +189,25 @@ export class StaticImageNode implements VisualNode {
       } else {
         // Image is taller than canvas: fit width, expand height
         this.mesh.scale.set(1.0, canvasAspect / imageAspect, 1.0)
+      }
+    }
+  }
+
+  /**
+   * Configures or clears the destination buffer pool tag (@NAME).
+   */
+  setSaveTo(name: string | null): void {
+    const formatted =
+      name && name.trim() !== ''
+        ? name.trim().startsWith('@')
+          ? name.trim()
+          : `@${name.trim()}`
+        : null
+    this.saveTo = formatted
+    if (this.bufferPool && formatted) {
+      this.bufferPool.recordNodeMapping(this.id, formatted)
+      if (this.texture) {
+        this.bufferPool.register(formatted, this.texture)
       }
     }
   }

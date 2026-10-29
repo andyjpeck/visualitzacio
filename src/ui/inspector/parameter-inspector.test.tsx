@@ -136,4 +136,45 @@ describe('ParameterInspector Component', () => {
     expect(updatedNode?.data.feedback).toBe(true)
     expect(updatedNode?.data.blendMode).toBe('additive')
   })
+
+  it('updates saveTo and loadFrom named buffer tags with @ prefix formatting', () => {
+    useAppStore.getState().addGraphNode({
+      id: 'fb-buffer-test',
+      type: 'frameBuffer',
+      position: { x: 0, y: 0 },
+      data: {
+        label: 'Routing Buffer',
+      },
+    })
+    useAppStore.setState({ selectedNodeId: 'fb-buffer-test' })
+
+    render(<ParameterInspector />)
+
+    const saveToInput = screen.getByLabelText('Publish Output (@NAME)')
+    const loadFromInput = screen.getByLabelText('Sample Input (@NAME)')
+
+    expect(saveToInput).toBeInTheDocument()
+    expect(loadFromInput).toBeInTheDocument()
+
+    // Type without @ prefix -> auto-formats to @BUFFER_A
+    fireEvent.change(saveToInput, { target: { value: 'BUFFER_A' } })
+    let updatedNode = useAppStore
+      .getState()
+      .graphNodes.find((n) => n.id === 'fb-buffer-test')
+    expect(updatedNode?.data.saveTo).toBe('@BUFFER_A')
+
+    // Type with @ prefix -> preserves @INPUT_B
+    fireEvent.change(loadFromInput, { target: { value: '@INPUT_B' } })
+    updatedNode = useAppStore
+      .getState()
+      .graphNodes.find((n) => n.id === 'fb-buffer-test')
+    expect(updatedNode?.data.loadFrom).toBe('@INPUT_B')
+
+    // Clear value -> clears to empty string
+    fireEvent.change(saveToInput, { target: { value: '' } })
+    updatedNode = useAppStore
+      .getState()
+      .graphNodes.find((n) => n.id === 'fb-buffer-test')
+    expect(updatedNode?.data.saveTo).toBe('')
+  })
 })

@@ -90,6 +90,10 @@ export function ParameterInspector({
           if (paramKey === 'positionX') patch.offsetX_formula = value
           if (paramKey === 'positionY') patch.offsetY_formula = value
         }
+        if (paramKey === 'saveTo' || paramKey === 'loadFrom') {
+          const str = String(value).trim()
+          patch[paramKey] = str === '' ? '' : str.startsWith('@') ? str : `@${str}`
+        }
         if (paramKey === 'blendMode') {
           if (value !== 'replace') {
             patch.feedback = true
@@ -398,12 +402,50 @@ export function ParameterInspector({
               onChange={(val) => handleUpdate('rotation', val)}
               engine={engine}
             />
+
+            <ParameterRow
+              label="Publish Output (@NAME)"
+              value={String(data.saveTo || '')}
+              type="text"
+              allowExpression={false}
+              isFocused={focusedParamKey === 'saveTo'}
+              onChange={(val) => handleUpdate('saveTo', val)}
+            />
+
+            <ParameterRow
+              label="Sample Input (@NAME)"
+              value={String(data.loadFrom || '')}
+              type="text"
+              allowExpression={false}
+              isFocused={focusedParamKey === 'loadFrom'}
+              onChange={(val) => handleUpdate('loadFrom', val)}
+            />
           </>
+        )}
+
+        {/* Master Output Specific Parameters */}
+        {isMaster && (
+          <ParameterRow
+            label="Sample Input (@NAME)"
+            value={String(data.loadFrom || '')}
+            type="text"
+            allowExpression={false}
+            isFocused={focusedParamKey === 'loadFrom'}
+            onChange={(val) => handleUpdate('loadFrom', val)}
+          />
         )}
 
         {/* Static Image Parameters */}
         {isImage && (
           <>
+            <ParameterRow
+              label="Publish Output (@NAME)"
+              value={String(data.saveTo || '')}
+              type="text"
+              allowExpression={false}
+              isFocused={focusedParamKey === 'saveTo'}
+              onChange={(val) => handleUpdate('saveTo', val)}
+            />
             <ParameterRow
               label="Image URL"
               value={String(data.imageUrl || '')}

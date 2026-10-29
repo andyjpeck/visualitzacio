@@ -233,6 +233,12 @@ export function ViewportCanvas({
         if (posY !== undefined) {
           vNode.bindExpression('positionY', posY as string | number, exprEngine)
         }
+        if (gNode.data.saveTo !== undefined) {
+          vNode.setSaveTo((gNode.data.saveTo as string) || null)
+        }
+        if (gNode.data.loadFrom !== undefined) {
+          vNode.setLoadFrom((gNode.data.loadFrom as string) || null)
+        }
       } else if (vNode instanceof StaticImageNode) {
         if (gNode.data.imageUrl) {
           vNode.setUrl(String(gNode.data.imageUrl))
@@ -242,6 +248,9 @@ export function ViewportCanvas({
         }
         if (gNode.data.opacity !== undefined) {
           vNode.setOpacity(gNode.data.opacity as string | number, exprEngine)
+        }
+        if (gNode.data.saveTo !== undefined) {
+          vNode.setSaveTo((gNode.data.saveTo as string) || null)
         }
       }
     }
