@@ -335,16 +335,23 @@ export class FrameBufferNode implements VisualNode {
   }
 
   /**
-   * Removes a child visual node from this buffer container and triggers its disposal.
+   * Removes a child visual node from this buffer container, optionally triggering its disposal.
    */
-  removeChild(node: VisualNode): void {
+  removeChild(node: VisualNode, autoDispose = true): void {
     const idx = this.children.indexOf(node)
     if (idx !== -1) {
       this.children.splice(idx, 1)
-      if (node.dispose) {
+      if (autoDispose && node.dispose) {
         node.dispose()
       }
     }
+  }
+
+  /**
+   * Detaches a child visual node from this buffer container without disposing it (for reparenting).
+   */
+  detachChild(node: VisualNode): void {
+    this.removeChild(node, false)
   }
 
   /**

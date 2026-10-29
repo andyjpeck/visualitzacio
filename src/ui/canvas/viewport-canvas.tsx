@@ -26,6 +26,7 @@ export function ViewportCanvas({
   const engineRef = useRef<RenderEngine | null>(null)
   const masterBufferRef = useRef<FrameBufferNode | null>(null)
   const nodeMapRef = useRef<Map<string, VisualNode>>(new Map())
+  const parentMapRef = useRef<Map<string, FrameBufferNode>>(new Map())
   const exprEngineRef = useRef<ExpressionEngine>(getDefaultExpressionEngine())
   const resizeTimeoutRef = useRef<number | null>(null)
 
@@ -82,6 +83,7 @@ export function ViewportCanvas({
     masterBufferRef.current = masterBuffer
     nodeMapRef.current.set('master-frame-buffer', masterBuffer)
     nodeMapRef.current.set('test-visual-1', visualNode)
+    parentMapRef.current.set('test-visual-1', masterBuffer)
 
     engineRef.current = engine
     if (onEngineReadyRef.current) {
@@ -106,6 +108,7 @@ export function ViewportCanvas({
     }
 
     const nodeMap = nodeMapRef.current
+    const parentMap = parentMapRef.current
     const observer = new ResizeObserver(handleResize)
     observer.observe(container)
 
@@ -120,6 +123,7 @@ export function ViewportCanvas({
       }
       engineRef.current = null
       nodeMap.clear()
+      parentMap.clear()
     }
   }, [setCurrentFps])
 
@@ -140,6 +144,7 @@ export function ViewportCanvas({
     if (!engine || !masterBuffer) return
 
     const nodeMap = nodeMapRef.current
+    const parentMap = parentMapRef.current
     const exprEngine = exprEngineRef.current
 
     // Synchronize each node in the store
@@ -150,7 +155,6 @@ export function ViewportCanvas({
       if (!vNode) {
         if (gNode.type === 'testVisual') {
           vNode = new TestVisualNode(gNode.id)
-          masterBuffer.addChild(vNode)
           nodeMap.set(gNode.id, vNode)
         } else if (gNode.type === 'frameBuffer') {
           vNode = new FrameBufferNode({
@@ -167,7 +171,6 @@ export function ViewportCanvas({
             loadFrom: (gNode.data.loadFrom as string) || null,
             expressionEngine: exprEngine,
           })
-          masterBuffer.addChild(vNode)
           nodeMap.set(gNode.id, vNode)
         } else if (gNode.type === 'staticImage') {
           vNode = new StaticImageNode({
@@ -178,7 +181,6 @@ export function ViewportCanvas({
             saveTo: (gNode.data.saveTo as string) || null,
             expressionEngine: exprEngine,
           })
-          masterBuffer.addChild(vNode)
           nodeMap.set(gNode.id, vNode)
         }
       }
@@ -244,12 +246,45 @@ export function ViewportCanvas({
       }
     }
 
+    // Pass 3: Reconcile parent-child attachments based on gNode.parentId
+    // Sort so container frame buffers attach to their parents before leaf visual nodes
+    const sortedNodes = [...graphNodes].sort((a, b) => {
+      if (a.type === 'frameBuffer' && b.type !== 'frameBuffer') return -1
+      if (a.type !== 'frameBuffer' && b.type === 'frameBuffer') return 1
+      return 0
+    })
+
+    for (const gNode of sortedNodes) {
+      if (gNode.id === 'master-frame-buffer') continue
+      const vNode = nodeMap.get(gNode.id)
+      if (!vNode) continue
+
+      let targetParent: FrameBufferNode = masterBuffer
+      if (gNode.parentId) {
+        const candidate = nodeMap.get(gNode.parentId)
+        if (candidate instanceof FrameBufferNode) {
+          targetParent = candidate
+        }
+      }
+
+      const currentParent = parentMap.get(gNode.id)
+      if (currentParent !== targetParent) {
+        if (currentParent) {
+          currentParent.detachChild(vNode)
+        }
+        targetParent.addChild(vNode)
+        parentMap.set(gNode.id, targetParent)
+      }
+    }
+
     // Clean up removed nodes (excluding permanent master root)
     const activeIds = new Set(graphNodes.map((n) => n.id))
     for (const [id, node] of nodeMap.entries()) {
       if (id !== 'master-frame-buffer' && !activeIds.has(id)) {
-        masterBuffer.removeChild(node)
+        const parent = parentMap.get(id) || masterBuffer
+        parent.removeChild(node, true)
         nodeMap.delete(id)
+        parentMap.delete(id)
       }
     }
   }, [graphNodes])
