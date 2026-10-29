@@ -102,6 +102,7 @@ This plan implements the complete Studio workspace for Visualització in 5 test-
   - Implement `deserializePreset()` validating schema and reconstructing the node graph and engine pipeline.
   - Implement export via `.json` download and clipboard copy, and import via file input, clipboard paste, and drag-and-drop onto viewport.
   - Trigger automatic DAG layout upon preset load.
+  - **Cleanup:** Remove temporary Phase 2/3 "Copy JSON" graph action bar button and `window.__getGraphLayout` helper once formal preset serializer/importer is active.
   - *Verification:* Write roundtrip tests in `src/engine/presets/preset-roundtrip.test.ts` (serialize $\to$ deserialize $\to$ render).
 
 ---

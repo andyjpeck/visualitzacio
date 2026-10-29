@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import {
   addEdge,
   applyEdgeChanges,
@@ -14,7 +14,7 @@ import {
   ReactFlow,
   ReactFlowProvider,
 } from '@xyflow/react'
-import { LayoutDashboard, Trash2 } from 'lucide-react'
+import { Check, Copy, LayoutDashboard, Trash2 } from 'lucide-react'
 import { nodeTypes } from './nodes/node-types'
 import { validateConnection } from './validation/connection-validator'
 import { autoLayoutGraph } from './layout/auto-layout'
@@ -41,6 +41,37 @@ function InnerVisualNodeGraph({
   const removeGraphNode = useAppStore((state) => state.removeGraphNode)
 
   const [connectionWarning, setConnectionWarning] = useState<string | null>(null)
+  const [copiedJson, setCopiedJson] = useState(false)
+
+  // TEMPORARY(Track 4 Phase 2/3): Fast preset/layout JSON copy for user debugging.
+  // Must be removed when Task 4.3 (Preset Deserializer & Import Handlers) is completed.
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      ;(window as unknown as { __getGraphLayout?: () => unknown }).__getGraphLayout =
+        () => ({
+          timestamp: new Date().toISOString(),
+          nodes: graphNodes,
+          edges: graphEdges,
+        })
+    }
+  }, [graphNodes, graphEdges])
+
+  const handleCopyLayoutJson = useCallback(() => {
+    const layout = {
+      timestamp: new Date().toISOString(),
+      nodes: graphNodes,
+      edges: graphEdges,
+    }
+    const jsonStr = JSON.stringify(layout, null, 2)
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      navigator.clipboard.writeText(jsonStr).catch(() => {
+        // fallback if permissions fail
+      })
+    }
+    console.log('[Visualització] Current Graph Layout JSON:\n', jsonStr)
+    setCopiedJson(true)
+    setTimeout(() => setCopiedJson(false), 2000)
+  }, [graphNodes, graphEdges])
 
   // Sync node changes (drag, selection, dimension changes)
   // Enforces that child nodes inside containers cannot be dragged over the container header
@@ -156,6 +187,28 @@ function InnerVisualNodeGraph({
         >
           <LayoutDashboard className="w-3.5 h-3.5 text-amber-400" />
           <span>Auto-Layout</span>
+        </button>
+
+        {/* TEMPORARY(Track 4 Phase 2/3): Fast Copy Layout JSON Button */}
+        <button
+          type="button"
+          data-testid="graph-copy-json-button"
+          onClick={handleCopyLayoutJson}
+          title="Copy Graph Layout JSON to Clipboard"
+          aria-label="Copy Graph Layout JSON"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyber-dark/90 hover:bg-cyber-dark border border-white/10 hover:border-cyan-400/50 text-slate-200 hover:text-cyan-300 text-xs font-mono font-semibold shadow-lg shadow-black/60 backdrop-blur-md transition-all cursor-pointer"
+        >
+          {copiedJson ? (
+            <>
+              <Check className="w-3.5 h-3.5 text-green-400" />
+              <span className="text-green-300">Copied!</span>
+            </>
+          ) : (
+            <>
+              <Copy className="w-3.5 h-3.5 text-cyan-400" />
+              <span>Copy JSON</span>
+            </>
+          )}
         </button>
 
         {/* Delete Selected Node Button */}
