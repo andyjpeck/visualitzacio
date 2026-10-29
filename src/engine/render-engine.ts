@@ -83,6 +83,8 @@ export class RenderEngine {
       this.renderer = webglRenderer
     }
 
+    this.renderer.autoClear = false
+
     this.setupContextListeners()
   }
 
@@ -302,6 +304,11 @@ export class RenderEngine {
 
     if (this.onBeforeUpdate) {
       this.onBeforeUpdate(this.frameContext, timestamp)
+    }
+
+    // Clear main canvas before root node updates
+    if (this.renderer.clear) {
+      this.renderer.clear()
     }
 
     // Update nodes

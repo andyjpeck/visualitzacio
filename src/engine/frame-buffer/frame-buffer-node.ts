@@ -449,9 +449,14 @@ export class FrameBufferNode implements VisualNode {
       if (this.renderer.clear) {
         this.renderer.clear()
       }
+      let isFirstChild = true
       for (const child of this.children) {
         if (!child.bypassed) {
+          if (!isFirstChild && this.renderer.clearDepth) {
+            this.renderer.clearDepth()
+          }
           child.update(ctx)
+          isFirstChild = false
         }
       }
 
@@ -497,9 +502,14 @@ export class FrameBufferNode implements VisualNode {
         }
       }
 
+      let isFirstChild = true
       for (const child of this.children) {
         if (!child.bypassed) {
+          if (!isFirstChild && this.renderer.clearDepth) {
+            this.renderer.clearDepth()
+          }
           child.update(ctx)
+          isFirstChild = false
         }
       }
     }

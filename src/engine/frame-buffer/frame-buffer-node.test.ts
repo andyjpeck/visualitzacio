@@ -93,6 +93,24 @@ describe('FrameBufferNode', () => {
     expect(childMock.update).toHaveBeenCalledWith(ctx)
   })
 
+  it('clears depth between multiple sibling children during update pass', () => {
+    const node = new FrameBufferNode({ id: 'fb-multi-child' })
+    node.init(mockRenderer)
+    node.resize(800, 600, 1.0, 1.0)
+
+    const child1: VisualNode = { update: vi.fn() }
+    const child2: VisualNode = { update: vi.fn() }
+    node.addChild(child1)
+    node.addChild(child2)
+
+    const ctx = createDefaultFrameContext()
+    node.update(ctx)
+
+    expect(child1.update).toHaveBeenCalledWith(ctx)
+    expect(child2.update).toHaveBeenCalledWith(ctx)
+    expect(mockRenderer.clearDepth).toHaveBeenCalledTimes(1)
+  })
+
   it('supports removing child nodes and disposing them', () => {
     const node = new FrameBufferNode({ id: 'fb-parent' })
     node.init(mockRenderer)
