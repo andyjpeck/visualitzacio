@@ -161,6 +161,8 @@ export function ViewportCanvas({
             id: gNode.id,
             name: String(gNode.data.label || 'Frame Buffer'),
             blendMode: String(gNode.data.blendMode || 'replace'),
+            inputBlendMode: gNode.data.inputBlendMode ? String(gNode.data.inputBlendMode) : undefined,
+            outputBlendMode: gNode.data.outputBlendMode ? String(gNode.data.outputBlendMode) : undefined,
             feedback: Boolean(gNode.data.feedback),
             opacity: gNode.data.opacity as string | number,
             scale: gNode.data.scale as string | number,
@@ -210,7 +212,12 @@ export function ViewportCanvas({
           vNode.setPositionYExpression(posY as string | number, exprEngine)
         }
       } else if (vNode instanceof FrameBufferNode) {
-        if (gNode.data.blendMode) {
+        if (gNode.data.inputBlendMode !== undefined) {
+          vNode.setInputBlendMode(String(gNode.data.inputBlendMode))
+        }
+        if (gNode.data.outputBlendMode !== undefined) {
+          vNode.setOutputBlendMode(String(gNode.data.outputBlendMode))
+        } else if (gNode.data.blendMode !== undefined) {
           vNode.setBlendMode(String(gNode.data.blendMode))
         }
         if (gNode.data.feedback !== undefined) {

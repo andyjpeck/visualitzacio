@@ -23,7 +23,8 @@ describe('ParameterInspector Component', () => {
     expect(screen.getByText('Master Output')).toBeInTheDocument()
     expect(screen.getByText(/masterFrameBuffer/i)).toBeInTheDocument()
 
-    expect(screen.getByText('Blend Mode')).toBeInTheDocument()
+    expect(screen.getByText('Input Blend Mode')).toBeInTheDocument()
+    expect(screen.getByText('Output Blend Mode')).toBeInTheDocument()
     expect(screen.getByText('Opacity')).toBeInTheDocument()
   })
 
@@ -176,5 +177,39 @@ describe('ParameterInspector Component', () => {
       .getState()
       .graphNodes.find((n) => n.id === 'fb-buffer-test')
     expect(updatedNode?.data.saveTo).toBe('')
+  })
+
+  it('updates input and output blend modes including none option', () => {
+    useAppStore.getState().addGraphNode({
+      id: 'fb-blend-test',
+      type: 'frameBuffer',
+      position: { x: 0, y: 0 },
+      data: {
+        label: 'Blend Mode Buffer',
+      },
+    })
+    useAppStore.setState({ selectedNodeId: 'fb-blend-test' })
+
+    render(<ParameterInspector />)
+
+    const inputBlendSelect = screen.getByLabelText('Input Blend Mode')
+    const outputBlendSelect = screen.getByLabelText('Output Blend Mode')
+
+    expect(inputBlendSelect).toBeInTheDocument()
+    expect(outputBlendSelect).toBeInTheDocument()
+
+    // Change output blend mode to 'none' (pure offscreen)
+    fireEvent.change(outputBlendSelect, { target: { value: 'none' } })
+    let updatedNode = useAppStore
+      .getState()
+      .graphNodes.find((n) => n.id === 'fb-blend-test')
+    expect(updatedNode?.data.outputBlendMode).toBe('none')
+
+    // Change input blend mode to 'replace'
+    fireEvent.change(inputBlendSelect, { target: { value: 'replace' } })
+    updatedNode = useAppStore
+      .getState()
+      .graphNodes.find((n) => n.id === 'fb-blend-test')
+    expect(updatedNode?.data.inputBlendMode).toBe('replace')
   })
 })

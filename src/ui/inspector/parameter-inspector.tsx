@@ -19,7 +19,22 @@ export interface ParameterInspectorProps {
   className?: string
 }
 
-const BLEND_MODE_OPTIONS = [
+const INPUT_BLEND_MODE_OPTIONS = [
+  { label: 'None (Blank Canvas)', value: 'none' },
+  { label: 'Replace (Standard)', value: 'replace' },
+  { label: 'Add (Additive Glow)', value: 'add' },
+  { label: 'Screen (Luminance Soft)', value: 'screen' },
+  { label: 'Multiply (Darken)', value: 'multiply' },
+  { label: 'Subtract', value: 'subtract' },
+  { label: 'Lighten', value: 'lighten' },
+  { label: 'Darken', value: 'darken' },
+  { label: 'Difference', value: 'difference' },
+  { label: 'Color Dodge', value: 'color-dodge' },
+  { label: 'Linear Burn', value: 'linear-burn' },
+]
+
+const OUTPUT_BLEND_MODE_OPTIONS = [
+  { label: 'None (Offscreen Only)', value: 'none' },
   { label: 'Replace (Standard)', value: 'replace' },
   { label: 'Add (Additive Glow)', value: 'add' },
   { label: 'Screen (Luminance Soft)', value: 'screen' },
@@ -90,12 +105,26 @@ export function ParameterInspector({
           if (paramKey === 'positionX') patch.offsetX_formula = value
           if (paramKey === 'positionY') patch.offsetY_formula = value
         }
-        if (paramKey === 'saveTo' || paramKey === 'loadFrom') {
+        if (paramKey === 'saveTo') {
           const str = String(value).trim()
           patch[paramKey] = str === '' ? '' : str.startsWith('@') ? str : `@${str}`
         }
-        if (paramKey === 'blendMode') {
-          if (value !== 'replace') {
+        if (paramKey === 'loadFrom') {
+          const str = String(value).trim()
+          const formatted = str === '' ? '' : str.startsWith('@') ? str : `@${str}`
+          patch[paramKey] = formatted
+          const currentNode = graphNodes.find((n) => n.id === selectedNodeId)
+          if (
+            formatted &&
+            (!currentNode?.data.inputBlendMode || currentNode?.data.inputBlendMode === 'none')
+          ) {
+            patch.inputBlendMode = 'replace'
+          }
+        }
+        if (paramKey === 'outputBlendMode') {
+          patch.outputBlendMode = value
+          patch.blendMode = value
+          if (value !== 'replace' && value !== 'none') {
             patch.feedback = true
             const currentNode = graphNodes.find((n) => n.id === selectedNodeId)
             if (
@@ -104,7 +133,22 @@ export function ParameterInspector({
             ) {
               patch.opacity = 0.92
             }
-          } else {
+          } else if (value === 'replace') {
+            patch.feedback = false
+          }
+        }
+        if (paramKey === 'blendMode') {
+          patch.outputBlendMode = value
+          if (value !== 'replace' && value !== 'none') {
+            patch.feedback = true
+            const currentNode = graphNodes.find((n) => n.id === selectedNodeId)
+            if (
+              currentNode &&
+              (currentNode.data.opacity === undefined || currentNode.data.opacity === 1.0)
+            ) {
+              patch.opacity = 0.92
+            }
+          } else if (value === 'replace') {
             patch.feedback = false
           }
         }
@@ -285,13 +329,23 @@ export function ParameterInspector({
         {(isMaster || isFrameBuffer) && (
           <>
             <ParameterRow
-              label="Blend Mode"
-              value={String(data.blendMode || 'replace')}
+              label="Input Blend Mode"
+              value={String(data.inputBlendMode || (data.loadFrom ? 'replace' : 'none'))}
               type="dropdown"
-              options={BLEND_MODE_OPTIONS}
+              options={INPUT_BLEND_MODE_OPTIONS}
               allowExpression={false}
-              isFocused={focusedParamKey === 'blendMode'}
-              onChange={(val) => handleUpdate('blendMode', val)}
+              isFocused={focusedParamKey === 'inputBlendMode'}
+              onChange={(val) => handleUpdate('inputBlendMode', val)}
+            />
+
+            <ParameterRow
+              label="Output Blend Mode"
+              value={String(data.outputBlendMode || data.blendMode || 'replace')}
+              type="dropdown"
+              options={OUTPUT_BLEND_MODE_OPTIONS}
+              allowExpression={false}
+              isFocused={focusedParamKey === 'outputBlendMode' || focusedParamKey === 'blendMode'}
+              onChange={(val) => handleUpdate('outputBlendMode', val)}
             />
 
             <ParameterRow

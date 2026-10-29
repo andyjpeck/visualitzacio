@@ -10,6 +10,8 @@ export interface BaseNodeData {
 
 export interface MasterFrameBufferNodeData extends BaseNodeData {
   blendMode?: string
+  inputBlendMode?: string
+  outputBlendMode?: string
   opacity?: number | string
   resolutionScale?: number
 }
@@ -18,6 +20,8 @@ export interface FrameBufferNodeData extends BaseNodeData {
   saveTo?: string
   loadFrom?: string
   blendMode?: string
+  inputBlendMode?: string
+  outputBlendMode?: string
   feedback?: boolean
   opacity?: number | string
   scale?: number | string

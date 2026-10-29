@@ -16,6 +16,8 @@ export interface FrameBufferNodeOptions {
   name?: string
   isMaster?: boolean
   blendMode?: string
+  inputBlendMode?: string
+  outputBlendMode?: string
   clearColor?: string
   opacity?: number | string
   scale?: number | string
@@ -32,6 +34,25 @@ export interface FrameBufferNodeOptions {
 }
 
 /**
+ * Maps standard blend mode names to Three.js Blending modes for scene composition.
+ */
+function getThreeBlending(mode: string): THREE.Blending {
+  switch (mode) {
+    case 'add':
+    case 'additive':
+      return THREE.AdditiveBlending
+    case 'multiply':
+    case 'multiplicative':
+      return THREE.MultiplyBlending
+    case 'subtract':
+    case 'subtractive':
+      return THREE.SubtractiveBlending
+    default:
+      return THREE.NormalBlending
+  }
+}
+
+/**
  * Modular container, render-to-texture buffer, and compositing layer.
  * Implements the VisualNode contract, managing offscreen THREE.WebGLRenderTarget instances,
  * dual-FBO ping-pong texture swapping, and hierarchical child execution.
@@ -40,12 +61,21 @@ export class FrameBufferNode implements VisualNode {
   readonly id: string
   name: string
   isMaster: boolean
-  blendMode: string
+  inputBlendMode: string
+  outputBlendMode: string
   clearColor: string
   feedback: boolean
   saveTo: string | null
   loadFrom: string | null
   bypassed = false
+
+  get blendMode(): string {
+    return this.outputBlendMode
+  }
+
+  set blendMode(mode: string) {
+    this.setOutputBlendMode(mode)
+  }
 
   private opacityVal = 1.0
   private scaleVal = 1.0
@@ -91,7 +121,8 @@ export class FrameBufferNode implements VisualNode {
     this.id = options.id
     this.name = options.name ?? 'Frame Buffer'
     this.isMaster = options.isMaster ?? false
-    this.blendMode = options.blendMode ?? 'replace'
+    this.outputBlendMode = options.outputBlendMode ?? options.blendMode ?? 'replace'
+    this.inputBlendMode = options.inputBlendMode ?? (options.loadFrom ? 'replace' : 'none')
     this.clearColor = options.clearColor ?? '#000000'
     this.feedback = options.feedback ?? false
     this.saveTo = options.saveTo ?? null
@@ -121,7 +152,8 @@ export class FrameBufferNode implements VisualNode {
     }
 
     this.initCompositeQuad()
-    if (this.feedback || this.blendMode !== 'replace') {
+    const needsMultiPass = this.feedback || (this.outputBlendMode !== 'replace' && this.outputBlendMode !== 'none')
+    if (needsMultiPass) {
       this.initFeedbackQuad()
     }
   }
@@ -183,7 +215,7 @@ export class FrameBufferNode implements VisualNode {
   setFeedback(feedback: boolean): void {
     if (this.feedback === feedback) return
     this.feedback = feedback
-    const needsMultiPass = feedback || this.blendMode !== 'replace'
+    const needsMultiPass = feedback || (this.outputBlendMode !== 'replace' && this.outputBlendMode !== 'none')
     if (needsMultiPass && !this.feedbackQuad) {
       this.initFeedbackQuad()
     }
@@ -193,19 +225,33 @@ export class FrameBufferNode implements VisualNode {
   }
 
   /**
-   * Sets the active compositing blend mode, dynamically allocating dual-FBO targets
+   * Sets the input compositing blend mode for sampled source textures (@NAME).
+   */
+  setInputBlendMode(blendMode: string): void {
+    this.inputBlendMode = blendMode
+  }
+
+  /**
+   * Sets the output compositing blend mode, dynamically allocating dual-FBO targets
    * if a non-replace blend mode is selected.
    */
-  setBlendMode(blendMode: string): void {
-    if (this.blendMode === blendMode) return
-    this.blendMode = blendMode
-    const needsMultiPass = this.feedback || this.blendMode !== 'replace'
+  setOutputBlendMode(blendMode: string): void {
+    if (this.outputBlendMode === blendMode) return
+    this.outputBlendMode = blendMode
+    const needsMultiPass = this.feedback || (this.outputBlendMode !== 'replace' && this.outputBlendMode !== 'none')
     if (needsMultiPass && !this.feedbackQuad) {
       this.initFeedbackQuad()
     }
     const targetW = Math.max(1, Math.floor(this.width * this.pixelRatio * this.resolutionScale))
     const targetH = Math.max(1, Math.floor(this.height * this.pixelRatio * this.resolutionScale))
     this.allocateRenderTargets(targetW, targetH)
+  }
+
+  /**
+   * Sets the active compositing blend mode (alias for output blend mode).
+   */
+  setBlendMode(blendMode: string): void {
+    this.setOutputBlendMode(blendMode)
   }
 
   init(renderer: RendererLike, bufferPool?: BufferPool): void {
@@ -305,7 +351,7 @@ export class FrameBufferNode implements VisualNode {
 
     this.fboA = new THREE.WebGLRenderTarget(targetW, targetH, options)
 
-    const needsMultiPass = this.feedback || this.blendMode !== 'replace'
+    const needsMultiPass = this.feedback || (this.outputBlendMode !== 'replace' && this.outputBlendMode !== 'none')
     if (needsMultiPass) {
       this.fboB = new THREE.WebGLRenderTarget(targetW, targetH, options)
       this.childTarget = new THREE.WebGLRenderTarget(targetW, targetH, options)
@@ -321,7 +367,7 @@ export class FrameBufferNode implements VisualNode {
    * Returns current write render target where rendering operations are directed.
    */
   getWriteTarget(): THREE.WebGLRenderTarget | null {
-    const needsMultiPass = this.feedback || this.blendMode !== 'replace'
+    const needsMultiPass = this.feedback || (this.outputBlendMode !== 'replace' && this.outputBlendMode !== 'none')
     if (!needsMultiPass || !this.fboB) {
       return this.fboA
     }
@@ -332,7 +378,7 @@ export class FrameBufferNode implements VisualNode {
    * Returns current read render target containing the completed previous frame.
    */
   getReadTarget(): THREE.WebGLRenderTarget | null {
-    const needsMultiPass = this.feedback || this.blendMode !== 'replace'
+    const needsMultiPass = this.feedback || (this.outputBlendMode !== 'replace' && this.outputBlendMode !== 'none')
     if (!needsMultiPass || !this.fboB) {
       return this.fboA
     }
@@ -343,7 +389,7 @@ export class FrameBufferNode implements VisualNode {
    * Swaps read and write render targets for ping-pong feedback.
    */
   swap(): void {
-    const needsMultiPass = this.feedback || this.blendMode !== 'replace'
+    const needsMultiPass = this.feedback || (this.outputBlendMode !== 'replace' && this.outputBlendMode !== 'none')
     if (needsMultiPass && this.fboB) {
       this.pingPongIndex = this.pingPongIndex === 0 ? 1 : 0
     }
@@ -477,7 +523,7 @@ export class FrameBufferNode implements VisualNode {
     const writeTarget = this.getWriteTarget()
     const readTarget = this.getReadTarget()
 
-    const needsMultiPass = this.feedback || this.blendMode !== 'replace'
+    const needsMultiPass = this.feedback || (this.outputBlendMode !== 'replace' && this.outputBlendMode !== 'none')
 
     // 1. Direct render pass into write FBO
     if (needsMultiPass && readTarget && this.childTarget && this.feedbackMaterial && this.feedbackScene && this.feedbackCamera) {
@@ -489,11 +535,12 @@ export class FrameBufferNode implements VisualNode {
         this.renderer.clear()
       }
 
-      if (this.loadFrom && this.bufferPool && this.compositeScene && this.compositeCamera && this.compositeMaterial) {
+      if (this.inputBlendMode !== 'none' && this.loadFrom && this.bufferPool && this.compositeScene && this.compositeCamera && this.compositeMaterial) {
         const loadedTex = this.bufferPool.resolve(this.loadFrom, this.id)
         if (loadedTex) {
           this.compositeMaterial.map = loadedTex
           this.compositeMaterial.opacity = 1.0
+          this.compositeMaterial.blending = getThreeBlending(this.inputBlendMode)
           this.renderer.render(this.compositeScene, this.compositeCamera)
         }
       }
@@ -522,7 +569,8 @@ export class FrameBufferNode implements VisualNode {
       this.feedbackMaterial.uniforms.uBlendTexture.value = this.childTarget.texture
       this.feedbackMaterial.uniforms.uHasBase.value = 1
       this.feedbackMaterial.uniforms.uOpacity.value = this.opacityVal
-      this.feedbackMaterial.uniforms.uBlendMode.value = BLEND_MODES[this.blendMode as BlendModeName] ?? 0
+      const blendKey = this.outputBlendMode !== 'none' ? this.outputBlendMode : 'replace'
+      this.feedbackMaterial.uniforms.uBlendMode.value = BLEND_MODES[blendKey as BlendModeName] ?? 0
       this.feedbackMaterial.uniforms.uScale.value.set(this.scaleVal, this.scaleVal)
       this.feedbackMaterial.uniforms.uRotation.value = this.rotationVal
       this.feedbackMaterial.uniforms.uOffset.value.set(this.positionXVal, this.positionYVal)
@@ -538,15 +586,16 @@ export class FrameBufferNode implements VisualNode {
         this.renderer.setClearColor(this.clearColor)
       }
 
-      if (this.blendMode === 'replace' && this.renderer.clear) {
+      if (this.renderer.clear) {
         this.renderer.clear()
       }
 
-      if (this.loadFrom && this.bufferPool && this.compositeScene && this.compositeCamera && this.compositeMaterial) {
+      if (this.inputBlendMode !== 'none' && this.loadFrom && this.bufferPool && this.compositeScene && this.compositeCamera && this.compositeMaterial) {
         const loadedTex = this.bufferPool.resolve(this.loadFrom, this.id)
         if (loadedTex) {
           this.compositeMaterial.map = loadedTex
           this.compositeMaterial.opacity = 1.0
+          this.compositeMaterial.blending = getThreeBlending(this.inputBlendMode)
           this.renderer.render(this.compositeScene, this.compositeCamera)
         }
       }
@@ -582,17 +631,20 @@ export class FrameBufferNode implements VisualNode {
     }
 
     // 4. Composite to display if master root, or onto parent target if nested
-    const displayTarget = needsMultiPass ? this.getReadTarget() : writeTarget
-    if (displayTarget && this.compositeScene && this.compositeCamera && this.compositeMaterial) {
-      if (this.isMaster || prevTarget) {
-        if (this.compositeQuad) {
-          this.compositeQuad.scale.set(this.scaleVal, this.scaleVal, 1)
-          this.compositeQuad.position.set(this.positionXVal, this.positionYVal, 0)
-          this.compositeQuad.rotation.z = (this.rotationVal * Math.PI) / 180
+    if (this.outputBlendMode !== 'none') {
+      const displayTarget = needsMultiPass ? this.getReadTarget() : writeTarget
+      if (displayTarget && this.compositeScene && this.compositeCamera && this.compositeMaterial) {
+        if (this.isMaster || prevTarget) {
+          if (this.compositeQuad) {
+            this.compositeQuad.scale.set(this.scaleVal, this.scaleVal, 1)
+            this.compositeQuad.position.set(this.positionXVal, this.positionYVal, 0)
+            this.compositeQuad.rotation.z = (this.rotationVal * Math.PI) / 180
+          }
+          this.compositeMaterial.map = displayTarget.texture
+          this.compositeMaterial.opacity = this.opacityVal
+          this.compositeMaterial.blending = getThreeBlending(this.outputBlendMode)
+          this.renderer.render(this.compositeScene, this.compositeCamera)
         }
-        this.compositeMaterial.map = displayTarget.texture
-        this.compositeMaterial.opacity = this.opacityVal
-        this.renderer.render(this.compositeScene, this.compositeCamera)
       }
     }
   }
