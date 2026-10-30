@@ -49,3 +49,8 @@ This registry tracks the planned, active, and completed workstreams across Visua
 - [ ] **Track 10: Rust + WASM Engine Architecture & Desktop Portability Evaluation**
   *Goal: Feasibility study, boundary benchmarking, hybrid compute prototype (Audio DSP / Duperscope point loop in WASM), and native desktop Tauri packaging evaluation.*  
   *Link: [./tracks/track_10_rust_wasm_evaluation/index.md](./tracks/track_10_rust_wasm_evaluation/index.md)* (Planned)
+
+
+- [ ] **Track 11: High-Fidelity Verification Overhaul (Playwright, WebGL Smoke Tests, & Agent Quality Gates)**
+  *Goal: Real Chromium E2E Playwright actionability checks for modal/dialog stacking, WebGL pipeline & non-empty pixel smoke tests, Chrome DevTools MCP visual inspection rules, and updated Conductor 3-tier quality gates.*  
+  *Link: [./tracks/track_11_high_fidelity_verification/index.md](./tracks/track_11_high_fidelity_verification/index.md)* (In Progress)

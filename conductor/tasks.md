@@ -16,7 +16,7 @@
   - Pre-compiled, sandboxed `expr-eval` uniform modulation.
 - [x] **Code Style Guides:** [`conductor/code_styleguides/typescript.md`](./code_styleguides/typescript.md)
 - [x] **Workflow Configuration:** [`conductor/workflow.md`](./workflow.md)
-- [x] **Index Handshake:** [`conductor/index.md`](./index.md)
+- [x] **Index Handshake:** [`conductor/index.md`](./index.md)
 - [x] **Live GitHub Pages Deployment:** Built & verified at https://andyjpeck.github.io/visualitzacio/ via GitHub Actions.
 - [x] **Stateless Subagent Architectural Review:** Completed and findings integrated into `tech-stack.md`.
 
@@ -28,6 +28,9 @@
   - [x] Phase 1: Two-Plane Render Loop, Viewport Canvas, and CI/CD.
   - [x] Phase 2: Reactive Web Audio Pipeline (`AudioAnalyzer`, `AudioManager`, `$BASS`/`$MID`/`$TREBLE`/`$RMS`/`$BEAT`/`$BPM`) and 60 FPS telemetry overlay.
   - [x] Phase 3: Live Reactive Visual Scene, Clickable FPS Badge, Preset Settings Modal (`target_fps` & `resolution_scale`), and end-to-end interactive verification.
+
+---
+
 - [x] **Track 2: Dynamic Expression Engine & Parameter Binding**
   - [x] Phase 1: Core Expression Parser, AST Compiler & System Variables.
   - [x] Phase 2: Audio Function Library (`#FFT`, `#WAVEFORM`, `#BEAT`, `#BEAT_FRAMES`, `#TRI`, `#SAW`, `#SQR`, math helpers).
@@ -63,9 +66,17 @@
 
 ---
 
+- [x] **Track 11: High-Fidelity Verification Overhaul (Playwright, WebGL Smoke Tests, & Agent Quality Gates)**
+  - [x] Phase 1: Modal Stacking, Portal Guarantees & Z-Index Guardrails.
+  - [x] Phase 2: WebGL Pipeline & Preset Integration Smoke Tests.
+  - [x] Phase 3: Playwright Real-Browser E2E Suite.
+  - [x] Phase 4: Conductor 3-Tier Verification Gates & Protocol Sync.
+
+---
+
 ## Active Track
 
-*None currently active. Track 5 completed.*
+*None currently active. Track 11 completed.*
 
 ---
 

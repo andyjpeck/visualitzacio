@@ -126,6 +126,34 @@ When an implemented task or phase requires corrections, amendments, or additions
     commits and resets the task state in `plan.md` back to pending `[ ]` to
     allow a clean restart.
 
+### Three-Tier Verification Protocol (Mandatory for All UI & Graphics Tracks)
+
+To eliminate the "Green Test Mirage" (where JSDOM unit tests pass while real WebGL graphics or UI layers are completely broken), every track and phase MUST satisfy the **Three-Tier Verification Gate**:
+
+1. **Tier 1: Unit & Static Gate**
+   - Linter: `npm run lint` (0 errors)
+   - Typechecker & Build: `npm run build` (0 TypeScript / Vite compile errors)
+   - Unit Tests: `npm test` (Unit tests covering AST, expression evaluation, and isolated logic)
+
+2. **Tier 2: WebGL Pipeline & Preset Integration Gate**
+   - Run `npx vitest run src/engine/presets/preset-render-smoke.test.ts`
+   - Every graphical node (`duperscopeNode`, `frameBuffer`, `staticImage`, `testVisual`) MUST:
+     - Successfully deserialize from Preset Schema v2 format.
+     - Wire into the active render engine and scene graph.
+     - Execute `update(context)` without GPU/shader compilation errors.
+     - Populate vertex/instance buffers (`getActiveSegmentCount() > 0` or `getActivePointCount() > 0`).
+     - Disable frustum culling on 2D ribbon/screen-space meshes (`frustumCulled = false`).
+
+3. **Tier 3: Real-Browser Actionability & Visual Gate (Playwright & Chrome DevTools)**
+   - Run `npm run test:e2e` (Playwright in headless Chromium).
+   - Verifies:
+     - Zero unhandled console errors or shader compile warnings.
+     - All dialogs, modals, and popover menus render via `createPortal` into `document.body` with `z-[9999]`.
+     - Actionability checks pass (elements are not occluded by the canvas or background panels).
+   - For visual validation, agents must inspect via Chrome DevTools MCP (`navigate_page`, `take_screenshot`, `get_console_errors`) before declaring completion.
+
+---
+
 ### Phase Completion Verification and Checkpointing Protocol
 
 **Trigger:** This protocol is executed immediately after a task is completed

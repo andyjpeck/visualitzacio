@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import {
   Activity,
   AlertTriangle,
@@ -62,6 +63,7 @@ export function LayerTreeView({
 
   // Add child menu dropdown state: nodeId -> boolean
   const [openAddMenuId, setOpenAddMenuId] = useState<string | null>(null)
+  const [addMenuPos, setAddMenuPos] = useState<{ top: number; right: number } | null>(null)
   const addMenuRef = useRef<HTMLDivElement>(null)
 
   // Confirmation modal state when deleting a container with child layers
@@ -623,7 +625,17 @@ export function LayerTreeView({
                   data-testid={`tree-add-child-btn-${node.id}`}
                   onClick={(e) => {
                     e.stopPropagation()
-                    setOpenAddMenuId(openAddMenuId === node.id ? null : node.id)
+                    if (openAddMenuId === node.id) {
+                      setOpenAddMenuId(null)
+                      setAddMenuPos(null)
+                    } else {
+                      const rect = e.currentTarget.getBoundingClientRect()
+                      setAddMenuPos({
+                        top: rect.bottom + 4,
+                        right: Math.max(8, window.innerWidth - rect.right),
+                      })
+                      setOpenAddMenuId(node.id)
+                    }
                   }}
                   title="Add Child Layer to this Buffer"
                   aria-label="Add Child Layer"
@@ -634,12 +646,19 @@ export function LayerTreeView({
 
                 {/* Add Child Menu Dropdown */}
                 {openAddMenuId === node.id && (
-                  <div
-                    ref={addMenuRef}
-                    data-testid={`tree-add-child-menu-${node.id}`}
-                    role="dialog"
-                    aria-label="Add Child Layer Menu"
-                    className="absolute right-0 top-full mt-1 w-44 rounded-xl bg-[#140e24]/98 border border-purple-500/40 shadow-[0_12px_40px_rgba(0,0,0,0.85)] backdrop-blur-2xl p-1 flex flex-col gap-0.5 text-xs font-mono z-50"
+                  typeof document !== 'undefined' && document.body
+                    ? createPortal(
+                        <div
+                          ref={addMenuRef}
+                          data-testid={`tree-add-child-menu-${node.id}`}
+                          role="dialog"
+                          aria-label="Add Child Layer Menu"
+                          style={{
+                            position: 'fixed',
+                            top: `${addMenuPos?.top ?? 0}px`,
+                            right: `${addMenuPos?.right ?? 8}px`,
+                          }}
+                          className="fixed w-44 rounded-xl bg-[#140e24]/98 border border-purple-500/40 shadow-[0_12px_40px_rgba(0,0,0,0.85)] backdrop-blur-2xl p-1 flex flex-col gap-0.5 text-xs font-mono z-[9999]"
                   >
                     <button
                       type="button"
@@ -678,7 +697,10 @@ export function LayerTreeView({
                       <Layers className="w-3.5 h-3.5 text-purple-400" />
                       <span>Frame Buffer</span>
                     </button>
-                  </div>
+                  </div>,
+                        document.body,
+                      )
+                    : null
                 )}
               </div>
             )}

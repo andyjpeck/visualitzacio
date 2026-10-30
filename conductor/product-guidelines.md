@@ -89,3 +89,19 @@ To prevent architectural drift and maintain a healthy, decoupled codebase as the
 - **Reusable Primitive Extraction:** Reusable UI elements (like sparkline renderers, expression inputs, quick-reference guides, and draggable dialog hooks) must be promoted to shared libraries (`src/ui/expressions/`, `src/ui/hooks/`) so future tracks can compose them cleanly without duplicating code.
 - **Continuous Documentation & Specification Sync:** Root documentation, directory READMEs, Conductor track plans, system variable/function references, and product specifications must be updated concurrently with code changes. Code and documentation are held to the exact same standards.
 
+
+## 7. High-Fidelity Verification & UI Stacking Standards
+
+To eliminate the "Green Test Mirage" (where JSDOM unit tests pass while real WebGL graphics or UI layers are completely broken in production):
+- **Universal Top-Layer Portaling for Dialogs & Popovers:**
+  - All floating UI elements (`BaseModalDialog`, menus, dropdowns, and confirmation modals) **must** mount directly to `document.body` or `#modal-root` via React `createPortal`.
+  - Floating dialogs must have explicit top-tier z-index tokens (`z-[9999]` for dialogs, `z-[9998]` for backdrops) and calculate fixed boundary positions if triggered from nested containers.
+  - Never render inline popover menus inside scrollable or `overflow: hidden` containers without portaling.
+- **WebGL Pipeline & Non-Empty Pixel Verification:**
+  - New visual components (like `DuperscopeNode`, shaders, and buffer passes) must never be considered complete based solely on isolated class unit tests.
+  - Every component must pass preset roundtrip tests (`deserializePreset -> engine.render()`) asserting:
+    1. Zero WebGL/shader compilation warnings or runtime errors.
+    2. Frustum culling is explicitly disabled on 2D screen-space and ribbon geometry (`frustumCulled = false`).
+    3. Vertex and instance buffers are non-empty (`getActiveSegmentCount() > 0` or `getActivePointCount() > 0`).
+- **Real-Browser E2E Actionability (Playwright):**
+  - E2E smoke tests (`npm run test:e2e`) run in real Chromium to verify pointer-event hit-testing, actionability (preventing canvas or sibling panels from intercepting clicks), and zero unhandled browser console errors.

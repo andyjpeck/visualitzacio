@@ -32,7 +32,7 @@ export function FpsBadge(): React.ReactElement | null {
   }
 
   return (
-    <button
+    <button data-testid="fps-badge"
       type="button"
       onClick={() => toggleDialog('preset-settings')}
       title="Click to configure Target FPS & Resolution Scale"
