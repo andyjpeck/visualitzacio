@@ -26,6 +26,15 @@ Visualització adheres to the **Clean Primitive Philosophy**: a tight, orthogona
 
 ---
 
+## 🤖 AI Agent Preset Designer Skill
+
+If you are an AI assistant or agent designing presets for Visualització:
+- Activate the workspace skill at [.agents/skills/preset-designer/SKILL.md](../../.agents/skills/preset-designer/SKILL.md).
+- Follow the guidelines in [AGENTS.md](../../AGENTS.md).
+- Always return complete, validated preset JSON in a single-click copyable code block.
+
+---
+
 ## 📚 Documentation Table of Contents
 
 - [**Preset Schema v2 Reference (`preset-schema.md`)**](./preset-schema.md)  

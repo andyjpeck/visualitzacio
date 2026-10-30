@@ -75,6 +75,17 @@ Visualització is designed for high-performance audio reactivity, combining math
 
 ---
 
+## 🎨 AI Agent Preset Authoring & Skills
+
+Visualització includes a dedicated agent skill for designing, testing, and debugging generative audio-reactive presets:
+- **Workspace Skill:** [.agents/skills/preset-designer/SKILL.md](.agents/skills/preset-designer/SKILL.md)
+- **Agent Guide:** [AGENTS.md](AGENTS.md)
+- **Authoring Documentation:** [docs/preset-authoring/](docs/preset-authoring/)
+
+Any AI agent (Antigravity, Claude Code, Cursor, Copilot, Gemini CLI) tasked with creating or modifying presets will discover and activate the preset-designer skill automatically.
+
+---
+
 ## 📂 Project Directory Structure
 
 ```text

@@ -26,7 +26,8 @@ All visual nodes, engine modules, and UI inspectors must strictly adhere to the 
   - **Pause immediately and ask the user for direction** with concrete pros and cons before writing code or scaffolding tracks.
 
 ### 5. Feedback-Driven Evolution
-- New visual capabilities and engine APIs should be driven backwards from real creative use cases surfaced by the **Preset Designer** feedback loop rather than speculative design in a vacuum.
+- New visual capabilities and engine APIs should be driven backwards from real creative use cases surfaced by the [**Preset Designer**](.agents/skills/preset-designer/SKILL.md) feedback loop rather than speculative design in a vacuum.
+- All AI agents authoring or modifying presets must activate and follow the workspace skill at [`.agents/skills/preset-designer/SKILL.md`](.agents/skills/preset-designer/SKILL.md).
 
 ---
 
