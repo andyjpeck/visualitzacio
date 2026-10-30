@@ -208,4 +208,25 @@ describe('Toolbar Component', () => {
     fireEvent.click(modeBtn)
     expect(useAppStore.getState().studioMode).toBe('live')
   })
+
+  it('scales to fit available horizontal space and shifts row when parent is narrow', () => {
+    const parentDiv = document.createElement('div')
+    Object.defineProperty(parentDiv, 'clientWidth', { value: 400, configurable: true })
+    document.body.appendChild(parentDiv)
+
+    render(<Toolbar audioManager={mockAudioManager} />, { container: parentDiv })
+
+    const toolbarHeader = screen.getByTestId('playback-toolbar')
+    expect(toolbarHeader).toBeInTheDocument()
+
+    // Mock natural layout width
+    Object.defineProperty(toolbarHeader, 'offsetWidth', { value: 600, configurable: true })
+    fireEvent(window, new Event('resize'))
+
+    // When narrow with FPS overlay, shifts to top-14 to avoid overlapping FPS badge and scales
+    expect(toolbarHeader.className).toContain('top-14')
+    expect(toolbarHeader.style.transform).toContain('scale(')
+
+    document.body.removeChild(parentDiv)
+  })
 })

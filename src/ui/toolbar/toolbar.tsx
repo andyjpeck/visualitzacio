@@ -1,4 +1,4 @@
-import React, { useRef } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import {
   Activity,
   Disc,
@@ -29,6 +29,9 @@ export interface ToolbarProps {
  */
 export function Toolbar({ audioManager, className = '' }: ToolbarProps): React.ReactElement {
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const headerRef = useRef<HTMLElement>(null)
+  const [scale, setScale] = useState(1)
+  const [isNarrow, setIsNarrow] = useState(false)
 
   const isPlaying = useAppStore((state) => state.isPlaying)
   const setIsPlaying = useAppStore((state) => state.setIsPlaying)
@@ -54,6 +57,56 @@ export function Toolbar({ audioManager, className = '' }: ToolbarProps): React.R
   )
 
   const isMicActive = sourceType === 'mic'
+
+  // Dynamically scale toolbar to fit available horizontal space in preview window
+  useEffect(() => {
+    const el = headerRef.current
+    if (!el) return
+
+    const updateScale = () => {
+      const parent = el.parentElement
+      const parentWidth = parent ? parent.clientWidth : window.innerWidth
+      if (!parentWidth || parentWidth <= 0) {
+        setScale(1)
+        return
+      }
+
+      // If preview pane is narrow (< 480px) and FPS badge is shown, position toolbar on row 2
+      const isNarrowWithFps = showFpsOverlay && parentWidth < 480
+      setIsNarrow(isNarrowWithFps)
+
+      const leftReserved = isNarrowWithFps ? 16 : showFpsOverlay ? 135 : 16
+      const rightReserved = 16
+      const availableWidth = Math.max(100, parentWidth - leftReserved - rightReserved)
+
+      // Layout width before CSS transforms
+      const naturalWidth = el.offsetWidth || el.scrollWidth || 0
+
+      if (naturalWidth > availableWidth && naturalWidth > 0) {
+        const targetScale = Math.min(1, Math.max(0.35, availableWidth / naturalWidth))
+        setScale(targetScale)
+      } else {
+        setScale(1)
+      }
+    }
+
+    updateScale()
+
+    const resizeObserver = new ResizeObserver(() => {
+      updateScale()
+    })
+
+    if (el.parentElement) {
+      resizeObserver.observe(el.parentElement)
+    }
+    resizeObserver.observe(el)
+
+    window.addEventListener('resize', updateScale)
+    return () => {
+      resizeObserver.disconnect()
+      window.removeEventListener('resize', updateScale)
+    }
+  }, [showFpsOverlay, sourceType, audioFileName, isPlaying])
 
   const handlePlayPause = async () => {
     if (!audioManager || isMicActive) return
@@ -171,8 +224,16 @@ export function Toolbar({ audioManager, className = '' }: ToolbarProps): React.R
         className="hidden"
       />
 
-      {/* Top Floating Glassmorphic Toolbar (floats within playback window) */}
-      <header className={`absolute top-4 right-4 z-40 flex items-center gap-2 p-1.5 rounded-xl backdrop-blur-md bg-cyber-void/85 border border-white/10 shadow-2xl select-none ${className}`}>
+      {/* Top Floating Glassmorphic Toolbar (floats within playback window, scales to fit available horizontal space) */}
+      <header
+        ref={headerRef}
+        data-testid="playback-toolbar"
+        style={{
+          transform: scale < 1 ? `scale(${scale})` : undefined,
+          transformOrigin: 'top right',
+        }}
+        className={`absolute ${isNarrow ? 'top-14' : 'top-4'} right-4 z-40 flex items-center gap-2 p-1.5 rounded-xl backdrop-blur-md bg-cyber-void/85 border border-white/10 shadow-2xl select-none transition-all duration-75 max-w-[calc(100%-2rem)] ${className}`}
+      >
         {/* Play / Pause (Controls Sample/File playback; disabled when Mic is active) */}
         <button
           type="button"
