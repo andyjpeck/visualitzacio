@@ -10,21 +10,29 @@ Track 4 unifies the rendering primitives (Two-Plane RenderEngine, ExpressionEngi
 ### FR-1: Split-View Studio Workspace & Mode Switching
 - **Dual Operating Modes:**
   1. **Studio / Editor Mode (Default):**
-     - Left pane: Live visualizer viewport preview canvas with overlay FPS badge, transport bar, and telemetry meters (min 320px).
+     - Left pane: Live visualizer viewport preview canvas (min 320px) with floating transport bar, overlay FPS badge, and audio telemetry meters. Features responsive auto-scaling via `ResizeObserver` (`transform: scale(...)`) and adaptive row shifting (< 480px) to prevent viewport clipping.
      - Vertical Divider: Resizable divider between Viewport Preview and Right Column with double-click reset to 50% / 50%.
      - Right Column:
-       - Top pane: Parameter Inspector (min height 180px, default 45%) displaying selected node settings, tactile controls, and dynamic `f(x)` expression editors with live readouts and sparkline canvas.
-       - Horizontal Divider: Resizable divider between Parameter Inspector and Node Graph with double-click reset to 45% / 55%.
-       - Bottom pane: Interactive visual node graph workspace (`@xyflow/react`) (min height 200px, default 55%).
+       - Top pane: Parameter Inspector (min height 180px, default 45%) displaying selected node settings, tactile controls, single-column parameter rows with tooltips, and dynamic `f(x)` expression editors with live readouts and sparkline canvas.
+       - Horizontal Divider: Resizable divider between Parameter Inspector and Workspace Pane with double-click reset to 45% / 55%.
+       - Bottom pane: Dedicated Hierarchical Layer Tree View (Outliner) workspace (`WorkspacePane` + `LayerTreeView`) (min height 200px, default 55%) with underlying `@xyflow/react` spatial graph synchronization.
   2. **Live Performance Mode:**
      - Fullscreen borderless canvas (via `F11` or toolbar maximize button).
      - Auto-hiding HUD controls on 3 seconds of mouse inactivity, reappearing instantly on mouse motion.
-     - Hides entire right column (both inspector and node graph) to ensure zero GPU/CPU distraction during live performances.
+     - Hides entire right column (both inspector and workspace pane) to ensure zero GPU/CPU distraction during live performances.
 - **Persistent Preferences:**
   - Workspace pane split ratios (vertical and horizontal) and active mode persisted in `localStorage`.
 
-### FR-2: Interactive Visual Node Graph (`@xyflow/react`)
-- **Integration:** Powered by `@xyflow/react` (React Flow) customized with Visualització's dark cyberpunk aesthetic.
+### FR-2: Hierarchical Layer Tree (Outliner) & Visual Node Graph Pipeline
+- **Dedicated Layer Tree Workspace (`WorkspacePane`):**
+  - Collapsible outliner displaying the complete layer hierarchy and container execution sequence.
+  - Interactive drag-and-drop reordering and reparenting with boundary clamping and descendant cycle prevention.
+  - Inline label double-click renaming with Enter/blur commit and Escape cancel.
+  - Expand / Collapse all toggle preserving permanent Master Output visibility.
+  - Add-child layer dialog menu with outside-click and <kbd>Esc</kbd> dismissal.
+  - Interactive semantic tag highlighting: hovering on any `@NAME` buffer tag illuminates all producers and consumers in matching neon glow.
+  - Diagnostic Fast "Copy JSON" button and `window.__getGraphLayout` console helper.
+- **Underlying Visual Node Graph (`@xyflow/react`):** Powered by `@xyflow/react` customized with dark cyberpunk aesthetic, supporting spatial Dagre auto-layout, container stacking, and connection cycle validation.
 - **Custom Node Types:**
   1. `MasterFrameBufferNode`:
      - Permanent root container anchoring the render pipeline.
@@ -32,7 +40,7 @@ Track 4 unifies the rendering primitives (Two-Plane RenderEngine, ExpressionEngi
   2. `FrameBufferNode`:
      - Offscreen multi-pass buffer with ping-pong feedback indicators, blend mode badge, and feedback transform chips.
   3. `StaticImageNode`:
-     - Image layer node displaying thumbnail preview, aspect fit mode badge (`cover`/`contain`/`stretch`), and `@NAME` publish tag.
+     - Image layer node displaying thumbnail preview, aspect fit mode badge (`cover`/`contain`/`stretch`), `@NAME` publish tag, and direct file upload with Base64 JSON encoding.
   4. `TestVisualNode` (and extensible for future generative synthesis nodes):
      - Procedural audio-reactive wireframe crystal preview node.
 - **Port Wiring & Connection Handles:**
@@ -46,22 +54,27 @@ Track 4 unifies the rendering primitives (Two-Plane RenderEngine, ExpressionEngi
 ### FR-3: Universal `f(x)` Parameter Inspector
 - **Docked Inspector Architecture:**
   - Selecting any node in the graph populates the docked right-hand inspector panel with that component's settings and modulatable parameters.
+  - Comprehensive parameter tooltips and dropdown menu option tooltips.
+  - Direct file upload picker and drag-and-drop dropzone for `StaticImageNode` with live thumbnail preview and Base64 JSON encoding.
 - **Tactile Fixed Mode vs. Dynamic Expression Mode (`f(x)`):**
   - Every modulatable parameter row features an `f(x)` toggle button.
   - **Fixed Mode (`"mode": "fixed"`):** Standard tactile controls (rotary knobs, range sliders, toggles, dropdowns) tailored to the parameter type.
   - **Expression Mode (`"mode": "expression"`):**
-    - Clicking `f(x)` morphs the row into the mathematical formula input.
+    - Clicking `f(x)` morphs the row into the mathematical formula input. Formula strings are preserved across toggles and collapses.
     - Inline autocomplete dropdown triggering automatically on `$` (variables) and `#` (functions) with full keyboard navigation and inline documentation tooltips.
     - Strict syntax validation on every keystroke (`Syntax Valid` check or explicit error diagnostics).
     - **Zero-Allocation 60 FPS Telemetry:** Real-time numerical readout updating directly via DOM element refs.
     - **Sliding-Window Sparkline Canvas:** 180-frame sliding window (~3 seconds of real-time history) rendered on an offscreen/direct canvas with cyan stroke, gradient fill, and dynamic min/max scaling.
 
-### FR-4: Component Preset Selector & Dirty-State Overwrite Guard
+### FR-4: Component Preset Selector & Universal Portal Dialogs
 - **Component Preset Selector:**
-  - Inspector header features a curated dropdown of built-in templates specific to the selected component (e.g. Frame Buffer templates, Duperscope templates).
+  - Inspector header features a curated dropdown of built-in templates specific to the selected component (e.g. Frame Buffer templates).
 - **Dirty-State Confirmation Modal:**
-  - If the component parameters or children have been modified, selecting a template triggers a confirmation dialog (`BaseModalDialog`) warning that current settings will be overwritten.
+  - If the component parameters or children have been modified, selecting a template triggers an amber-bordered confirmation dialog (`BaseModalDialog`) warning that current settings will be overwritten.
   - Confirming pushes the pre-overwrite state to the Undo stack and cleanly applies the template.
+- **Portal Modal Dialog System:**
+  - All modal dialogs mount directly into `document.body` via React Portals (`createPortal`) to escape nested pane stacking contexts (`backdrop-filter`, `overflow: hidden`, `transform`).
+  - Elevated to `z-[9999]` with a full-viewport blurred backdrop overlay at `z-[9998]` and outside-click dismissal.
 
 ### FR-5: 100-Step Undo / Redo Engine with Input Coalescing
 - **Time-Travel History Stack:**

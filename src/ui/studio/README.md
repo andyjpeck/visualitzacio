@@ -7,7 +7,8 @@ The Studio Workspace module powers the visual synthesizer interface of Visualitz
 
 | File | Purpose |
 | :--- | :--- |
-| `studio-split-view.tsx` | Split-view container pairing the Viewport Preview (left) with a vertically stacked right column (Parameter Inspector on top, Node Graph on bottom), featuring both vertical and horizontal 60 FPS pointer dividers, min constraints, double-click reset, and `localStorage` persistence. |
+| `studio-split-view.tsx` | Split-view container pairing the Viewport Preview (left) with a vertically stacked right column (Parameter Inspector on top, Workspace Pane on bottom), featuring both vertical and horizontal 60 FPS pointer dividers, min constraints, double-click reset, and `localStorage` persistence. |
+| `workspace-pane.tsx` | Dedicated bottom workspace pane displaying the Hierarchical Layer Tree with active count badge, Expand / Collapse All toggle (preserving Master Output), and fast "Copy JSON" diagnostic export. |
 | `use-studio-controls.ts` | State machine and event coordinator for Studio vs. Live modes, 3-second mouse inactivity HUD auto-hide, and global `F11` / `Escape` keyboard shortcuts. |
 
 ## Layout Architecture & Constraints
@@ -18,7 +19,7 @@ The Studio Workspace module powers the visual synthesizer interface of Visualitz
 │       (min-width: 320px)        │ E │            (min-height: 180px)            │
 │        Default ratio: 50%       │ R │            Default ratio: 45%             │
 │                                 │ T │─── H O R I Z O N T A L   D I V I D E R ───│
-│                                 │   │             Visual Node Graph             │
+│                                 │   │       Workspace Pane (Layer Tree)         │
 │                                 │ D │            (min-height: 200px)            │
 │                                 │ I │            Default ratio: 55%             │
 │                                 │ V │                                           │
@@ -26,8 +27,8 @@ The Studio Workspace module powers the visual synthesizer interface of Visualitz
 ```
 
 - **Vertical Divider:** Controls boundary between Viewport Preview (left) and Right Column (right). Double-clicking resets to `0.50` (50% / 50%).
-- **Horizontal Divider:** Controls boundary between Parameter Inspector (top) and Node Graph (bottom). Double-clicking resets to `0.45` (45% inspector / 55% graph).
-- **Live Mode:** Collapses the entire Right Column (Inspector and Node Graph); Viewport Preview expands to 100% full screen.
+- **Horizontal Divider:** Controls boundary between Parameter Inspector (top) and Workspace Pane (bottom). Double-clicking resets to `0.45` (45% inspector / 55% workspace pane).
+- **Live Mode:** Collapses the entire Right Column (Inspector and Workspace Pane); Viewport Preview expands to 100% full screen.
 - **Inactivity Auto-Hide:** In Live mode, 3 seconds of mouse inactivity smoothly fades out floating HUD elements; any interaction instantly restores full visibility.
 
 ## Testing

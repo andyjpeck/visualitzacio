@@ -53,29 +53,38 @@ This plan implements the complete Studio workspace for Visualització in 5 test-
 - [x] **Task 2.4: Graph State Synchronization with `RenderEngine`**
   - Synchronize React Flow nodes/edges with the `RenderEngine` node tree and `BufferPool` in real time.
   - *Verification:* Write integration tests in `src/ui/graph/graph-engine-sync.test.tsx` verifying engine node additions and removals.
-- [x] **Task 2.5: Layer Tree View with Interactive Semantic Tag Highlighting**
-  - Implement collapsible Outliner Tree view component as an alternative/companion to the 2D node graph canvas.
+- [x] **Task 2.5: Dedicated Layer Tree View (Outliner) & Fast Diagnostic Export**
+  - Implement collapsible Outliner Tree view component as the dedicated bottom workspace pane (`WorkspacePane` + `LayerTreeView`).
   - Render execution sequence badges, container hierarchies, and layer controls (bypass, re-order, delete).
+  - Support drag-and-drop layer reordering and reparenting with boundary clamping and descendant cycle prevention.
+  - Implement inline label renaming on double-click (commit on Enter/blur, cancel on Escape).
+  - Add quick expand/collapse all toggle that preserves Master Output visibility.
+  - Add add-child layer dialog menu with outside-click and <kbd>Esc</kbd> dismissal.
   - Implement interactive semantic tag highlighting: hovering on any `@NAME` buffer tag illuminates all producers and consumers in matching neon glow.
-  - Provide a toggle in the bottom workspace pane to switch between Layer Tree and 2D Node Graph.
-  - *Verification:* Write unit tests in `src/ui/tree/layer-tree-view.test.tsx`.
+  - Add fast "Copy JSON" diagnostic button to header and expose `window.__getGraphLayout` helper.
+  - *Verification:* Unit tests in `src/ui/tree/layer-tree-view.test.tsx`.
 
 ---
 
-## Phase 3: Universal `f(x)` Parameter Inspector & Autocomplete
+## Phase 3: Universal `f(x)` Parameter Inspector, Modals & Viewport Toolbar Integration
 
 ### Goals
 - Build the docked right-hand Inspector reflecting the selected graph node.
 - Implement tactile fixed controls with seamless morphing to dynamic expression inputs (`f(x)`).
 - Implement inline autocomplete on `$` and `#`, direct DOM 60 FPS readouts, and sparkline canvas.
 - Add component preset selector with dirty-state confirmation guards.
+- Implement portal-based modal dialog system escaping pane stacking contexts.
+- Support static image file uploads with Base64 JSON encoding.
+- Integrate floating playback toolbar within the viewport canvas with responsive auto-scaling.
 
 ### Tasks
 - [x] **Task 3.1: Docked Parameter Inspector Shell**
-  - Create `src/ui/inspector/parameter-inspector.tsx` displaying node header, component preset selector, and parameter rows.
+  - Create `src/ui/inspector/parameter-inspector.tsx` displaying node header, component preset selector, single-column parameter rows, and parameter/option tooltips.
+  - Remove redundant "Frame Buffer & Feedback" section from global preset settings.
   - *Verification:* Write tests in `src/ui/inspector/parameter-inspector.test.tsx` verifying node selection binding.
 - [x] **Task 3.2: Universal Parameter Row (`ParameterRow`) with `f(x)` Mode Toggle**
   - Create `ParameterRow` supporting fixed controls (rotary knobs, range sliders, toggles, dropdowns) and `f(x)` formula toggle.
+  - Preserve formula strings across f(x) window toggles and section collapses.
   - *Verification:* Write tests in `src/ui/inspector/parameter-row.test.tsx` verifying mode toggle and value persistence.
 - [x] **Task 3.3: Inline Autocomplete & 60 FPS Sparkline Integration**
   - Integrate `ExpressionInput` with inline autocomplete dropdown triggering on `$` and `#`.
@@ -83,8 +92,21 @@ This plan implements the complete Studio workspace for Visualització in 5 test-
   - *Verification:* Write tests in `src/ui/inspector/expression-autocomplete.test.tsx` verifying autocomplete keyboard navigation.
 - [x] **Task 3.4: Component Preset Selector & Dirty-State Confirmation Modal**
   - Add component preset dropdown to inspector header with built-in templates.
-  - Integrate dirty-state confirmation modal (`BaseModalDialog`) protecting modified components from accidental overwrite.
+  - Integrate dirty-state confirmation modal protecting modified components from accidental overwrite.
   - *Verification:* Write tests in `src/ui/inspector/component-preset-selector.test.tsx` verifying dirty-state detection and modal confirmation.
+- [x] **Task 3.5: Portal Modal Dialog System (`BaseModalDialog`)**
+  - Render all modal dialogs into `document.body` via React Portals (`createPortal`) to escape nested pane stacking contexts (`backdrop-filter`, `overflow: hidden`).
+  - Elevate dialog window to `z-[9999]` and add full-viewport blurred backdrop overlay at `z-[9998]` with outside-click dismissal.
+  - *Verification:* Write tests in `src/ui/dialogs/base-modal-dialog.test.tsx`.
+- [x] **Task 3.6: Static Image File Upload & Base64 JSON Encoding**
+  - Add file input picker and drag-and-drop image dropzone to `ParameterInspector` for `StaticImageNode`.
+  - Encode uploaded images directly as Base64 data URLs into node data and serialized preset JSON with live thumbnails.
+  - *Verification:* Write tests in `src/ui/inspector/parameter-inspector.test.tsx`.
+- [x] **Task 3.7: Viewport Canvas Toolbar Integration & Responsive Auto-Scaling**
+  - Relocate floating `Toolbar`, `FpsBadge`, and `AudioTelemetryOverlay` into the 3D playback viewport canvas.
+  - Implement `ResizeObserver` responsive scale-to-fit (`transform: scale(...)`) on `Toolbar` to fit available horizontal space.
+  - Add adaptive row shifting (`top-14`) when viewport is narrow (< 480px) and FPS badge is active.
+  - *Verification:* Write tests in `src/ui/toolbar/toolbar.test.tsx`.
 
 ---
 

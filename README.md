@@ -27,6 +27,18 @@ Visualització is designed for high-performance audio reactivity, combining math
   - Global `BufferPool` registry enabling named buffer routing (`@NAME`) between visual passes with circular dependency detection and fallback textures.
   - Built-in Frame Buffer Template Selector with 6 curated presets (Clean Slate, Analog Phosphor Trails, Infinite Feedback Vortex, 4-Corner Multi-Screen Replicator, Picture-in-Picture Echo, Beat-Pulsed Shockwave Feedback) and dirty-state confirmation guards.
   - `StaticImageNode` component for static background and overlay textures supporting aspect-ratio preservation (`cover`, `contain`, `stretch`), dynamic opacity, and BufferPool export.
+- **Studio Workspace & Hierarchical Layer Tree**:
+  - Resizable split-view studio workspace (`StudioSplitView`) pairing the 3D playback viewport (left) with a vertically stacked right column (Parameter Inspector on top, Layer Tree on bottom) with dual dividers, min-width/height clamping, and persistent ratios in `localStorage`.
+  - Dedicated **Hierarchical Layer Tree Outliner** (`WorkspacePane` + `LayerTreeView`): interactive drag-and-drop layer reordering and reparenting, inline label renaming on double-click, container expand/collapse preserving Master Output, execution order badges, and semantic buffer tag highlighting (`@NAME`).
+  - Underlying `@xyflow/react` visual node graph engine (`VisualNodeGraph`) with Dagre hierarchical auto-layout, container bounds enforcement, and connection cycle prevention.
+  - Floating playback toolbar (`Toolbar`), FPS badge, and audio telemetry overlay positioned within the 3D viewport canvas, featuring responsive auto-scaling (`ResizeObserver`) to prevent clipping on narrow viewports.
+  - Universal portal-based modal dialog system (`BaseModalDialog` rendered via `createPortal` at `z-[9999]`) with backdrop blur overlay escaping nested pane stacking contexts.
+  - Fast diagnostic "Copy JSON" export button and `window.__getGraphLayout` console helper.
+- **Universal Parameter Inspector & `f(x)` Expressions**:
+  - Docked inspector panel with single-column layout, parameter and dropdown tooltips, and component preset selector (`ComponentPresetSelector`) with dirty-state confirmation guards.
+  - Seamless toggle between tactile fixed controls and dynamic mathematical expressions (`ParameterRow`) with AST formula preservation.
+  - Inline syntax validation and keyboard-navigable autocomplete (`ExpressionAutocomplete`) on `$` (variables) and `#` (functions).
+  - Direct image file uploads and drag-and-drop dropzone for `StaticImageNode` with live thumbnail preview and Base64 JSON encoding.
 - **Multimodal Audio Engine**:
   - **Sample**: Bundled procedural electronic drum loop with sub-bass kick drops, noise-burst snares, and hi-hats.
   - **File**: Drag-and-drop or select any local audio file (`.mp3`, `.wav`, `.ogg`, `.flac`) with 60 FPS track seeking and duration display.
@@ -65,13 +77,17 @@ visualitzacio/
     │   └── fixtures/      # Reusable mock factories
     └── ui/                # React 19 user interface
         ├── canvas/        # Viewport canvas mount and ResizeObserver
-        ├── dialogs/       # Reusable BaseModalDialog shell and stack history navigation
+        ├── dialogs/       # Reusable portal BaseModalDialog shell and stack history navigation
         ├── expressions/   # Sparkline canvas, formula input, quick-reference, and preset catalog
+        ├── graph/         # Interactive visual node graph, custom node cards, and DAG auto-layout
         ├── hooks/         # Viewport dialog dragging and Escape key listeners
         ├── hud/           # Real-time audio telemetry overlay, FPS badge, and formula testbed
-        ├── settings/      # Preset performance configuration modal, DSP rows, and Template Selector
+        ├── inspector/     # Docked parameter inspector, ParameterRow, and autocomplete
+        ├── settings/      # Preset performance configuration modal and DSP boundary tuning
         ├── store/         # Zustand global state store
-        └── toolbar/       # Top floating glassmorphic transport, seek, volume, f(x), and templates toolbar
+        ├── studio/        # Studio split-view workspace, dividers, and WorkspacePane
+        ├── toolbar/       # Floating transport, seek, volume, and responsive auto-scaling toolbar
+        └── tree/          # Hierarchical Layer Tree outliner with drag-and-drop reordering
 ```
 
 ---
@@ -101,7 +117,7 @@ Visit [http://localhost:5173/visualitzacio/](http://localhost:5173/visualitzacio
 
 ### Test Suite
 
-Runs all 158+ unit and component tests via Vitest:
+Runs all 269+ unit and component tests via Vitest:
 
 ```bash
 npm test
