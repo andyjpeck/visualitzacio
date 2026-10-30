@@ -42,7 +42,7 @@ describe('LayerTreeView Component', () => {
     })
   })
 
-  it('renders all tree nodes with execution order badges', () => {
+  it('renders all tree nodes without redundant number badges', () => {
     render(<LayerTreeView />)
 
     expect(screen.getByTestId('layer-tree-item-master-frame-buffer')).toBeInTheDocument()
@@ -50,11 +50,11 @@ describe('LayerTreeView Component', () => {
     expect(screen.getByTestId('layer-tree-item-synth-child')).toBeInTheDocument()
     expect(screen.getByTestId('layer-tree-item-consumer-buffer')).toBeInTheDocument()
 
-    // Execution badge check
-    expect(screen.getByTestId('tree-exec-badge-synth-child')).toHaveTextContent('#1')
-    expect(screen.getByTestId('tree-exec-badge-source-buffer')).toHaveTextContent('#2')
-    expect(screen.getByTestId('tree-exec-badge-consumer-buffer')).toHaveTextContent('#3')
-    expect(screen.getByTestId('tree-exec-badge-master-frame-buffer')).toHaveTextContent('#4')
+    // Verify execution number badges are removed for clean vertical list styling
+    expect(screen.queryByTestId('tree-exec-badge-synth-child')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('tree-exec-badge-source-buffer')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('tree-exec-badge-consumer-buffer')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('tree-exec-badge-master-frame-buffer')).not.toBeInTheDocument()
   })
 
   it('updates selectedNodeId when clicking an item row', () => {

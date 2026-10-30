@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from 'react'
+import React, { useRef, useState } from 'react'
 import {
   ChevronDown,
   ChevronRight,
@@ -15,7 +15,6 @@ import {
 } from 'lucide-react'
 import type { Node } from '@xyflow/react'
 import { useAppStore } from '../store/app-store'
-import { computeExecutionOrder } from '../graph/execution-order'
 import {
   calculateNodeDimensions,
   CONTAINER_HEADER_HEIGHT,
@@ -66,11 +65,6 @@ export function LayerTreeView({
   // Drag and drop state
   const [draggedNodeId, setDraggedNodeId] = useState<string | null>(null)
   const [dropIndicator, setDropIndicator] = useState<DropIndicator | null>(null)
-
-  // Compute execution pass index for each node in real-time
-  const executionOrderMap = useMemo(() => {
-    return computeExecutionOrder(graphNodes)
-  }, [graphNodes])
 
   // Helper to determine if a target is a descendant of a candidate ancestor
   const isDescendantOf = (
@@ -387,7 +381,6 @@ export function LayerTreeView({
   const renderNodeRow = (node: Node, depth = 0): React.ReactNode => {
     const isSelected = node.id === selectedNodeId
     const isBypassed = Boolean(node.data?.bypassed)
-    const execOrder = executionOrderMap.get(node.id)
 
     const isMaster = node.id === 'master-frame-buffer' || node.type === 'masterFrameBuffer'
     const isFrameBuffer = node.type === 'frameBuffer'
@@ -491,23 +484,6 @@ export function LayerTreeView({
               </button>
             ) : (
               <span className="w-4" />
-            )}
-
-            {/* Execution Order Badge */}
-            {execOrder !== undefined && (
-              <span
-                data-testid={`tree-exec-badge-${node.id}`}
-                className={`text-[9px] font-bold px-1.5 py-0.2 rounded border font-mono ${
-                  isMaster
-                    ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
-                    : isFrameBuffer
-                      ? 'bg-purple-500/20 text-purple-300 border-purple-500/40'
-                      : 'bg-cyan-500/20 text-cyber-cyan border-cyan-500/40'
-                }`}
-                title={`Execution Pass #${execOrder}`}
-              >
-                #{execOrder}
-              </span>
             )}
 
             {/* Node Type Icon */}
