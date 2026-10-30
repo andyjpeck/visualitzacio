@@ -177,6 +177,20 @@ describe('WorkspacePane Component', () => {
     expect(screen.getByTestId('layers-count-badge')).toBeInTheDocument()
     expect(screen.getByTestId('layer-tree-view')).toBeInTheDocument()
 
+    // Test Toggle Collapse All / Expand All button
+    const toggleBtn = screen.getByTestId('toggle-collapse-all-btn')
+    expect(toggleBtn).toHaveTextContent('Collapse All')
+
+    // Click toggle to Collapse All
+    fireEvent.click(toggleBtn)
+    expect(screen.queryByTestId('layer-tree-item-synth-child')).not.toBeInTheDocument()
+    expect(toggleBtn).toHaveTextContent('Expand All')
+
+    // Click toggle again to Expand All
+    fireEvent.click(toggleBtn)
+    expect(screen.getByTestId('layer-tree-item-synth-child')).toBeInTheDocument()
+    expect(toggleBtn).toHaveTextContent('Collapse All')
+
     // Test Collapse All
     const collapseAllBtn = screen.getByTestId('collapse-all-layers-btn')
     fireEvent.click(collapseAllBtn)

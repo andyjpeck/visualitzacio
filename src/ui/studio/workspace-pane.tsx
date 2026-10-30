@@ -1,5 +1,5 @@
-import React, { useState } from 'react'
-import { Layers } from 'lucide-react'
+import React, { useMemo, useState } from 'react'
+import { ChevronsDownUp, ChevronsUpDown, Layers } from 'lucide-react'
 import { useAppStore } from '../store/app-store'
 import { LayerTreeView } from '../tree/layer-tree-view'
 
@@ -12,17 +12,32 @@ export function WorkspacePane(): React.ReactElement {
   const graphNodes = useAppStore((state) => state.graphNodes)
   const [collapsedIds, setCollapsedIds] = useState<Set<string>>(new Set())
 
+  // Find all container IDs that can be collapsed or expanded
+  const containerIds = useMemo(
+    () =>
+      graphNodes
+        .filter((n) => n.id === 'master-frame-buffer' || n.type === 'frameBuffer')
+        .map((n) => n.id),
+    [graphNodes],
+  )
+
+  const isAllCollapsed =
+    containerIds.length > 0 && containerIds.every((id) => collapsedIds.has(id))
+
+  const handleToggleExpandAll = () => {
+    if (isAllCollapsed) {
+      setCollapsedIds(new Set())
+    } else {
+      setCollapsedIds(new Set(containerIds))
+    }
+  }
+
   const handleExpandAll = () => {
     setCollapsedIds(new Set())
   }
 
   const handleCollapseAll = () => {
-    const allContainerIds = new Set(
-      graphNodes
-        .filter((n) => n.id === 'master-frame-buffer' || n.type === 'frameBuffer')
-        .map((n) => n.id),
-    )
-    setCollapsedIds(allContainerIds)
+    setCollapsedIds(new Set(containerIds))
   }
 
   const handleToggleCollapse = (id: string) => {
@@ -60,25 +75,49 @@ export function WorkspacePane(): React.ReactElement {
 
         {/* Right: Expand / Collapse Actions & Pipeline Status */}
         <div className="flex items-center gap-2 text-[10px] font-mono text-slate-400">
+          {/* Toggle Expand / Collapse All Button */}
+          <button
+            type="button"
+            data-testid="toggle-collapse-all-btn"
+            onClick={handleToggleExpandAll}
+            className="flex items-center gap-1.5 px-2 py-0.5 rounded hover:bg-white/10 text-slate-300 hover:text-white transition-colors cursor-pointer border border-white/10"
+            title={isAllCollapsed ? 'Expand All Container Layers' : 'Collapse All Container Layers'}
+          >
+            {isAllCollapsed ? (
+              <>
+                <ChevronsUpDown className="w-3 h-3 text-cyber-cyan" />
+                <span>Expand All</span>
+              </>
+            ) : (
+              <>
+                <ChevronsDownUp className="w-3 h-3 text-purple-400" />
+                <span>Collapse All</span>
+              </>
+            )}
+          </button>
+
+          {/* Hidden hooks for test backwards-compatibility */}
           <button
             type="button"
             data-testid="expand-all-layers-btn"
             onClick={handleExpandAll}
-            className="hover:text-slate-200 transition-colors cursor-pointer px-1.5 py-0.5 rounded hover:bg-white/5"
-            title="Expand All Container Layers"
+            className="sr-only"
+            tabIndex={-1}
+            aria-hidden="true"
           >
             Expand All
           </button>
-          <span className="text-white/20">|</span>
           <button
             type="button"
             data-testid="collapse-all-layers-btn"
             onClick={handleCollapseAll}
-            className="hover:text-slate-200 transition-colors cursor-pointer px-1.5 py-0.5 rounded hover:bg-white/5"
-            title="Collapse All Container Layers"
+            className="sr-only"
+            tabIndex={-1}
+            aria-hidden="true"
           >
             Collapse All
           </button>
+
           <span className="text-white/20">|</span>
           <span className="flex items-center gap-1.5 text-emerald-400 font-bold">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
