@@ -45,3 +45,7 @@ This registry tracks the planned, active, and completed workstreams across Visua
 - [ ] **Track 9: Preset Library, Community Sharing & Detached Display Output**
   *Goal: IndexedDB local preset library, portable preset bundles, and dual-window detached projector output for live stage productions.*  
   *Status: Planned*
+
+- [ ] **Track 10: Rust + WASM Engine Architecture & Desktop Portability Evaluation**
+  *Goal: Feasibility study, boundary benchmarking, hybrid compute prototype (Audio DSP / Duperscope point loop in WASM), and native desktop Tauri packaging evaluation.*  
+  *Link: [./tracks/track_10_rust_wasm_evaluation/index.md](./tracks/track_10_rust_wasm_evaluation/index.md)* (Planned)

@@ -1,0 +1,11 @@
+{
+  "track_id": "track_10_rust_wasm_evaluation",
+  "type": "research",
+  "status": "planned",
+  "created_at": "2026-10-30T01:25:00-07:00",
+  "updated_at": "2026-10-30T01:25:00-07:00",
+  "description": "Rust + WASM Engine Architecture & Desktop Portability Evaluation: Feasibility study, boundary benchmarking, hybrid compute prototype (Audio DSP / Duperscope point loop in WASM), and native desktop Tauri packaging evaluation.",
+  "github_issue": null,
+  "branch": null,
+  "tasks": []
+}

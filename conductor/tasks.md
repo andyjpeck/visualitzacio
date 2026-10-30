@@ -61,3 +61,17 @@
   - [ ] Phase 3: Built-in Templates, Preset Schema v2 & Store Synchronization.
   - [ ] Phase 4: Studio Inspector 4-Phase Code Editor, Autocomplete & Outliner UI.
   - [ ] Phase 5: End-to-End Integration, Documentation Sync & Track Completion Protocol.
+
+---
+
+## Planned Future Tracks (Tracks 6 – 10)
+
+- [ ] **Track 6: Next-Generation Component Suite (Colormap, LightSource, 3dMesh)**
+- [ ] **Track 7: Custom GLSL Shader Passes & Post-Processing Pipeline**
+- [ ] **Track 8: Web MIDI Hardware Integration & Live Performance Mode**
+- [ ] **Track 9: Preset Library, Community Sharing & Detached Display Output**
+- [ ] **Track 10: Rust + WASM Engine Architecture & Desktop Portability Evaluation**
+  - [ ] Feasibility study & boundary benchmarks (TS vs. Rust WASM 4,096-point loop).
+  - [ ] Zero-copy shared memory WebGL attribute buffer prototype.
+  - [ ] Rust AudioWorklet DSP frequency extraction evaluation.
+  - [ ] Standalone desktop performance runtime via Tauri.
