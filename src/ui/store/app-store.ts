@@ -6,6 +6,7 @@ import {
   type ResolutionScale,
 } from '../../contracts/preset-settings'
 import type { Preset } from '../../contracts/preset-schema'
+import type { LayerNodeType } from '../../contracts/node-types'
 import { getTemplateById } from '../../engine/frame-buffer/frame-buffer-templates'
 import {
   DEFAULT_DUPERSCOPE_CONFIG,
@@ -422,7 +423,7 @@ export interface AppState {
   updateGraphNodeData: (nodeId: string, patch: Record<string, unknown>, options?: RecordOptions) => void
   setNodeParent: (nodeId: string, parentId: string) => void
   addLayerNode: (
-    type: 'frameBuffer' | 'staticImage' | 'duperscopeNode' | 'testVisual',
+    type: LayerNodeType,
     parentId?: string,
   ) => string
   applyDuperscopeTemplate: (nodeId: string, templateId: string) => void

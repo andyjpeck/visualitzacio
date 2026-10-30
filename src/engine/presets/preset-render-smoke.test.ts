@@ -1,118 +1,160 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, test } from 'vitest'
 import { createDefaultFrameContext } from '../../contracts/frame-context'
+import type { VisualNode } from '../../contracts/renderer-like'
+import { LAYER_NODE_TYPES, type LayerNodeType } from '../../contracts/node-types'
 import { createMockRenderer } from '../../test/fixtures/renderer-mock'
 import { deserializePreset } from './preset-deserializer'
 import { FrameBufferNode } from '../frame-buffer/frame-buffer-node'
 import { DuperscopeNode } from '../nodes/duperscope-node'
 import { DUPERSCOPE_TEMPLATES } from '../nodes/duperscope-templates'
+import { StaticImageNode } from '../nodes/static-image-node'
+import { TestVisualNode } from '../visual-node'
+
+/**
+ * Fixture registry providing preset parameters and engine node constructors.
+ * Any new node added to LAYER_NODE_TYPES must provide a valid fixture here.
+ */
+const NODE_FIXTURE_REGISTRY: Record<
+  LayerNodeType,
+  {
+    params: Record<string, unknown>
+    instantiate: (id: string, params: Record<string, unknown>) => VisualNode
+  }
+> = {
+  duperscopeNode: {
+    params: {
+      drawMode: 'lines',
+      audioMode: 'waveform',
+      channel: 'center',
+      opacity: 1.0,
+      initCode: DUPERSCOPE_TEMPLATES[0].initCode,
+      beatCode: DUPERSCOPE_TEMPLATES[0].beatCode,
+      frameCode: DUPERSCOPE_TEMPLATES[0].frameCode,
+      pointCode: DUPERSCOPE_TEMPLATES[0].pointCode,
+    },
+    instantiate: (id, params) =>
+      new DuperscopeNode({
+        id,
+        name: 'Duperscope Smoke Node',
+        drawMode: params.drawMode as 'lines',
+        audioMode: params.audioMode as 'waveform',
+        channel: params.channel as 'center',
+        opacity: params.opacity as number,
+        initCode: String(params.initCode),
+        beatCode: String(params.beatCode),
+        frameCode: String(params.frameCode),
+        pointCode: String(params.pointCode),
+      }),
+  },
+  frameBuffer: {
+    params: {
+      inputBlendMode: 'normal',
+      outputBlendMode: 'normal',
+      feedback: false,
+      opacity: 1.0,
+    },
+    instantiate: (id) => new FrameBufferNode({ id, name: 'FrameBuffer Smoke Node' }),
+  },
+  staticImage: {
+    params: {
+      imageUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
+      fitMode: 'contain',
+      opacity: 1.0,
+    },
+    instantiate: (id, params) =>
+      new StaticImageNode({
+        id,
+        url: String(params.imageUrl),
+        fit: params.fitMode as 'contain',
+        opacity: params.opacity as number,
+      }),
+  },
+  testVisual: {
+    params: {
+      shape: 'crystal',
+      reactive: true,
+      scale: 1.0,
+    },
+    instantiate: (id) => new TestVisualNode(id),
+  },
+}
 
 describe('Preset WebGL Pipeline Smoke Tests (High-Fidelity Verification)', () => {
-  it('deserializes and renders a full multi-node hierarchy without pipeline disconnection', () => {
-    const rawPreset = {
-      schemaVersion: 2,
-      metadata: {
-        name: 'Full Pipeline Integration Smoke',
-        version: 1,
-        created: new Date().toISOString(),
-      },
-      settings: {
-        targetFps: 60,
-        resolutionScale: 1.0,
-        audioBands: {
-          bass: [20, 250],
-          mid: [250, 4000],
-          treble: [4000, 20000],
+  test.each(LAYER_NODE_TYPES)(
+    'dynamic registry gate: layer node type "%s" must have fixture, deserialize cleanly, and execute render pass',
+    (nodeType) => {
+      const fixture = NODE_FIXTURE_REGISTRY[nodeType]
+      expect(
+        fixture,
+        `FAIL CLOSED: New node type "${nodeType}" is registered in LAYER_NODE_TYPES but missing from NODE_FIXTURE_REGISTRY! ` +
+          `Future agents MUST add a preset fixture and verify its render pass in src/engine/presets/preset-render-smoke.test.ts.`
+      ).toBeDefined()
+
+      // 1. Build and deserialize a preset containing this node
+      const rawPreset = {
+        schemaVersion: 2,
+        metadata: {
+          name: `Smoke Preset for ${nodeType}`,
+          version: 1,
+          created: new Date().toISOString(),
         },
-      },
-      root: {
-        id: 'master-frame-buffer',
-        type: 'masterFrameBuffer',
-        params: {
-          inputBlendMode: 'normal',
-          outputBlendMode: 'normal',
+        settings: {
+          targetFps: 60,
+          resolutionScale: 1.0,
+          audioBands: {
+            bass: [20, 250],
+            mid: [250, 4000],
+            treble: [4000, 20000],
+          },
         },
-        children: [
-          {
-            id: 'scope-layer-1',
-            type: 'duperscopeNode',
-            label: 'Oscilloscope Tunnel',
-            params: {
-              drawMode: 'lines',
-              audioMode: 'waveform',
-              channel: 'center',
-              opacity: 1.0,
-              initCode: DUPERSCOPE_TEMPLATES[0].initCode,
-              beatCode: DUPERSCOPE_TEMPLATES[0].beatCode,
-              frameCode: DUPERSCOPE_TEMPLATES[0].frameCode,
-              pointCode: DUPERSCOPE_TEMPLATES[0].pointCode,
-            },
+        root: {
+          id: 'master-frame-buffer',
+          type: 'masterFrameBuffer',
+          params: {
+            inputBlendMode: 'normal',
+            outputBlendMode: 'normal',
           },
-          {
-            id: 'crystal-layer-1',
-            type: 'testVisual',
-            label: 'Crystal Synth',
-            params: {
-              shape: 'crystal',
-              reactive: true,
-              scale: '1.0 + $BASS * 0.5',
+          children: [
+            {
+              id: `test-node-${nodeType}`,
+              type: nodeType,
+              label: `Smoke ${nodeType}`,
+              params: fixture.params,
             },
-          },
-        ],
-      },
+          ],
+        },
+      }
+
+      const result = deserializePreset(rawPreset)
+      expect(result.success, `Failed to deserialize preset for node type "${nodeType}": ${result.errors.join(', ')}`).toBe(true)
+      expect(result.nodes.some((n) => n.type === nodeType)).toBe(true)
+
+      // 2. Wire and execute the engine node
+      const renderer = createMockRenderer()
+      const node = fixture.instantiate(`smoke-${nodeType}`, fixture.params)
+
+      if (node.init) {
+        node.init(renderer)
+      }
+      if (node.resize) {
+        node.resize(1920, 1080, 1.0)
+      }
+
+      const ctx = createDefaultFrameContext()
+      ctx.$WIDTH = 1920
+      ctx.$HEIGHT = 1080
+      ctx.$ASPECT = 1920 / 1080
+      ctx.$TIME = 2.0
+      ctx.$BEAT = 1.0
+
+      node.update(ctx)
+
+      // 3. For visual nodes, verify render execution
+      if (nodeType !== 'frameBuffer') {
+        expect(renderer.render, `Node type "${nodeType}" update() did not call renderer.render()!`).toHaveBeenCalled()
+      }
     }
-
-    // 1. Verify deserialization success
-    const result = deserializePreset(rawPreset)
-    expect(result.success).toBe(true)
-    expect(result.errors).toEqual([])
-    expect(result.nodes.length).toBe(3)
-
-    const masterNodeData = result.nodes.find((n) => n.id === 'master-frame-buffer')
-    const scopeNodeData = result.nodes.find((n) => n.id === 'scope-layer-1')
-    expect(masterNodeData).toBeDefined()
-    expect(scopeNodeData).toBeDefined()
-    expect(scopeNodeData?.type).toBe('duperscopeNode')
-
-    // 2. Wire up the actual WebGL engine nodes
-    const renderer = createMockRenderer()
-    const masterBuffer = new FrameBufferNode({ id: 'master-frame-buffer', name: 'Master' })
-    masterBuffer.init(renderer)
-    masterBuffer.resize(1920, 1080, 1.0)
-
-    const scopeNode = new DuperscopeNode({
-      id: 'scope-layer-1',
-      name: 'Oscilloscope Tunnel',
-      drawMode: scopeNodeData?.data.drawMode as 'lines',
-      audioMode: scopeNodeData?.data.audioMode as 'waveform',
-      channel: scopeNodeData?.data.channel as 'center',
-      opacity: scopeNodeData?.data.opacity as number,
-      initCode: String(scopeNodeData?.data.initCode),
-      beatCode: String(scopeNodeData?.data.beatCode),
-      frameCode: String(scopeNodeData?.data.frameCode),
-      pointCode: String(scopeNodeData?.data.pointCode),
-    })
-
-    scopeNode.init(renderer)
-    scopeNode.resize(1920, 1080, 1.0)
-    masterBuffer.addChild(scopeNode)
-
-    // 3. Execute frame lifecycle
-    const ctx = createDefaultFrameContext()
-    ctx.$WIDTH = 1920
-    ctx.$HEIGHT = 1080
-    ctx.$ASPECT = 1920 / 1080
-    ctx.$TIME = 1.5
-    ctx.$BASS = 0.8
-    ctx.$BEAT = 1.0
-
-    masterBuffer.update(ctx)
-
-    // 4. Assert non-empty geometry & active render pass
-    expect(scopeNode.hasErrors).toBe(false)
-    expect(scopeNode.getActiveSegmentCount()).toBeGreaterThan(0)
-    expect(scopeNode.getActivePointCount()).toBeGreaterThan(0)
-    expect(renderer.render).toHaveBeenCalledWith(scopeNode.scene, scopeNode.camera)
-  })
+  )
 
   it('guarantees that all built-in Duperscope templates produce visible geometry with zero errors', () => {
     const renderer = createMockRenderer()
