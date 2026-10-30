@@ -22,6 +22,9 @@ The UI components operate on the **Low-Frequency User Plane** (<10 Hz). They do 
 - [**`graph/`**](file:///C:/Users/andyj/Documents/visualitzacio/src/ui/graph/README.md)
   Graph pipeline contracts, named buffer flow edge synchronization, execution order resolution, and container bounds layout math.
 
+- [**`history/`**](file:///C:/Users/andyj/Documents/visualitzacio/src/ui/history/README.md)
+  100-step immutable JSON history engine (`UndoRedoManager`) with continuous input coalescing and global keyboard shortcut bindings.
+
 - [**`hooks/`**](file:///C:/Users/andyj/Documents/visualitzacio/src/ui/hooks/README.md)
   Reusable UI hooks for pointer-capture viewport dialog dragging (`useDraggableDialog`) and Escape key listeners (`useEscapeKey`).
 

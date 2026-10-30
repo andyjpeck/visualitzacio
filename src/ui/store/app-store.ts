@@ -13,6 +13,14 @@ import {
   reflowGraphStacks,
 } from '../graph/layout/container-bounds'
 import { syncNamedBufferEdges } from '../graph/buffer-edges'
+import {
+  UndoRedoManager,
+  type HistorySnapshot,
+  type RecordOptions,
+  MAX_HISTORY_SNAPSHOTS,
+} from '../history/undo-redo-manager'
+
+export const undoRedoManager = new UndoRedoManager(MAX_HISTORY_SNAPSHOTS)
 
 export type { AudioSourceType }
 
@@ -401,7 +409,7 @@ export interface AppState {
   setGraphEdges: (edges: Edge[] | ((prev: Edge[]) => Edge[])) => void
   addGraphNode: (node: Node) => void
   removeGraphNode: (nodeId: string) => boolean
-  updateGraphNodeData: (nodeId: string, patch: Record<string, unknown>) => void
+  updateGraphNodeData: (nodeId: string, patch: Record<string, unknown>, options?: RecordOptions) => void
   setNodeParent: (nodeId: string, parentId: string) => void
 
   // Dialog Stack Navigation Actions
@@ -439,6 +447,37 @@ export interface AppState {
   setResolutionScale: (scale: ResolutionScale) => void
   setAudioBands: (bands: Partial<AudioBandsSettings>) => void
   resetAudioBands: () => void
+
+  // 100-Step History & Undo/Redo Actions (Track 4 Task 4.1)
+  canUndo: boolean
+  canRedo: boolean
+  undo: () => boolean
+  redo: () => boolean
+  recordHistorySnapshot: (description?: string, options?: RecordOptions) => void
+  commitHistoryCoalescing: () => void
+  clearHistory: () => void
+}
+
+function getHistorySnapshotFromState(state: AppState): HistorySnapshot {
+  return {
+    graphNodes: state.graphNodes,
+    graphEdges: state.graphEdges,
+    targetFps: state.targetFps,
+    resolutionScale: state.resolutionScale,
+    audioBands: state.audioBands,
+    selectedNodeId: state.selectedNodeId,
+    feedbackConfig: {
+      selectedTemplateId: state.selectedTemplateId,
+      feedbackEnabled: state.feedbackEnabled,
+      feedbackBlendMode: state.feedbackBlendMode,
+      feedbackOpacity: state.feedbackOpacity,
+      feedbackScale: state.feedbackScale,
+      feedbackRotation: state.feedbackRotation,
+      feedbackPositionX: state.feedbackPositionX,
+      feedbackPositionY: state.feedbackPositionY,
+      isCustomFeedbackConfig: state.isCustomFeedbackConfig,
+    },
+  }
 }
 
 function computeDialogState(stack: DialogId[]) {
@@ -520,6 +559,9 @@ export const useAppStore = create<AppState>((set) => ({
   feedbackPositionY: 0.0,
   isCustomFeedbackConfig: false,
 
+  canUndo: false,
+  canRedo: false,
+
   setIsPlaying: (isPlaying) => set({ isPlaying }),
   togglePlay: () => set((state) => ({ isPlaying: !state.isPlaying })),
   setSourceType: (sourceType) => set({ sourceType, audioError: null }),
@@ -574,6 +616,7 @@ export const useAppStore = create<AppState>((set) => ({
   setFocusedParamKey: (focusedParamKey) => set({ focusedParamKey }),
   setGraphNodes: (nodesOrUpdater) =>
     set((state) => {
+      undoRedoManager.record(getHistorySnapshotFromState(state), { description: 'Reorder Layers' })
       const updatedNodes =
         typeof nodesOrUpdater === 'function'
           ? nodesOrUpdater(state.graphNodes)
@@ -582,6 +625,8 @@ export const useAppStore = create<AppState>((set) => ({
       return {
         graphNodes: updatedNodes,
         graphEdges: updatedEdges,
+        canUndo: undoRedoManager.canUndo(),
+        canRedo: undoRedoManager.canRedo(),
       }
     }),
   setGraphEdges: (edgesOrUpdater) =>
@@ -593,6 +638,7 @@ export const useAppStore = create<AppState>((set) => ({
     })),
   addGraphNode: (node) =>
     set((state) => {
+      undoRedoManager.record(getHistorySnapshotFromState(state), { description: 'Add Layer' })
       // The ONLY node allowed at top level is master-frame-buffer.
       // Any other node must be a child of a buffer.
       const resolvedParentId =
@@ -616,7 +662,11 @@ export const useAppStore = create<AppState>((set) => ({
         : node
 
       const updatedNodes = [...state.graphNodes, normalizedNode]
-      return { graphNodes: reflowGraphStacks(updatedNodes) }
+      return {
+        graphNodes: reflowGraphStacks(updatedNodes),
+        canUndo: undoRedoManager.canUndo(),
+        canRedo: undoRedoManager.canRedo(),
+      }
     }),
   removeGraphNode: (nodeId) => {
     const state = useAppStore.getState()
@@ -625,6 +675,8 @@ export const useAppStore = create<AppState>((set) => ({
     if (!nodeToRemove || nodeToRemove.type === 'masterFrameBuffer' || nodeId === 'master-frame-buffer') {
       return false
     }
+
+    undoRedoManager.record(getHistorySnapshotFromState(state), { description: 'Delete Layer' })
 
     // Recursively collect all descendant child node IDs
     const idsToRemove = new Set<string>([nodeId])
@@ -652,11 +704,14 @@ export const useAppStore = create<AppState>((set) => ({
       graphNodes: reflowGraphStacks(remainingNodes),
       graphEdges: remainingEdges,
       selectedNodeId: nextSelectedId,
+      canUndo: undoRedoManager.canUndo(),
+      canRedo: undoRedoManager.canRedo(),
     })
     return true
   },
-  updateGraphNodeData: (nodeId, patch) =>
+  updateGraphNodeData: (nodeId, patch, options) =>
     set((state) => {
+      undoRedoManager.record(getHistorySnapshotFromState(state), options)
       const updatedNodes = state.graphNodes.map((node) =>
         node.id === nodeId
           ? { ...node, data: { ...node.data, ...patch } }
@@ -666,12 +721,16 @@ export const useAppStore = create<AppState>((set) => ({
       return {
         graphNodes: updatedNodes,
         graphEdges: updatedEdges,
+        canUndo: undoRedoManager.canUndo(),
+        canRedo: undoRedoManager.canRedo(),
       }
     }),
   setNodeParent: (nodeId, parentId) =>
     set((state) => {
       const targetNode = state.graphNodes.find((n) => n.id === nodeId)
       if (!targetNode || targetNode.id === 'master-frame-buffer') return state
+
+      undoRedoManager.record(getHistorySnapshotFromState(state), { description: 'Reparent Layer' })
 
       // Fallback to master-frame-buffer if parentId is empty or invalid
       const targetParentId = parentId || 'master-frame-buffer'
@@ -695,7 +754,11 @@ export const useAppStore = create<AppState>((set) => ({
         return n
       })
 
-      return { graphNodes: recalculateContainerBounds(updatedNodes) }
+      return {
+        graphNodes: recalculateContainerBounds(updatedNodes),
+        canUndo: undoRedoManager.canUndo(),
+        canRedo: undoRedoManager.canRedo(),
+      }
     }),
   // Dialog Stack Actions
   openDialog: (id: DialogId) =>
@@ -807,6 +870,10 @@ export const useAppStore = create<AppState>((set) => ({
   applyFrameBufferTemplate: (templateId) => {
     const template = getTemplateById(templateId)
     if (!template) return
+    const state = useAppStore.getState()
+    undoRedoManager.record(getHistorySnapshotFromState(state), {
+      description: `Apply Template ${template.name}`,
+    })
     set({
       selectedTemplateId: template.id,
       feedbackEnabled: template.config.feedback,
@@ -817,17 +884,138 @@ export const useAppStore = create<AppState>((set) => ({
       feedbackPositionX: template.config.positionX,
       feedbackPositionY: template.config.positionY,
       isCustomFeedbackConfig: false,
+      canUndo: undoRedoManager.canUndo(),
+      canRedo: undoRedoManager.canRedo(),
     })
   },
 
-  setTargetFps: (targetFps) => set({ targetFps }),
-  setResolutionScale: (resolutionScale) => set({ resolutionScale }),
+  setTargetFps: (targetFps) =>
+    set((state) => {
+      undoRedoManager.record(getHistorySnapshotFromState(state), {
+        description: 'Change Target FPS',
+      })
+      return {
+        targetFps,
+        canUndo: undoRedoManager.canUndo(),
+        canRedo: undoRedoManager.canRedo(),
+      }
+    }),
+  setResolutionScale: (resolutionScale) =>
+    set((state) => {
+      undoRedoManager.record(getHistorySnapshotFromState(state), {
+        description: 'Change Resolution Scale',
+      })
+      return {
+        resolutionScale,
+        canUndo: undoRedoManager.canUndo(),
+        canRedo: undoRedoManager.canRedo(),
+      }
+    }),
   setAudioBands: (bands) =>
-    set((state) => ({
-      audioBands: {
-        ...state.audioBands,
-        ...bands,
-      },
-    })),
-  resetAudioBands: () => set({ audioBands: { ...DEFAULT_AUDIO_BANDS } }),
+    set((state) => {
+      undoRedoManager.record(getHistorySnapshotFromState(state), {
+        description: 'Change Audio Bands',
+      })
+      return {
+        audioBands: {
+          ...state.audioBands,
+          ...bands,
+        },
+        canUndo: undoRedoManager.canUndo(),
+        canRedo: undoRedoManager.canRedo(),
+      }
+    }),
+  resetAudioBands: () =>
+    set((state) => {
+      undoRedoManager.record(getHistorySnapshotFromState(state), {
+        description: 'Reset Audio Bands',
+      })
+      return {
+        audioBands: { ...DEFAULT_AUDIO_BANDS },
+        canUndo: undoRedoManager.canUndo(),
+        canRedo: undoRedoManager.canRedo(),
+      }
+    }),
+
+  // 100-Step History & Undo/Redo Engine Actions (Track 4 Task 4.1)
+  undo: () => {
+    const state = useAppStore.getState()
+    const current = getHistorySnapshotFromState(state)
+    const restored = undoRedoManager.undo(current)
+    if (!restored) return false
+    const feedbackConfig = restored.feedbackConfig
+    set({
+      graphNodes: restored.graphNodes,
+      graphEdges: restored.graphEdges,
+      targetFps: restored.targetFps,
+      resolutionScale: restored.resolutionScale,
+      audioBands: restored.audioBands,
+      selectedNodeId: restored.selectedNodeId,
+      ...(feedbackConfig
+        ? {
+            selectedTemplateId: feedbackConfig.selectedTemplateId,
+            feedbackEnabled: feedbackConfig.feedbackEnabled,
+            feedbackBlendMode: feedbackConfig.feedbackBlendMode,
+            feedbackOpacity: feedbackConfig.feedbackOpacity,
+            feedbackScale: feedbackConfig.feedbackScale,
+            feedbackRotation: feedbackConfig.feedbackRotation,
+            feedbackPositionX: feedbackConfig.feedbackPositionX,
+            feedbackPositionY: feedbackConfig.feedbackPositionY,
+            isCustomFeedbackConfig: feedbackConfig.isCustomFeedbackConfig,
+          }
+        : {}),
+      canUndo: undoRedoManager.canUndo(),
+      canRedo: undoRedoManager.canRedo(),
+    })
+    return true
+  },
+  redo: () => {
+    const state = useAppStore.getState()
+    const current = getHistorySnapshotFromState(state)
+    const restored = undoRedoManager.redo(current)
+    if (!restored) return false
+    const feedbackConfig = restored.feedbackConfig
+    set({
+      graphNodes: restored.graphNodes,
+      graphEdges: restored.graphEdges,
+      targetFps: restored.targetFps,
+      resolutionScale: restored.resolutionScale,
+      audioBands: restored.audioBands,
+      selectedNodeId: restored.selectedNodeId,
+      ...(feedbackConfig
+        ? {
+            selectedTemplateId: feedbackConfig.selectedTemplateId,
+            feedbackEnabled: feedbackConfig.feedbackEnabled,
+            feedbackBlendMode: feedbackConfig.feedbackBlendMode,
+            feedbackOpacity: feedbackConfig.feedbackOpacity,
+            feedbackScale: feedbackConfig.feedbackScale,
+            feedbackRotation: feedbackConfig.feedbackRotation,
+            feedbackPositionX: feedbackConfig.feedbackPositionX,
+            feedbackPositionY: feedbackConfig.feedbackPositionY,
+            isCustomFeedbackConfig: feedbackConfig.isCustomFeedbackConfig,
+          }
+        : {}),
+      canUndo: undoRedoManager.canUndo(),
+      canRedo: undoRedoManager.canRedo(),
+    })
+    return true
+  },
+  recordHistorySnapshot: (description, options) => {
+    const state = useAppStore.getState()
+    undoRedoManager.record(getHistorySnapshotFromState(state), {
+      ...options,
+      description: description ?? options?.description,
+    })
+    set({
+      canUndo: undoRedoManager.canUndo(),
+      canRedo: undoRedoManager.canRedo(),
+    })
+  },
+  commitHistoryCoalescing: () => {
+    undoRedoManager.commitCoalescing()
+  },
+  clearHistory: () => {
+    undoRedoManager.clear()
+    set({ canUndo: false, canRedo: false })
+  },
 }))

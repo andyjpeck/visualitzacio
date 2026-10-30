@@ -229,4 +229,43 @@ describe('Toolbar Component', () => {
 
     document.body.removeChild(parentDiv)
   })
+
+  it('renders tactile Undo and Redo buttons reflecting canUndo and canRedo state', () => {
+    const undoMock = vi.fn()
+    const redoMock = vi.fn()
+    useAppStore.setState({
+      canUndo: false,
+      canRedo: false,
+      undo: undoMock,
+      redo: redoMock,
+    })
+
+    const { rerender } = render(<Toolbar audioManager={mockAudioManager} />)
+
+    const undoBtn = screen.getByTestId('toolbar-undo-btn')
+    const redoBtn = screen.getByTestId('toolbar-redo-btn')
+
+    expect(undoBtn).toBeInTheDocument()
+    expect(redoBtn).toBeInTheDocument()
+    expect(undoBtn).toBeDisabled()
+    expect(redoBtn).toBeDisabled()
+
+    // Enable undo
+    act(() => {
+      useAppStore.setState({ canUndo: true })
+    })
+    rerender(<Toolbar audioManager={mockAudioManager} />)
+    expect(undoBtn).not.toBeDisabled()
+    fireEvent.click(undoBtn)
+    expect(undoMock).toHaveBeenCalledTimes(1)
+
+    // Enable redo
+    act(() => {
+      useAppStore.setState({ canRedo: true })
+    })
+    rerender(<Toolbar audioManager={mockAudioManager} />)
+    expect(redoBtn).not.toBeDisabled()
+    fireEvent.click(redoBtn)
+    expect(redoMock).toHaveBeenCalledTimes(1)
+  })
 })

@@ -12,6 +12,7 @@ import { AudioManager } from './audio/audio-manager'
 import { AudioAnalyzer } from './audio/audio-analyzer'
 import type { RenderEngine } from './engine/render-engine'
 import { useAppStore } from './ui/store/app-store'
+import { useUndoRedoShortcuts } from './ui/history/use-undo-redo-shortcuts'
 
 /**
  * Root Application component integrating the WebGL RenderEngine canvas,
@@ -23,6 +24,9 @@ export function App(): React.ReactElement {
   const [audioAnalyzer] = useState(() => new AudioAnalyzer())
   const audioBands = useAppStore((state) => state.audioBands)
   const { isHudVisible, isLive } = useStudioControls()
+
+  // Bind global Ctrl+Z / Ctrl+Y undo/redo shortcuts
+  useUndoRedoShortcuts()
 
   // Synchronize dynamic frequency band cutoffs to audio analyzer
   useEffect(() => {

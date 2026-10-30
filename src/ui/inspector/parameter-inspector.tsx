@@ -91,7 +91,7 @@ export function ParameterInspector({
   const selectedNode = graphNodes.find((n) => n.id === selectedNodeId)
 
   const handleUpdate = useCallback(
-    (paramKey: string, value: number | string | boolean) => {
+    (paramKey: string, value: number | string | boolean, isContinuous?: boolean) => {
       if (selectedNodeId) {
         const patch: Record<string, unknown> = { [paramKey]: value }
         if (
@@ -134,7 +134,10 @@ export function ParameterInspector({
           patch.offsetY = value
           patch.positionY = value
         }
-        updateGraphNodeData(selectedNodeId, patch)
+        const options = isContinuous
+          ? { coalescingKey: `${selectedNodeId}-${paramKey}`, debounceMs: 500 }
+          : undefined
+        updateGraphNodeData(selectedNodeId, patch, options)
       }
     },
     [selectedNodeId, graphNodes, updateGraphNodeData],
@@ -448,7 +451,7 @@ export function ParameterInspector({
               step={0.01}
               type="slider"
               isFocused={focusedParamKey === 'opacity'}
-              onChange={(val) => handleUpdate('opacity', val)}
+              onChange={(val) => handleUpdate('opacity', val, true)}
               engine={engine}
             />
 
@@ -462,7 +465,7 @@ export function ParameterInspector({
               step={0.01}
               type="slider"
               isFocused={focusedParamKey === 'scale'}
-              onChange={(val) => handleUpdate('scale', val)}
+              onChange={(val) => handleUpdate('scale', val, true)}
               engine={engine}
             />
 
@@ -489,7 +492,7 @@ export function ParameterInspector({
               type="slider"
               isFocused={focusedParamKey === 'offsetX' || focusedParamKey === 'positionX'}
               onChange={(val) => {
-                handleUpdate('offsetX', val)
+                handleUpdate('offsetX', val, true)
               }}
               engine={engine}
             />
@@ -517,7 +520,7 @@ export function ParameterInspector({
               type="slider"
               isFocused={focusedParamKey === 'offsetY' || focusedParamKey === 'positionY'}
               onChange={(val) => {
-                handleUpdate('offsetY', val)
+                handleUpdate('offsetY', val, true)
               }}
               engine={engine}
             />
@@ -547,7 +550,7 @@ export function ParameterInspector({
               step={1}
               type="slider"
               isFocused={focusedParamKey === 'rotation'}
-              onChange={(val) => handleUpdate('rotation', val)}
+              onChange={(val) => handleUpdate('rotation', val, true)}
               engine={engine}
             />
 
@@ -726,7 +729,7 @@ export function ParameterInspector({
               step={0.01}
               type="slider"
               isFocused={focusedParamKey === 'opacity'}
-              onChange={(val) => handleUpdate('opacity', val)}
+              onChange={(val) => handleUpdate('opacity', val, true)}
               engine={engine}
             />
           </>
@@ -756,7 +759,7 @@ export function ParameterInspector({
               step={0.05}
               type="slider"
               isFocused={focusedParamKey === 'scale'}
-              onChange={(val) => handleUpdate('scale', val)}
+              onChange={(val) => handleUpdate('scale', val, true)}
               engine={engine}
             />
 
@@ -783,7 +786,7 @@ export function ParameterInspector({
               type="slider"
               isFocused={focusedParamKey === 'offsetX' || focusedParamKey === 'positionX'}
               onChange={(val) => {
-                handleUpdate('offsetX', val)
+                handleUpdate('offsetX', val, true)
               }}
               engine={engine}
             />
@@ -811,7 +814,7 @@ export function ParameterInspector({
               type="slider"
               isFocused={focusedParamKey === 'offsetY' || focusedParamKey === 'positionY'}
               onChange={(val) => {
-                handleUpdate('offsetY', val)
+                handleUpdate('offsetY', val, true)
               }}
               engine={engine}
             />

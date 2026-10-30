@@ -9,7 +9,9 @@ import {
   Minimize2,
   Pause,
   Play,
+  Redo2,
   Settings,
+  Undo2,
   Volume2,
   VolumeX,
 } from 'lucide-react'
@@ -48,6 +50,10 @@ export function Toolbar({ audioManager, className = '' }: ToolbarProps): React.R
   const toggleDialog = useAppStore((state) => state.toggleDialog)
   const studioMode = useAppStore((state) => state.studioMode)
   const toggleStudioMode = useAppStore((state) => state.toggleStudioMode)
+  const canUndo = useAppStore((state) => state.canUndo)
+  const canRedo = useAppStore((state) => state.canRedo)
+  const undo = useAppStore((state) => state.undo)
+  const redo = useAppStore((state) => state.redo)
   const isAudioLoading = useAppStore((state) => state.isAudioLoading)
   const audioLoadingProgress = useAppStore((state) => state.audioLoadingProgress)
   const audioLoadingStage = useAppStore((state) => state.audioLoadingStage)
@@ -347,6 +353,32 @@ export function Toolbar({ audioManager, className = '' }: ToolbarProps): React.R
             className="w-16 h-1 bg-white/20 rounded-lg appearance-none cursor-pointer accent-cyber-cyan"
           />
         </div>
+
+        {/* Undo Action */}
+        <button
+          type="button"
+          data-testid="toolbar-undo-btn"
+          disabled={!canUndo}
+          onClick={() => undo()}
+          title="Undo (Ctrl+Z)"
+          aria-label="Undo"
+          className="p-2 rounded-lg bg-white/5 transition-colors border border-transparent disabled:opacity-25 disabled:cursor-not-allowed hover:bg-white/10 text-slate-300 hover:text-white hover:border-white/10 cursor-pointer"
+        >
+          <Undo2 className="w-4 h-4" />
+        </button>
+
+        {/* Redo Action */}
+        <button
+          type="button"
+          data-testid="toolbar-redo-btn"
+          disabled={!canRedo}
+          onClick={() => redo()}
+          title="Redo (Ctrl+Y / Ctrl+Shift+Z)"
+          aria-label="Redo"
+          className="p-2 rounded-lg bg-white/5 transition-colors border border-transparent disabled:opacity-25 disabled:cursor-not-allowed hover:bg-white/10 text-slate-300 hover:text-white hover:border-white/10 cursor-pointer"
+        >
+          <Redo2 className="w-4 h-4" />
+        </button>
 
         {/* FPS Badge Toggle */}
         <button

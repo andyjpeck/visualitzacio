@@ -117,7 +117,7 @@ This plan implements the complete Studio workspace for Visualització in 5 test-
 - Implement standard preset JSON schema validation, file import/export, clipboard copy/paste, and drag-and-drop.
 
 ### Tasks
-- [ ] **Task 4.1: 100-Step Undo/Redo Engine with Input Coalescing**
+- [x] **Task 4.1: 100-Step Undo/Redo Engine with Input Coalescing**
   - Create `src/ui/history/undo-redo-manager.ts` maintaining a 100-snapshot history stack.
   - Implement input coalescing on pointer release (`onPointerUp`) and 500ms typing debounces.
   - Bind global keyboard shortcuts (`Ctrl+Z`, `Ctrl+Y` / `Ctrl+Shift+Z`) and toolbar buttons.

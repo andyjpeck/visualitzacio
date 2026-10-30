@@ -4,6 +4,7 @@ import { useAppStore } from './app-store'
 describe('useAppStore (Zustand State Plane)', () => {
   beforeEach(() => {
     // Reset to defaults before each test
+    useAppStore.getState().clearHistory()
     useAppStore.setState({
       isPlaying: false,
       sourceType: 'sample',
@@ -259,5 +260,116 @@ describe('useAppStore (Zustand State Plane)', () => {
 
     // Master Output cannot be removed
     expect(store.removeGraphNode('master-frame-buffer')).toBe(false)
+  })
+
+  it('records undo snapshots on node addition and restoration on undo/redo', () => {
+    const store = useAppStore.getState()
+    expect(store.canUndo).toBe(false)
+    expect(store.canRedo).toBe(false)
+
+    const initialCount = store.graphNodes.length
+
+    // Add node
+    store.addGraphNode({
+      id: 'undoable-synth',
+      type: 'testVisual',
+      parentId: 'master-frame-buffer',
+      position: { x: 20, y: 65 },
+      data: { label: 'Undoable Synth' },
+    })
+
+    expect(useAppStore.getState().graphNodes.length).toBe(initialCount + 1)
+    expect(useAppStore.getState().canUndo).toBe(true)
+    expect(useAppStore.getState().canRedo).toBe(false)
+
+    // Undo addition
+    const undone = store.undo()
+    expect(undone).toBe(true)
+    expect(useAppStore.getState().graphNodes.length).toBe(initialCount)
+    expect(useAppStore.getState().graphNodes.some((n) => n.id === 'undoable-synth')).toBe(false)
+    expect(useAppStore.getState().canUndo).toBe(false)
+    expect(useAppStore.getState().canRedo).toBe(true)
+
+    // Redo addition
+    const redone = store.redo()
+    expect(redone).toBe(true)
+    expect(useAppStore.getState().graphNodes.length).toBe(initialCount + 1)
+    expect(useAppStore.getState().graphNodes.some((n) => n.id === 'undoable-synth')).toBe(true)
+    expect(useAppStore.getState().canUndo).toBe(true)
+    expect(useAppStore.getState().canRedo).toBe(false)
+  })
+
+  it('records undo snapshots on parameter mutation and restores previous values on undo', () => {
+    const store = useAppStore.getState()
+    const targetNode = store.graphNodes[0]
+    const initialOpacity = targetNode.data.opacity ?? 1.0
+
+    // Update parameter
+    store.updateGraphNodeData(targetNode.id, { opacity: 0.33 })
+    expect(
+      useAppStore.getState().graphNodes.find((n) => n.id === targetNode.id)?.data.opacity
+    ).toBe(0.33)
+    expect(useAppStore.getState().canUndo).toBe(true)
+
+    // Undo parameter update
+    store.undo()
+    expect(
+      useAppStore.getState().graphNodes.find((n) => n.id === targetNode.id)?.data.opacity
+    ).toBe(initialOpacity)
+    expect(useAppStore.getState().canRedo).toBe(true)
+
+    // Redo parameter update
+    store.redo()
+    expect(
+      useAppStore.getState().graphNodes.find((n) => n.id === targetNode.id)?.data.opacity
+    ).toBe(0.33)
+  })
+
+  it('records undo snapshots on performance settings and audio band mutations', () => {
+    const store = useAppStore.getState()
+    expect(store.targetFps).toBe(60)
+
+    store.setTargetFps(30)
+    expect(useAppStore.getState().targetFps).toBe(30)
+    expect(useAppStore.getState().canUndo).toBe(true)
+
+    store.undo()
+    expect(useAppStore.getState().targetFps).toBe(60)
+
+    store.redo()
+    expect(useAppStore.getState().targetFps).toBe(30)
+
+    // Audio bands
+    store.setAudioBands({ bassMax: 400 })
+    expect(useAppStore.getState().audioBands.bassMax).toBe(400)
+
+    store.undo()
+    expect(useAppStore.getState().audioBands.bassMax).toBe(250)
+
+    store.redo()
+    expect(useAppStore.getState().audioBands.bassMax).toBe(400)
+  })
+
+  it('records undo snapshots when applying frame buffer templates and restores prior state on undo', () => {
+    const store = useAppStore.getState()
+    const initialTemplateId = store.selectedTemplateId
+    const initialFeedbackOpacity = store.feedbackOpacity
+
+    // Apply template to feedback system
+    store.applyFrameBufferTemplate('feedback-vortex')
+    expect(useAppStore.getState().selectedTemplateId).toBe('feedback-vortex')
+    expect(useAppStore.getState().feedbackOpacity).toBe(0.96)
+    expect(useAppStore.getState().canUndo).toBe(true)
+
+    // Undo template application
+    store.undo()
+    expect(useAppStore.getState().selectedTemplateId).toBe(initialTemplateId)
+    expect(useAppStore.getState().feedbackOpacity).toBe(initialFeedbackOpacity)
+    expect(useAppStore.getState().canRedo).toBe(true)
+
+    // Redo template application
+    store.redo()
+    expect(useAppStore.getState().selectedTemplateId).toBe('feedback-vortex')
+    expect(useAppStore.getState().feedbackOpacity).toBe(0.96)
   })
 })
