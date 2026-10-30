@@ -28,9 +28,9 @@ void main() {
     return;
   }
 
-  // 1:1 Aspect ratio projection: divide x by uAspect
-  vec2 startNDC = vec2(instanceStart.x / uAspect, instanceStart.y);
-  vec2 endNDC = vec2(instanceEnd.x / uAspect, instanceEnd.y);
+  // Canonical NDC coordinates directly without square aspect distortion
+  vec2 startNDC = instanceStart.xy;
+  vec2 endNDC = instanceEnd.xy;
 
   // Convert NDC to pixel coordinates
   vec2 startPix = (startNDC * 0.5 + 0.5) * uResolution;
@@ -87,7 +87,6 @@ varying vec4 vColor;
 
 void main() {
   vec3 pos = position;
-  pos.x = pos.x / uAspect;
   gl_Position = vec4(pos, 1.0);
   gl_PointSize = max(1.0, aSize * uPixelRatio);
   vColor = color;

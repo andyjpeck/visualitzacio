@@ -70,7 +70,7 @@
               "initCode": "n = 256;",
               "beatCode": "linesize = 5.0;",
               "frameCode": "linesize = 3.5; r = 0.1 + $BASS * 0.4; g = 0.75; b = 1.0;",
-              "pointCode": "x = (-1.0 + (i * 2.0)) * $ASPECT; y = -1.0 + (v * 0.45); r = 0.1 + i * 0.5; g = 0.7 + (1.0 - i) * 0.3; b = 1.0;"
+              "pointCode": "x = -1.0 + (i * 2.0); y = -1.0 + (v * 0.45); r = 0.1 + i * 0.5; g = 0.7 + (1.0 - i) * 0.3; b = 1.0;"
             }
           },
           {
@@ -85,7 +85,7 @@
               "initCode": "n = 256;",
               "beatCode": "linesize = 5.0;",
               "frameCode": "linesize = 3.5; r = 0.2 + $BASS * 0.4; g = 0.70; b = 1.0;",
-              "pointCode": "y = 1.0 - (i * 2.0); x = (1.0 - (v * 0.45)) * $ASPECT; r = 0.2 + (1.0 - i) * 0.4; g = 0.6 + i * 0.4; b = 1.0;"
+              "pointCode": "y = 1.0 - (i * 2.0); x = 1.0 - (v * 0.45); r = 0.2 + (1.0 - i) * 0.4; g = 0.6 + i * 0.4; b = 1.0;"
             }
           }
         ]

@@ -69,7 +69,7 @@ export const DUPERSCOPE_TEMPLATES: DuperscopeTemplate[] = [
     frameCode:
       'linesize = linesize + (3.0 - linesize) * 0.15;\nr = 1.0;\ng = 0.2 + $MID * 0.8;\nb = 0.1;',
     pointCode:
-      'x = ((i * 2.0) - 1.0) * $ASPECT;\ny = -0.5 + (v * 1.2);',
+      'x = (i * 2.0) - 1.0;\ny = -0.5 + (v * 1.2);',
     instantiate(id: string, name?: string) {
       return new DuperscopeNode({
         id,
