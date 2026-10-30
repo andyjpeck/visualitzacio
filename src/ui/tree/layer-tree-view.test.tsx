@@ -1,5 +1,5 @@
-import { fireEvent, render, screen } from '@testing-library/react'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { createEvent, fireEvent, render, screen } from '@testing-library/react'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { LayerTreeView } from './layer-tree-view'
 import { WorkspacePane } from '../studio/workspace-pane'
 import { useAppStore } from '../store/app-store'
@@ -140,6 +140,183 @@ describe('LayerTreeView Component', () => {
 
     // Layer 1 Y position should now be greater than layer 2 position
     expect(layer1.position.y).toBeGreaterThan(layer2.position.y)
+  })
+
+  it('renders drag handles for non-master nodes but not for master', () => {
+    render(<LayerTreeView />)
+    expect(screen.queryByTestId('tree-drag-handle-master-frame-buffer')).not.toBeInTheDocument()
+    expect(screen.getByTestId('tree-drag-handle-source-buffer')).toBeInTheDocument()
+    expect(screen.getByTestId('tree-drag-handle-synth-child')).toBeInTheDocument()
+  })
+
+  it('reorders siblings when dragging and dropping below another node', () => {
+    useAppStore.setState({
+      graphNodes: [
+        {
+          id: 'master-frame-buffer',
+          type: 'masterFrameBuffer',
+          position: { x: 0, y: 0 },
+          data: { label: 'Master Output' },
+        },
+        {
+          id: 'layer-1',
+          type: 'frameBuffer',
+          parentId: 'master-frame-buffer',
+          position: { x: 20, y: 65 },
+          data: { label: 'Layer 1' },
+        },
+        {
+          id: 'layer-2',
+          type: 'frameBuffer',
+          parentId: 'master-frame-buffer',
+          position: { x: 20, y: 180 },
+          data: { label: 'Layer 2' },
+        },
+      ],
+    })
+
+    render(<LayerTreeView />)
+
+    const layer1Row = screen.getByTestId('layer-tree-item-layer-1')
+    const layer2Row = screen.getByTestId('layer-tree-item-layer-2')
+
+    const dataTransfer = {
+      setData: vi.fn(),
+      getData: () => 'layer-1',
+      dropEffect: 'none',
+      effectAllowed: 'all',
+    }
+
+    fireEvent.dragStart(layer1Row, { dataTransfer })
+
+    vi.spyOn(layer2Row, 'getBoundingClientRect').mockReturnValue({
+      top: 100,
+      bottom: 140,
+      height: 40,
+      left: 0,
+      right: 200,
+      width: 200,
+      x: 0,
+      y: 100,
+      toJSON: () => {},
+    })
+
+    // Drag over bottom 25% (clientY = 135 -> offsetY = 35 > 40 * 0.75) -> 'after'
+    const dragOverEv = createEvent.dragOver(layer2Row)
+    Object.defineProperty(dragOverEv, 'clientY', { value: 135 })
+    Object.defineProperty(dragOverEv, 'dataTransfer', { value: dataTransfer })
+    fireEvent(layer2Row, dragOverEv)
+    expect(layer2Row).toHaveAttribute('data-drop-position', 'after')
+
+    // Drop
+    fireEvent.drop(layer2Row, { dataTransfer })
+
+    const nodes = useAppStore.getState().graphNodes
+    const updatedLayer1 = nodes.find((n) => n.id === 'layer-1')!
+    const updatedLayer2 = nodes.find((n) => n.id === 'layer-2')!
+
+    // layer-1 should now be below layer-2 in Y position
+    expect(updatedLayer1.position.y).toBeGreaterThan(updatedLayer2.position.y)
+  })
+
+  it('moves a layer into another container when dropped inside', () => {
+    useAppStore.setState({
+      graphNodes: [
+        {
+          id: 'master-frame-buffer',
+          type: 'masterFrameBuffer',
+          position: { x: 0, y: 0 },
+          data: { label: 'Master Output' },
+        },
+        {
+          id: 'container-buffer',
+          type: 'frameBuffer',
+          parentId: 'master-frame-buffer',
+          position: { x: 20, y: 65 },
+          data: { label: 'Container Buffer' },
+        },
+        {
+          id: 'orphan-synth',
+          type: 'testVisual',
+          parentId: 'master-frame-buffer',
+          position: { x: 20, y: 200 },
+          data: { label: 'Orphan Synth' },
+        },
+      ],
+    })
+
+    render(<LayerTreeView />)
+
+    const synthRow = screen.getByTestId('layer-tree-item-orphan-synth')
+    const containerRow = screen.getByTestId('layer-tree-item-container-buffer')
+
+    const dataTransfer = {
+      setData: vi.fn(),
+      getData: () => 'orphan-synth',
+      dropEffect: 'none',
+      effectAllowed: 'all',
+    }
+
+    fireEvent.dragStart(synthRow, { dataTransfer })
+
+    vi.spyOn(containerRow, 'getBoundingClientRect').mockReturnValue({
+      top: 100,
+      bottom: 140,
+      height: 40,
+      left: 0,
+      right: 200,
+      width: 200,
+      x: 0,
+      y: 100,
+      toJSON: () => {},
+    })
+
+    // Drag over middle region (clientY = 120 -> offsetY = 20, between 10 and 30) -> 'inside'
+    const dragOverEv = createEvent.dragOver(containerRow)
+    Object.defineProperty(dragOverEv, 'clientY', { value: 120 })
+    Object.defineProperty(dragOverEv, 'dataTransfer', { value: dataTransfer })
+    fireEvent(containerRow, dragOverEv)
+    expect(containerRow).toHaveAttribute('data-drop-position', 'inside')
+
+    // Drop
+    fireEvent.drop(containerRow, { dataTransfer })
+
+    const nodes = useAppStore.getState().graphNodes
+    const movedSynth = nodes.find((n) => n.id === 'orphan-synth')!
+
+    // orphan-synth's parentId should now be container-buffer!
+    expect(movedSynth.parentId).toBe('container-buffer')
+  })
+
+  it('prevents dropping a container into its own descendant', () => {
+    render(<LayerTreeView />)
+
+    const sourceRow = screen.getByTestId('layer-tree-item-source-buffer')
+    const synthChildRow = screen.getByTestId('layer-tree-item-synth-child')
+
+    const dataTransfer = {
+      setData: vi.fn(),
+      getData: () => 'source-buffer',
+      dropEffect: 'none',
+      effectAllowed: 'all',
+    }
+
+    fireEvent.dragStart(sourceRow, { dataTransfer })
+
+    const dragOverEv = createEvent.dragOver(synthChildRow)
+    Object.defineProperty(dragOverEv, 'clientY', { value: 120 })
+    Object.defineProperty(dragOverEv, 'dataTransfer', { value: dataTransfer })
+    fireEvent(synthChildRow, dragOverEv)
+
+    // Should not set drop position because synth-child is descendant of source-buffer
+    expect(synthChildRow).not.toHaveAttribute('data-drop-position')
+
+    // Drop attempt
+    fireEvent.drop(synthChildRow, { dataTransfer })
+
+    // source-buffer parentId should remain master-frame-buffer
+    const sourceNode = useAppStore.getState().graphNodes.find((n) => n.id === 'source-buffer')!
+    expect(sourceNode.parentId).toBe('master-frame-buffer')
   })
 })
 

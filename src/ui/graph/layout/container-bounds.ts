@@ -176,14 +176,8 @@ export function reflowGraphStacks<T extends Record<string, unknown>>(
     const directChildren = currentNodes.filter((n) => n.parentId === containerId)
     if (directChildren.length === 0) continue
 
-    // Sibling sort:
-    // 1. Publishers (saveTo) before consumers (loadFrom)
-    // 2. Current Y position ascending
+    // Sibling sort: Respect user's vertical stack sequence (ascending Y)
     const sortedChildren = [...directChildren].sort((a, b) => {
-      const aPub = Boolean(a.data?.saveTo)
-      const bPub = Boolean(b.data?.saveTo)
-      if (aPub && !bPub) return -1
-      if (!aPub && bPub) return 1
       return (a.position?.y ?? 0) - (b.position?.y ?? 0)
     })
 

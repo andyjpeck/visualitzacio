@@ -6,6 +6,7 @@ import {
   Crown,
   Eye,
   EyeOff,
+  GripVertical,
   ImageIcon,
   Layers,
   Plus,
@@ -29,10 +30,16 @@ export interface LayerTreeViewProps {
   onToggleCollapse?: (id: string) => void
 }
 
+interface DropIndicator {
+  targetId: string
+  position: 'before' | 'after' | 'inside'
+}
+
 /**
  * Collapsible Hierarchical Layer Tree View (Outliner).
  * Provides compact layer inspection, execution sequence telemetry,
- * interactive semantic buffer tag highlighting, and one-click re-ordering.
+ * interactive semantic buffer tag highlighting, drag-and-drop hierarchy / reordering,
+ * and one-click up/down reordering buttons.
  */
 export function LayerTreeView({
   collapsedIds: controlledCollapsedIds,
@@ -56,10 +63,32 @@ export function LayerTreeView({
   const [openAddMenuId, setOpenAddMenuId] = useState<string | null>(null)
   const addMenuRef = useRef<HTMLDivElement>(null)
 
+  // Drag and drop state
+  const [draggedNodeId, setDraggedNodeId] = useState<string | null>(null)
+  const [dropIndicator, setDropIndicator] = useState<DropIndicator | null>(null)
+
   // Compute execution pass index for each node in real-time
   const executionOrderMap = useMemo(() => {
     return computeExecutionOrder(graphNodes)
   }, [graphNodes])
+
+  // Helper to determine if a target is a descendant of a candidate ancestor
+  const isDescendantOf = (
+    nodeId: string,
+    ancestorId: string,
+    allNodes: Node[],
+  ): boolean => {
+    let current = allNodes.find((n) => n.id === nodeId)
+    const visited = new Set<string>()
+    while (current && current.parentId) {
+      if (visited.has(current.id)) break
+      visited.add(current.id)
+      const parentId = current.parentId
+      if (parentId === ancestorId) return true
+      current = allNodes.find((n) => n.id === parentId)
+    }
+    return false
+  }
 
   const toggleCollapse = (id: string, e: React.MouseEvent) => {
     e.stopPropagation()
@@ -75,6 +104,179 @@ export function LayerTreeView({
         }
         return next
       })
+    }
+  }
+
+  // Handle drag start
+  const handleDragStart = (nodeId: string, e: React.DragEvent) => {
+    const node = graphNodes.find((n) => n.id === nodeId)
+    if (!node || node.id === 'master-frame-buffer' || node.type === 'masterFrameBuffer') {
+      e.preventDefault()
+      return
+    }
+    e.dataTransfer.setData('text/plain', nodeId)
+    e.dataTransfer.effectAllowed = 'move'
+    setDraggedNodeId(nodeId)
+  }
+
+  // Handle drag over
+  const handleDragOver = (targetNode: Node, e: React.DragEvent) => {
+    e.preventDefault()
+    if (!draggedNodeId || draggedNodeId === targetNode.id) {
+      e.dataTransfer.dropEffect = 'none'
+      return
+    }
+
+    if (isDescendantOf(targetNode.id, draggedNodeId, graphNodes)) {
+      e.dataTransfer.dropEffect = 'none'
+      return
+    }
+
+    const isMaster = targetNode.id === 'master-frame-buffer' || targetNode.type === 'masterFrameBuffer'
+    const isTargetContainer = isMaster || targetNode.type === 'frameBuffer' || Boolean(targetNode.data?.isContainer)
+
+    const rect = e.currentTarget.getBoundingClientRect()
+    const height = rect.height || 40
+    const clientY = typeof e.clientY === 'number' ? e.clientY : rect.top + height / 2
+    const offsetY = clientY - (rect.top || 0)
+
+    let position: 'before' | 'after' | 'inside'
+
+    if (isMaster) {
+      position = 'inside'
+    } else if (isTargetContainer) {
+      if (offsetY < height * 0.25) {
+        position = 'before'
+      } else if (offsetY > height * 0.75) {
+        position = 'after'
+      } else {
+        position = 'inside'
+      }
+    } else {
+      if (offsetY < height * 0.5) {
+        position = 'before'
+      } else {
+        position = 'after'
+      }
+    }
+
+    e.dataTransfer.dropEffect = 'move'
+    setDropIndicator({ targetId: targetNode.id, position })
+  }
+
+  // Handle drag leave
+  const handleDragLeave = (targetId: string, e: React.DragEvent) => {
+    if (dropIndicator?.targetId === targetId && !e.currentTarget.contains(e.relatedTarget as globalThis.Node)) {
+      setDropIndicator(null)
+    }
+  }
+
+  // Handle drag end
+  const handleDragEnd = () => {
+    setDraggedNodeId(null)
+    setDropIndicator(null)
+  }
+
+  // Handle drop
+  const handleDrop = (targetNode: Node, e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+
+    const droppedId = draggedNodeId || e.dataTransfer.getData('text/plain')
+    const currentIndicator = dropIndicator
+
+    setDraggedNodeId(null)
+    setDropIndicator(null)
+
+    if (!droppedId || droppedId === targetNode.id) return
+    if (isDescendantOf(targetNode.id, droppedId, graphNodes)) return
+
+    const droppedNode = graphNodes.find((n) => n.id === droppedId)
+    if (!droppedNode) return
+
+    let newParentId: string | undefined
+    const position = currentIndicator?.targetId === targetNode.id ? currentIndicator.position : 'inside'
+
+    if (position === 'inside') {
+      newParentId = targetNode.id
+    } else {
+      newParentId = targetNode.parentId
+    }
+
+    // Destination siblings excluding droppedNode
+    const destSiblings = graphNodes
+      .filter((n) => n.parentId === newParentId && n.id !== droppedId)
+      .sort((a, b) => (a.position?.y ?? 0) - (b.position?.y ?? 0))
+
+    let reordered: Node[]
+    if (position === 'inside') {
+      reordered = [...destSiblings, droppedNode]
+    } else if (position === 'before') {
+      const targetIdx = destSiblings.findIndex((n) => n.id === targetNode.id)
+      if (targetIdx === -1) {
+        reordered = [...destSiblings, droppedNode]
+      } else {
+        reordered = [
+          ...destSiblings.slice(0, targetIdx),
+          droppedNode,
+          ...destSiblings.slice(targetIdx),
+        ]
+      }
+    } else {
+      const targetIdx = destSiblings.findIndex((n) => n.id === targetNode.id)
+      if (targetIdx === -1) {
+        reordered = [...destSiblings, droppedNode]
+      } else {
+        reordered = [
+          ...destSiblings.slice(0, targetIdx + 1),
+          droppedNode,
+          ...destSiblings.slice(targetIdx + 1),
+        ]
+      }
+    }
+
+    // Compute relative Y positions for the reordered destination siblings
+    let currentY = CONTAINER_HEADER_HEIGHT
+    const newPositions = new Map<string, { x: number; y: number }>()
+    for (const child of reordered) {
+      newPositions.set(child.id, {
+        x: CONTAINER_PADDING,
+        y: currentY,
+      })
+      const dims = calculateNodeDimensions(child, graphNodes)
+      currentY += dims.height + CHILD_GAP
+    }
+
+    setGraphNodes((prev) => {
+      const updated = prev.map((n) => {
+        if (n.id === droppedId) {
+          const pos = newPositions.get(n.id) ?? { x: CONTAINER_PADDING, y: currentY }
+          return {
+            ...n,
+            parentId: newParentId,
+            position: pos,
+          }
+        }
+        const newPos = newPositions.get(n.id)
+        if (newPos) {
+          return { ...n, position: newPos }
+        }
+        return n
+      })
+      return reflowGraphStacks(updated)
+    })
+
+    // If dropped inside a collapsed container, expand it so the user sees the dropped item
+    if (newParentId && collapsedIds.has(newParentId)) {
+      if (controlledToggleCollapse) {
+        controlledToggleCollapse(newParentId)
+      } else {
+        setInternalCollapsedIds((prev) => {
+          const next = new Set(prev)
+          next.delete(newParentId!)
+          return next
+        })
+      }
     }
   }
 
@@ -198,6 +400,11 @@ export function LayerTreeView({
     const hasChildren = directChildren.length > 0
     const isCollapsed = collapsedIds.has(node.id)
 
+    // Drag-and-drop indicator states
+    const isDropTarget = dropIndicator?.targetId === node.id
+    const dropPos = isDropTarget ? dropIndicator.position : null
+    const isBeingDragged = draggedNodeId === node.id
+
     // Semantic Buffer Tags
     const saveToTag = typeof node.data?.saveTo === 'string' && node.data.saveTo.trim()
       ? node.data.saveTo.trim()
@@ -222,18 +429,51 @@ export function LayerTreeView({
         {/* Node Line Item */}
         <div
           data-testid={`layer-tree-item-${node.id}`}
+          data-drop-position={dropPos ?? undefined}
+          draggable={!isMaster}
+          onDragStart={(e) => handleDragStart(node.id, e)}
+          onDragOver={(e) => handleDragOver(node, e)}
+          onDragLeave={(e) => handleDragLeave(node.id, e)}
+          onDrop={(e) => handleDrop(node, e)}
+          onDragEnd={handleDragEnd}
           onClick={() => setSelectedNodeId(node.id)}
-          style={{ paddingLeft: `${depth * 18 + 10}px` }}
-          className={`group flex items-center justify-between gap-2 px-3 py-1.5 transition-all cursor-pointer border-l-2 text-xs font-mono ${
-            isSelected
-              ? 'bg-purple-950/40 border-purple-400 text-purple-100 shadow-[inset_0_0_15px_rgba(168,85,247,0.15)]'
-              : isRowHighlighted
-                ? 'bg-cyan-950/30 border-cyber-cyan text-cyan-100 shadow-[inset_0_0_12px_rgba(0,240,255,0.2)]'
-                : 'border-transparent hover:bg-white/[0.04] text-slate-300'
+          style={{ paddingLeft: `${depth * 18 + 8}px` }}
+          className={`group flex items-center justify-between gap-2 px-2.5 py-1.5 transition-all cursor-pointer border-l-2 text-xs font-mono relative ${
+            isBeingDragged ? 'opacity-30 border-dashed border-purple-500/50' : ''
+          } ${
+            dropPos === 'before'
+              ? 'border-t-2 border-t-cyber-cyan shadow-[0_-2px_10px_rgba(0,240,255,0.7)]'
+              : ''
+          } ${
+            dropPos === 'after'
+              ? 'border-b-2 border-b-cyber-cyan shadow-[0_2px_10px_rgba(0,240,255,0.7)]'
+              : ''
+          } ${
+            dropPos === 'inside'
+              ? 'bg-purple-900/40 ring-1 ring-purple-400 border-l-purple-400 shadow-[inset_0_0_15px_rgba(168,85,247,0.3)]'
+              : isSelected
+                ? 'bg-purple-950/40 border-purple-400 text-purple-100 shadow-[inset_0_0_15px_rgba(168,85,247,0.15)]'
+                : isRowHighlighted
+                  ? 'bg-cyan-950/30 border-cyber-cyan text-cyan-100 shadow-[inset_0_0_12px_rgba(0,240,255,0.2)]'
+                  : 'border-transparent hover:bg-white/[0.04] text-slate-300'
           } ${isBypassed ? 'opacity-40 grayscale' : ''}`}
         >
-          {/* Left: Expand chevron + Exec Badge + Icon + Label */}
-          <div className="flex items-center gap-2 min-w-0">
+          {/* Left: Drag Handle + Expand chevron + Exec Badge + Icon + Label */}
+          <div className="flex items-center gap-1.5 min-w-0">
+            {/* Drag Handle (non-master) */}
+            {!isMaster ? (
+              <div
+                data-testid={`tree-drag-handle-${node.id}`}
+                className="cursor-grab active:cursor-grabbing text-slate-500 hover:text-slate-300 p-0.5 rounded transition-colors flex-shrink-0"
+                title="Drag to reorder or move layer"
+                aria-label="Drag to reorder"
+              >
+                <GripVertical className="w-3.5 h-3.5" />
+              </div>
+            ) : (
+              <span className="w-4 flex-shrink-0" />
+            )}
+
             {/* Collapse / Expand Chevron */}
             {hasChildren ? (
               <button
