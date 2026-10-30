@@ -50,3 +50,14 @@
   - [x] Phase 3: Universal `f(x)` Parameter Inspector, Modals & Viewport Toolbar Integration.
   - [x] Phase 4: 100-Step Undo / Redo Engine & Preset Serialization.
   - [x] Phase 5: End-to-End Integration, Documentation Sync & Track Protocol.
+
+---
+
+## Active Track
+
+- [ ] **Track 5: Generative Visual Synthesis & Duperscope**
+  - [ ] Phase 1: Multi-Statement Script Compiler & 4-Phase Execution Engine.
+  - [ ] Phase 2: WebGL Duperscope Node (`DuperscopeNode`) & Custom Shaders.
+  - [ ] Phase 3: Built-in Templates, Preset Schema v2 & Store Synchronization.
+  - [ ] Phase 4: Studio Inspector 4-Phase Code Editor, Autocomplete & Outliner UI.
+  - [ ] Phase 5: End-to-End Integration, Documentation Sync & Track Completion Protocol.

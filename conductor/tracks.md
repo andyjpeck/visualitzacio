@@ -27,8 +27,8 @@ This registry tracks the planned, active, and completed workstreams across Visua
 ## Advanced Creative Capabilities (Tracks 5 – 9)
 
 - [ ] **Track 5: Generative Visual Synthesis & Duperscope**
-  *Goal: JIT-compiled procedural script runner (`init`, `frame`, `beat`, `point`), 3 draw modes, and Built-in Duperscope Preset Selector with classic generative curve templates. Completes the foundational component set (Frame Buffer, Static Image, Duperscope).*  
-  *Status: Planned*
+  *Goal: Multi-statement procedural script compiler (`init`, `beat`, `frame`, `point`), Instanced Screen-Space Quad Ribbon & circular particle draw modes, and Built-in Duperscope Preset Selector with classic generative curve templates. Completes the foundational component set (Frame Buffer, Static Image, Duperscope).*  
+  *Link: [./tracks/track_5_generative_visual_synthesis_duperscope/index.md](./tracks/track_5_generative_visual_synthesis_duperscope/index.md)* (In Progress)
 
 - [ ] **Track 6: Next-Generation Component Suite (Colormap, LightSource, 3dMesh)**
   *Goal: Detail full technical specifications and implement the second-generation component suite: Colormap (AVS-inspired visual gradient stop bar & palette cycling), LightSource (2D/2.5D specular & audio-reactive lighting projections), and 3dMesh (3D polygonal primitives, GLTF model loader, and vertex displacement).*  

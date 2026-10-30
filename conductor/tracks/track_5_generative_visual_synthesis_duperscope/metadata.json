@@ -1,0 +1,14 @@
+{
+  "track_id": "track_5_generative_visual_synthesis_duperscope",
+  "type": "feature",
+  "status": "in_progress",
+  "created_at": "2026-10-30T01:12:00-07:00",
+  "updated_at": "2026-10-30T01:12:00-07:00",
+  "description": "Generative Visual Synthesis & Duperscope: Multi-statement 4-phase script compiler (init, beat, frame, point), Instanced Screen-Space Quad Ribbon and circular particle WebGL renderer, logarithmic spectrum & waveform v shorthand, built-in classic curve templates, and Studio Inspector / Outliner integration.",
+  "github_issue": {
+    "number": 8,
+    "url": "https://github.com/andyjpeck/visualitzacio/issues/8"
+  },
+  "branch": "issue-8-track-5-duperscope",
+  "tasks": []
+}
