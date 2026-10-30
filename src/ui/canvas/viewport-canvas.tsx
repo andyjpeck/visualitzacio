@@ -177,6 +177,9 @@ export function ViewportCanvas({
             loadFrom: (gNode.data.loadFrom as string) || null,
             expressionEngine: exprEngine,
           })
+          if (vNode.init && engine.getRenderer()) {
+            vNode.init(engine.getRenderer())
+          }
           nodeMap.set(gNode.id, vNode)
         } else if (gNode.type === 'staticImage') {
           vNode = new StaticImageNode({
@@ -202,6 +205,9 @@ export function ViewportCanvas({
             pointCode: gNode.data.pointCode !== undefined ? String(gNode.data.pointCode) : undefined,
             expressionEngine: exprEngine,
           })
+          if (vNode.init && engine.getRenderer()) {
+            vNode.init(engine.getRenderer())
+          }
           nodeMap.set(gNode.id, vNode)
         }
       }

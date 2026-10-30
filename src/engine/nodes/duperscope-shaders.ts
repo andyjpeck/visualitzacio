@@ -120,6 +120,7 @@ export function createDuperscopeRibbonMaterial(): THREE.ShaderMaterial {
     transparent: true,
     depthTest: false,
     depthWrite: false,
+    side: THREE.DoubleSide,
     blending: THREE.NormalBlending,
     uniforms: {
       uResolution: { value: new THREE.Vector2(1920, 1080) },
@@ -170,6 +171,7 @@ export function createDuperscopePointsMaterial(): THREE.ShaderMaterial {
     transparent: true,
     depthTest: false,
     depthWrite: false,
+    side: THREE.DoubleSide,
     blending: THREE.NormalBlending,
     uniforms: {
       uAspect: { value: 1.0 },

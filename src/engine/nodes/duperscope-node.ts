@@ -62,6 +62,7 @@ export class DuperscopeNode implements VisualNode {
 
   private expressionEngine: ExpressionEngine
   private compiler: DuperscopeCompiler
+  private renderer: RendererLike | null = null
   private runner: DuperscopeRunner
 
   private scripts: DuperscopeScripts
@@ -112,6 +113,7 @@ export class DuperscopeNode implements VisualNode {
     this.ribbonGeometry = createRibbonQuadGeometry(MAX_SEGMENTS)
     this.ribbonMaterial = createDuperscopeRibbonMaterial()
     this.ribbonMesh = new THREE.Mesh(this.ribbonGeometry, this.ribbonMaterial)
+    this.ribbonMesh.frustumCulled = false
     this.scene.add(this.ribbonMesh)
 
     // Setup Points Mesh
@@ -131,6 +133,7 @@ export class DuperscopeNode implements VisualNode {
     this.pointsGeometry.setDrawRange(0, 0)
     this.pointsMaterial = createDuperscopePointsMaterial()
     this.pointsMesh = new THREE.Points(this.pointsGeometry, this.pointsMaterial)
+    this.pointsMesh.frustumCulled = false
     this.scene.add(this.pointsMesh)
 
     this.setOpacity(options.opacity ?? 1.0)
@@ -206,8 +209,8 @@ export class DuperscopeNode implements VisualNode {
     }
   }
 
-  init(_renderer: RendererLike): void {
-    // WebGL state and geometry are allocated on construction
+  init(renderer: RendererLike): void {
+    this.renderer = renderer
   }
 
   resize(width: number, height: number, pixelRatio: number): void {
@@ -343,11 +346,16 @@ export class DuperscopeNode implements VisualNode {
 
       this.ribbonGeometry.instanceCount = segmentCount
     }
+
+    if (this.renderer) {
+      this.renderer.render(this.scene, this.camera)
+    }
   }
 
   render(renderer?: RendererLike): void {
-    if (renderer) {
-      renderer.render(this.scene, this.camera)
+    const r = renderer ?? this.renderer
+    if (r) {
+      r.render(this.scene, this.camera)
     }
   }
 
