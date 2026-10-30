@@ -1,6 +1,6 @@
 # Tracks Registry: Visualització
 
-This registry tracks the planned, active, and completed workstreams across Visualització's 9-track roadmap.
+This registry tracks the planned, active, and completed workstreams across Visualització's 10-track roadmap.
 
 ---
 

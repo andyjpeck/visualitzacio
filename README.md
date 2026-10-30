@@ -48,7 +48,7 @@ Visualització is designed for high-performance audio reactivity, combining math
   - Continuous input coalescing for 60 FPS slider adjustments and 500ms debounced formula keystrokes, ensuring a single gesture yields exactly one undoable step.
   - Global keyboard shortcut bindings (`Ctrl+Z`, `Cmd+Z`, `Ctrl+Y`, `Ctrl+Shift+Z`) with text input focus protection and tactile toolbar controls.
 - **Preset Serialization & Import/Export Suite**:
-  - Standardized JSON preset schema (`PresetSchema` v1) encoding metadata, performance configurations, audio frequency bands, ping-pong feedback settings, and pure topological component hierarchies without ephemeral pixel coordinates.
+  - Standardized JSON preset schema (`PresetSchema` v2 with v1 backward compatibility) encoding metadata, performance configurations, audio frequency bands, ping-pong feedback settings, and pure topological component hierarchies without ephemeral pixel coordinates.
   - Complete import and export pipeline: download `.json` preset files, copy preset JSON to clipboard, load via file input, paste from clipboard (`Ctrl+V`), and drag-and-drop `.json` files directly onto the 3D viewport canvas.
   - Automatic DAG layout executed upon preset loading for pristine visual presentation.
 - **Universal Parameter Inspector & `f(x)` Expressions**:

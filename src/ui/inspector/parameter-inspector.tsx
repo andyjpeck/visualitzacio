@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import {
   Activity,
   AlertCircle,
@@ -123,6 +123,14 @@ function DuperscopePhaseEditor({
   const [localCode, setLocalCode] = useState(code)
   const textareaRef = useRef<HTMLTextAreaElement | null>(null)
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current)
+      }
+    }
+  }, [])
 
   if (code !== prevCode) {
     setPrevCode(code)
