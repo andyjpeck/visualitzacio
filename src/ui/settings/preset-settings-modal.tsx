@@ -225,16 +225,17 @@ export function PresetSettingsModal(): React.ReactElement | null {
                 <span className="text-xs text-slate-300 font-mono">Blend Mode</span>
                 <select
                   aria-label="Feedback blend mode"
+                  title="Feedback compositing blend mode"
                   value={feedbackBlendMode}
                   onChange={(e) => setFeedbackBlendMode(e.target.value)}
                   className="bg-slate-900 border border-white/15 text-xs text-slate-200 rounded px-2 py-1 font-mono focus:border-cyan-400 focus:outline-none"
                 >
-                  <option value="replace">replace</option>
-                  <option value="additive">additive</option>
-                  <option value="maximum">maximum</option>
-                  <option value="minimum">minimum</option>
-                  <option value="subtractive">subtractive</option>
-                  <option value="multiplicative">multiplicative</option>
+                  <option value="replace" title="Replace: Standard direct overwrite">replace</option>
+                  <option value="additive" title="Additive: Pixels sum together for neon bloom">additive</option>
+                  <option value="maximum" title="Maximum: Retains the brightest pixel">maximum</option>
+                  <option value="minimum" title="Minimum: Retains the darkest pixel">minimum</option>
+                  <option value="subtractive" title="Subtractive: Subtracts source color from background">subtractive</option>
+                  <option value="multiplicative" title="Multiplicative: Multiplies color channels for shading">multiplicative</option>
                 </select>
               </div>
 

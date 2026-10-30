@@ -14,57 +14,59 @@ import type { RenderEngine } from '../../engine/render-engine'
 import { FRAME_BUFFER_TEMPLATES } from '../../engine/frame-buffer/frame-buffer-templates'
 import type { ResolutionScale } from '../../contracts/preset-settings'
 
+import type { ParameterOption } from './parameter-row'
+
 export interface ParameterInspectorProps {
   engine?: RenderEngine | null
   className?: string
 }
 
-const INPUT_BLEND_MODE_OPTIONS = [
-  { label: 'None (Blank Canvas)', value: 'none' },
-  { label: 'Replace (Standard)', value: 'replace' },
-  { label: 'Add (Additive Glow)', value: 'add' },
-  { label: 'Screen (Luminance Soft)', value: 'screen' },
-  { label: 'Multiply (Darken)', value: 'multiply' },
-  { label: 'Subtract', value: 'subtract' },
-  { label: 'Lighten', value: 'lighten' },
-  { label: 'Darken', value: 'darken' },
-  { label: 'Difference', value: 'difference' },
-  { label: 'Color Dodge', value: 'color-dodge' },
-  { label: 'Linear Burn', value: 'linear-burn' },
+const INPUT_BLEND_MODE_OPTIONS: ParameterOption[] = [
+  { label: 'None (Blank Canvas)', value: 'none', tooltip: 'Child layers draw onto a clean, empty canvas before processing.' },
+  { label: 'Replace (Standard)', value: 'replace', tooltip: 'Standard direct rendering; incoming pixels overwrite the buffer.' },
+  { label: 'Add (Additive Glow)', value: 'add', tooltip: 'Additive blend; pixel colors sum together creating an intense neon glow.' },
+  { label: 'Screen (Luminance Soft)', value: 'screen', tooltip: 'Screen blend; inverts, multiplies, and inverts for soft optical luminosity.' },
+  { label: 'Multiply (Darken)', value: 'multiply', tooltip: 'Multiplies colors together, darkening light areas and creating depth.' },
+  { label: 'Subtract', value: 'subtract', tooltip: 'Subtracts incoming colors from the existing buffer canvas.' },
+  { label: 'Lighten', value: 'lighten', tooltip: 'Compares RGB channels and retains the brightest pixels.' },
+  { label: 'Darken', value: 'darken', tooltip: 'Compares RGB channels and retains the darkest pixels.' },
+  { label: 'Difference', value: 'difference', tooltip: 'Calculates absolute color difference, inverting overlapping forms.' },
+  { label: 'Color Dodge', value: 'color-dodge', tooltip: 'Brightens background pixels to reflect the blend color.' },
+  { label: 'Linear Burn', value: 'linear-burn', tooltip: 'Darkens background pixels to reflect the blend color.' },
 ]
 
-const OUTPUT_BLEND_MODE_OPTIONS = [
-  { label: 'None (Offscreen Only)', value: 'none' },
-  { label: 'Replace (Standard)', value: 'replace' },
-  { label: 'Add (Additive Glow)', value: 'add' },
-  { label: 'Screen (Luminance Soft)', value: 'screen' },
-  { label: 'Multiply (Darken)', value: 'multiply' },
-  { label: 'Subtract', value: 'subtract' },
-  { label: 'Lighten', value: 'lighten' },
-  { label: 'Darken', value: 'darken' },
-  { label: 'Difference', value: 'difference' },
-  { label: 'Color Dodge', value: 'color-dodge' },
-  { label: 'Linear Burn', value: 'linear-burn' },
+const OUTPUT_BLEND_MODE_OPTIONS: ParameterOption[] = [
+  { label: 'None (Offscreen Only)', value: 'none', tooltip: 'Does not composite onto the parent buffer; keeps texture offscreen for named bus routing only.' },
+  { label: 'Replace (Standard)', value: 'replace', tooltip: 'Overwrites the parent buffer or master screen with this buffer contents.' },
+  { label: 'Add (Additive Glow)', value: 'add', tooltip: 'Sums pixel values onto the parent buffer for vibrant additive lighting.' },
+  { label: 'Screen (Luminance Soft)', value: 'screen', tooltip: 'Blends onto parent using inverted multiplication for soft photographic luminosity.' },
+  { label: 'Multiply (Darken)', value: 'multiply', tooltip: 'Multiplies onto parent buffer, creating shadows and depth.' },
+  { label: 'Subtract', value: 'subtract', tooltip: 'Subtracts this buffer colors from the parent buffer.' },
+  { label: 'Lighten', value: 'lighten', tooltip: 'Retains whichever pixels are brighter between this buffer and parent.' },
+  { label: 'Darken', value: 'darken', tooltip: 'Retains whichever pixels are darker between this buffer and parent.' },
+  { label: 'Difference', value: 'difference', tooltip: 'Inverts colors where this buffer overlaps parent content.' },
+  { label: 'Color Dodge', value: 'color-dodge', tooltip: 'Brightens parent buffer based on this buffer luminosity.' },
+  { label: 'Linear Burn', value: 'linear-burn', tooltip: 'Darkens parent buffer based on this buffer luminosity.' },
 ]
 
-const FIT_MODE_OPTIONS = [
-  { label: 'Cover (Aspect Fill)', value: 'cover' },
-  { label: 'Contain (Aspect Fit)', value: 'contain' },
-  { label: 'Stretch', value: 'stretch' },
+const FIT_MODE_OPTIONS: ParameterOption[] = [
+  { label: 'Cover (Aspect Fill)', value: 'cover', tooltip: 'Scales image to fill the canvas completely, cropping excess margins.' },
+  { label: 'Contain (Aspect Fit)', value: 'contain', tooltip: 'Scales entire image to fit inside canvas without cropping, preserving aspect ratio.' },
+  { label: 'Stretch', value: 'stretch', tooltip: 'Stretches image to fill entire canvas width and height disregarding aspect ratio.' },
 ]
 
-const SHAPE_OPTIONS = [
-  { label: 'Crystal Wireframe', value: 'Crystal' },
-  { label: 'Cube Wireframe', value: 'Cube' },
-  { label: 'Torus Wireframe', value: 'Torus' },
-  { label: 'Sphere Wireframe', value: 'Sphere' },
+const SHAPE_OPTIONS: ParameterOption[] = [
+  { label: 'Crystal Wireframe', value: 'Crystal', tooltip: 'Complex facet-refracting crystalline polyhedron geometry.' },
+  { label: 'Cube Wireframe', value: 'Cube', tooltip: 'Classic geometric 3D cube mesh with rotating axes.' },
+  { label: 'Torus Wireframe', value: 'Torus', tooltip: 'Donut ring geometry with radial harmonic ripple waves.' },
+  { label: 'Sphere Wireframe', value: 'Sphere', tooltip: 'Geodesic spherical mesh undulating with audio frequency bands.' },
 ]
 
-const RESOLUTION_OPTIONS = [
-  { label: '100% (Native 1.0x)', value: '1.0' },
-  { label: '75% (Performance 0.75x)', value: '0.75' },
-  { label: '50% (Eco 0.5x)', value: '0.5' },
-  { label: '25% (Ultra-Low 0.25x)', value: '0.25' },
+const RESOLUTION_OPTIONS: ParameterOption[] = [
+  { label: '100% (Native 1.0x)', value: '1.0', tooltip: 'Native 1:1 pixel rendering matching device display resolution.' },
+  { label: '75% (Performance 0.75x)', value: '0.75', tooltip: 'Renders at 75% resolution; balances crisp visuals with high frame rates.' },
+  { label: '50% (Eco 0.5x)', value: '0.5', tooltip: 'Renders at half resolution; maximizes performance and GPU battery efficiency.' },
+  { label: '25% (Ultra-Low 0.25x)', value: '0.25', tooltip: 'Quarter resolution rendering; ultra-fast fallback for low-end hardware.' },
 ]
 
 /**
@@ -266,13 +268,19 @@ export function ParameterInspector({
               onChange={(e) => handleApplyTemplate(e.target.value)}
               defaultValue=""
               aria-label="Component Preset Selector"
+              title="Apply a built-in frame buffer template preset"
               className="px-2 py-1 rounded bg-black/50 border border-purple-500/30 text-[11px] font-mono text-purple-300 focus:outline-none focus:border-purple-400 cursor-pointer"
             >
-              <option value="" disabled>
+              <option value="" disabled title="Select a template preset to load">
                 Load Template...
               </option>
               {FRAME_BUFFER_TEMPLATES.map((tmpl) => (
-                <option key={tmpl.id} value={tmpl.id} className="bg-cyber-dark text-slate-200">
+                <option
+                  key={tmpl.id}
+                  value={tmpl.id}
+                  title={tmpl.description}
+                  className="bg-cyber-dark text-slate-200"
+                >
                   {tmpl.name}
                 </option>
               ))}
@@ -303,6 +311,7 @@ export function ParameterInspector({
         <ParameterRow
           label="Display Name"
           value={String(data.label || '')}
+          tooltip="User-friendly name of the layer in the pipeline and tree view"
           type="text"
           allowExpression={false}
           isFocused={focusedParamKey === 'label'}
@@ -313,10 +322,12 @@ export function ParameterInspector({
           <ParameterRow
             label="Parent Container"
             value={selectedNode.parentId || 'master-frame-buffer'}
+            tooltip="Parent container buffer that encloses and groups this layer"
             type="dropdown"
             options={containerNodes.map((c) => ({
               value: c.id,
               label: `${String(c.data.label || c.id)}${c.id === 'master-frame-buffer' ? ' (Root)' : ''}`,
+              tooltip: `Nest layer inside ${String(c.data.label || c.id)}`,
             }))}
             allowExpression={false}
             onChange={(val) => {
@@ -331,6 +342,7 @@ export function ParameterInspector({
             <ParameterRow
               label="Input Blend Mode"
               value={String(data.inputBlendMode || (data.loadFrom ? 'replace' : 'none'))}
+              tooltip="How child layers composite into this buffer canvas before processing"
               type="dropdown"
               options={INPUT_BLEND_MODE_OPTIONS}
               allowExpression={false}
@@ -341,6 +353,7 @@ export function ParameterInspector({
             <ParameterRow
               label="Output Blend Mode"
               value={String(data.outputBlendMode || data.blendMode || 'replace')}
+              tooltip="How this buffer's output composites onto its parent container or screen"
               type="dropdown"
               options={OUTPUT_BLEND_MODE_OPTIONS}
               allowExpression={false}
@@ -352,6 +365,7 @@ export function ParameterInspector({
               label="Opacity"
               value={data.opacity !== undefined ? (data.opacity as number | string) : 1.0}
               savedFormula={typeof data.opacity_formula === 'string' ? data.opacity_formula : undefined}
+              tooltip="Layer opacity / transparency or feedback decay persistence (0.0 to 1.0)"
               min={0}
               max={1}
               step={0.01}
@@ -365,6 +379,7 @@ export function ParameterInspector({
               label="Scale"
               value={data.scale !== undefined ? (data.scale as number | string) : 1.0}
               savedFormula={typeof data.scale_formula === 'string' ? data.scale_formula : undefined}
+              tooltip="Scale multiplier for geometry, image, or feedback zoom"
               min={0.5}
               max={2.0}
               step={0.01}
@@ -390,6 +405,7 @@ export function ParameterInspector({
                     ? data.positionX_formula
                     : undefined
               }
+              tooltip="Horizontal displacement from center (-1.0 left to +1.0 right)"
               min={-1.0}
               max={1.0}
               step={0.01}
@@ -418,6 +434,7 @@ export function ParameterInspector({
                     ? data.positionY_formula
                     : undefined
               }
+              tooltip="Vertical displacement from center (-1.0 bottom to +1.0 top)"
               min={-1.0}
               max={1.0}
               step={0.01}
@@ -438,6 +455,7 @@ export function ParameterInspector({
             <ParameterRow
               label="Feedback Loop"
               value={Boolean(data.feedback)}
+              tooltip="Enables dual-FBO ping-pong feedback loop to create recursive motion trails"
               type="toggle"
               allowExpression={false}
               isFocused={focusedParamKey === 'feedback'}
@@ -448,6 +466,7 @@ export function ParameterInspector({
               label="Rotation"
               value={data.rotation !== undefined ? (data.rotation as number | string) : 0.0}
               savedFormula={typeof data.rotation_formula === 'string' ? data.rotation_formula : undefined}
+              tooltip="Angular rotation in degrees applied each frame pass (-180° to +180°)"
               min={-180}
               max={180}
               step={1}
@@ -460,6 +479,7 @@ export function ParameterInspector({
             <ParameterRow
               label="Publish Output (@NAME)"
               value={String(data.saveTo || '')}
+              tooltip="Publish this buffer's rendered texture to a named virtual bus (e.g. @IMAGE) for other nodes to sample"
               type="text"
               allowExpression={false}
               isFocused={focusedParamKey === 'saveTo'}
@@ -469,6 +489,7 @@ export function ParameterInspector({
             <ParameterRow
               label="Sample Input (@NAME)"
               value={String(data.loadFrom || '')}
+              tooltip="Sample a texture from a named virtual bus (e.g. @IMAGE) into this buffer"
               type="text"
               allowExpression={false}
               isFocused={focusedParamKey === 'loadFrom'}
@@ -482,6 +503,7 @@ export function ParameterInspector({
           <ParameterRow
             label="Sample Input (@NAME)"
             value={String(data.loadFrom || '')}
+            tooltip="Sample a texture from a named virtual bus (e.g. @IMAGE) into this buffer"
             type="text"
             allowExpression={false}
             isFocused={focusedParamKey === 'loadFrom'}
@@ -495,6 +517,7 @@ export function ParameterInspector({
             <ParameterRow
               label="Publish Output (@NAME)"
               value={String(data.saveTo || '')}
+              tooltip="Publish this image texture to a named virtual bus (e.g. @IMAGE) for other nodes to sample"
               type="text"
               allowExpression={false}
               isFocused={focusedParamKey === 'saveTo'}
@@ -503,6 +526,7 @@ export function ParameterInspector({
             <ParameterRow
               label="Image URL"
               value={String(data.imageUrl || '')}
+              tooltip="Web URL or asset path of the image texture"
               type="text"
               allowExpression={false}
               isFocused={focusedParamKey === 'imageUrl'}
@@ -512,6 +536,7 @@ export function ParameterInspector({
             <ParameterRow
               label="Fit Mode"
               value={String(data.fitMode || 'cover')}
+              tooltip="How the image texture is mapped and scaled onto the buffer canvas"
               type="dropdown"
               options={FIT_MODE_OPTIONS}
               allowExpression={false}
@@ -523,6 +548,7 @@ export function ParameterInspector({
               label="Opacity"
               value={data.opacity !== undefined ? (data.opacity as number | string) : 1.0}
               savedFormula={typeof data.opacity_formula === 'string' ? data.opacity_formula : undefined}
+              tooltip="Layer opacity / transparency (0.0 to 1.0)"
               min={0}
               max={1}
               step={0.01}
@@ -540,6 +566,7 @@ export function ParameterInspector({
             <ParameterRow
               label="Shape"
               value={String(data.shape || 'Crystal')}
+              tooltip="Geometric 3D wireframe mesh shape to synthesize and render"
               type="dropdown"
               options={SHAPE_OPTIONS}
               allowExpression={false}
@@ -551,6 +578,7 @@ export function ParameterInspector({
               label="Scale"
               value={data.scale !== undefined ? (data.scale as number | string) : 1.0}
               savedFormula={typeof data.scale_formula === 'string' ? data.scale_formula : undefined}
+              tooltip="Scale multiplier of the 3D synth geometry"
               min={0.1}
               max={3.0}
               step={0.05}
@@ -576,6 +604,7 @@ export function ParameterInspector({
                     ? data.positionX_formula
                     : undefined
               }
+              tooltip="Horizontal displacement from center (-2.0 left to +2.0 right)"
               min={-2.0}
               max={2.0}
               step={0.01}
@@ -604,6 +633,7 @@ export function ParameterInspector({
                     ? data.positionY_formula
                     : undefined
               }
+              tooltip="Vertical displacement from center (-2.0 bottom to +2.0 top)"
               min={-2.0}
               max={2.0}
               step={0.01}

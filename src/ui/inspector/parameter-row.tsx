@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { ChevronDown, ChevronRight, ChevronUp, RotateCcw, Sparkles } from 'lucide-react'
+import { ChevronDown, ChevronRight, ChevronUp, Info, RotateCcw, Sparkles } from 'lucide-react'
 import { ExpressionInput } from '../expressions/expression-input'
 import { ExpressionSparkline } from '../expressions/expression-sparkline'
 import { ExpressionQuickReference } from '../expressions/expression-quick-reference'
@@ -11,11 +11,13 @@ import type { RenderEngine } from '../../engine/render-engine'
 export interface ParameterOption {
   label: string
   value: string
+  tooltip?: string
 }
 
 export interface ParameterRowProps {
   label: string
   value: number | string | boolean
+  tooltip?: string
   mode?: 'fixed' | 'expression'
   min?: number
   max?: number
@@ -37,6 +39,7 @@ export interface ParameterRowProps {
 export function ParameterRow({
   label,
   value,
+  tooltip,
   mode: explicitMode,
   min = 0,
   max = 1,
@@ -171,8 +174,22 @@ export function ParameterRow({
     >
       {/* Top Header Row */}
       <div className="flex items-center justify-between">
-        <label className="text-xs font-mono text-slate-300 font-semibold tracking-wide flex items-center gap-1.5">
+        <label
+          title={tooltip}
+          className={`text-xs font-mono text-slate-300 font-semibold tracking-wide flex items-center gap-1.5 ${
+            tooltip ? 'cursor-help' : ''
+          }`}
+        >
           <span>{label}</span>
+          {tooltip && (
+            <span
+              data-testid={`parameter-tooltip-${label.toLowerCase().replace(/\s+/g, '-')}`}
+              title={tooltip}
+              className="text-slate-500 hover:text-cyber-cyan cursor-help transition-colors"
+            >
+              <Info className="w-3 h-3" />
+            </span>
+          )}
         </label>
 
         <div className="flex items-center gap-1.5">
@@ -351,6 +368,7 @@ export function ParameterRow({
                 value={Number(value) || 0}
                 onChange={(e) => onChange(parseFloat(e.target.value), 'fixed')}
                 aria-label={label}
+                title={tooltip || label}
                 className="flex-1 h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyber-cyan"
               />
               <input
@@ -363,6 +381,7 @@ export function ParameterRow({
                   const val = parseFloat(e.target.value)
                   if (!Number.isNaN(val)) onChange(val, 'fixed')
                 }}
+                title={tooltip || label}
                 className="w-16 px-2 py-1 rounded bg-black/50 border border-white/10 text-xs font-mono text-cyan-300 text-right focus:outline-none focus:border-cyber-cyan"
               />
             </>
@@ -373,10 +392,16 @@ export function ParameterRow({
               value={String(value)}
               onChange={(e) => onChange(e.target.value, 'fixed')}
               aria-label={label}
+              title={tooltip || label}
               className="w-full px-3 py-1.5 rounded-lg bg-black/60 border border-white/10 text-xs font-mono text-slate-200 focus:outline-none focus:border-cyber-cyan cursor-pointer"
             >
               {options.map((opt) => (
-                <option key={opt.value} value={opt.value} className="bg-cyber-dark">
+                <option
+                  key={opt.value}
+                  value={opt.value}
+                  title={opt.tooltip || opt.label}
+                  className="bg-cyber-dark"
+                >
                   {opt.label}
                 </option>
               ))}
@@ -388,6 +413,7 @@ export function ParameterRow({
               type="button"
               onClick={() => onChange(!value, 'fixed')}
               aria-label={label}
+              title={tooltip || label}
               className={`px-3 py-1.5 rounded-lg text-xs font-mono font-semibold transition-colors cursor-pointer ${
                 value
                   ? 'bg-cyber-cyan/20 border border-cyber-cyan text-cyber-cyan'
@@ -404,6 +430,7 @@ export function ParameterRow({
               value={String(value)}
               onChange={(e) => onChange(e.target.value, 'fixed')}
               aria-label={label}
+              title={tooltip || label}
               className="w-full px-3 py-1.5 rounded-lg bg-black/60 border border-white/10 text-xs font-mono text-slate-200 focus:outline-none focus:border-cyber-cyan"
             />
           )}

@@ -643,6 +643,7 @@ export function LayerTreeView({
                     <button
                       type="button"
                       onClick={(e) => handleAddChild(node.id, 'testVisual', e)}
+                      title="Add a 3D audio-reactive geometric synthesizer mesh"
                       className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-cyan-950/60 text-slate-300 hover:text-cyber-cyan transition-colors text-left cursor-pointer"
                     >
                       <Sparkles className="w-3.5 h-3.5 text-cyber-cyan" />
@@ -651,6 +652,7 @@ export function LayerTreeView({
                     <button
                       type="button"
                       onClick={(e) => handleAddChild(node.id, 'staticImage', e)}
+                      title="Add a static texture or background graphic layer"
                       className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-emerald-950/60 text-slate-300 hover:text-emerald-300 transition-colors text-left cursor-pointer"
                     >
                       <ImageIcon className="w-3.5 h-3.5 text-emerald-400" />
@@ -659,6 +661,7 @@ export function LayerTreeView({
                     <button
                       type="button"
                       onClick={(e) => handleAddChild(node.id, 'frameBuffer', e)}
+                      title="Add a nested frame buffer pass with blend modes and ping-pong feedback"
                       className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-purple-950/60 text-slate-300 hover:text-purple-300 transition-colors text-left cursor-pointer"
                     >
                       <Layers className="w-3.5 h-3.5 text-purple-400" />

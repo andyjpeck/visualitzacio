@@ -184,4 +184,35 @@ describe('ParameterRow Component', () => {
     fireEvent.click(toggleBtn)
     expect(handleChange).toHaveBeenCalledWith(false, 'fixed')
   })
+
+  it('renders parameter tooltips and dropdown option tooltips', () => {
+    const options = [
+      { label: 'Replace (Standard)', value: 'replace', tooltip: 'Direct overwrite' },
+      { label: 'Add (Additive Glow)', value: 'add', tooltip: 'Additive glow blend' },
+    ]
+
+    render(
+      <ParameterRow
+        label="Input Blend Mode"
+        value="replace"
+        tooltip="How child layers composite into this buffer canvas"
+        type="dropdown"
+        options={options}
+        allowExpression={false}
+        onChange={() => {}}
+      />,
+    )
+
+    // Parameter label tooltip
+    const tooltipIcon = screen.getByTestId('parameter-tooltip-input-blend-mode')
+    expect(tooltipIcon).toBeInTheDocument()
+    expect(tooltipIcon).toHaveAttribute('title', 'How child layers composite into this buffer canvas')
+
+    // Dropdown options tooltip
+    const replaceOption = screen.getByRole('option', { name: 'Replace (Standard)' })
+    expect(replaceOption).toHaveAttribute('title', 'Direct overwrite')
+
+    const addOption = screen.getByRole('option', { name: 'Add (Additive Glow)' })
+    expect(addOption).toHaveAttribute('title', 'Additive glow blend')
+  })
 })
