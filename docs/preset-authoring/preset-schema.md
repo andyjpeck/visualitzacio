@@ -86,7 +86,9 @@ Global master feedback settings (controls overall canvas trail retention):
 - `feedbackEnabled` *(boolean)*: Toggle dual-FBO feedback loop.
 - `feedbackBlendMode` *(string)*: `'replace' | 'additive' | 'maximum' | 'minimum' | 'subtractive' | 'multiplicative'`.
 - `feedbackOpacity` *(number | string)*: Decay factor (e.g. `0.92` or dynamic expression `'0.85 + $BASS * 0.1'`).
-- `feedbackScale` *(number | string)*: Zoom modulation (e.g. `1.02` for vortex tunnel).
+- `feedbackScale` *(number | string)*: Uniform zoom modulation (e.g. `1.02` for vortex tunnel).
+- `feedbackScaleX` / `feedbackScaleY` *(number | string, optional)*: Independent horizontal and vertical feedback scale multipliers.
+- `feedbackFlipX` / `feedbackFlipY` *(boolean | number | string, optional)*: Invert feedback texture horizontally or vertically.
 - `feedbackRotation` *(number | string)*: Spiral angle in degrees (e.g. `0.5`).
 - `feedbackPositionX` / `feedbackPositionY` *(number | string)*: Drift offset in normalized coordinates.
 

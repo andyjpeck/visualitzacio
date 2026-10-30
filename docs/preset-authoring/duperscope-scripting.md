@@ -53,7 +53,7 @@ speed = 0.02;
 | **`n`** | Total point density ($1$ to $4096$) | `init`, `beat`, `frame` | `200` | Read-only in `point` phase |
 | **`i`** | Normalized point progress ($k / (n - 1)$) | **Read-Only** | $0.0 \dots 1.0$ | Automatically calculated per point |
 | **`v`** | Audio sample amplitude at progress `i` | **Read-Only** | $[-1.0, 1.0]$ | Waveform or FFT frequency energy |
-| **`x`** | Horizontal screen coordinate | `point` | `0.0` | NDC range $[-1.0, 1.0]$ (1:1 aspect corrected) |
+| **`x`** | Horizontal screen coordinate | `point` | `0.0` | NDC range $[-1.0, 1.0]$ |
 | **`y`** | Vertical screen coordinate | `point` | `0.0` | NDC range $[-1.0, 1.0]$ |
 | **`r`** | Red color component | `beat`, `frame`, `point` | `1.0` | Clamped $[0.0, 1.0]$ |
 | **`g`** | Green color component | `beat`, `frame`, `point` | `1.0` | Clamped $[0.0, 1.0]$ |
