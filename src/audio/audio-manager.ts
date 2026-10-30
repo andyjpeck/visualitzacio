@@ -165,7 +165,7 @@ export class AudioManager {
     }
 
     if (!this.sampleBuffer) {
-      this.sampleBuffer = createProceduralBeatBuffer(ctx, 120, 2)
+      this.sampleBuffer = createProceduralBeatBuffer(ctx, 118, 8)
     }
 
     this.currentSourceNode = this.startBufferPlayback(this.sampleBuffer, 0, true)
