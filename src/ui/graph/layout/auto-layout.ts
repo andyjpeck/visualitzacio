@@ -1,6 +1,6 @@
 import type { Edge, Node } from '@xyflow/react'
 import dagre from 'dagre'
-import { recalculateContainerBounds } from './container-bounds'
+import { reflowGraphStacks } from './container-bounds'
 
 export interface AutoLayoutOptions {
   direction?: 'TB' | 'LR'
@@ -88,7 +88,7 @@ export function autoLayoutGraph<T extends Record<string, unknown>>(
   }))
 
   return {
-    nodes: recalculateContainerBounds([...layoutedTopNodes, ...layoutedChildNodes]),
+    nodes: reflowGraphStacks([...layoutedTopNodes, ...layoutedChildNodes]),
     edges,
   }
 }

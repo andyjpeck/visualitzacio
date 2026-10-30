@@ -10,6 +10,7 @@ import type { AudioSourceType } from '../../audio/audio-manager'
 import {
   getNextChildPosition,
   recalculateContainerBounds,
+  reflowGraphStacks,
 } from '../graph/layout/container-bounds'
 import { syncNamedBufferEdges } from '../graph/buffer-edges'
 
@@ -610,7 +611,7 @@ export const useAppStore = create<AppState>((set) => ({
         : node
 
       const updatedNodes = [...state.graphNodes, normalizedNode]
-      return { graphNodes: recalculateContainerBounds(updatedNodes) }
+      return { graphNodes: reflowGraphStacks(updatedNodes) }
     }),
   removeGraphNode: (nodeId) => {
     const state = useAppStore.getState()
@@ -622,7 +623,7 @@ export const useAppStore = create<AppState>((set) => ({
 
     const remainingNodes = state.graphNodes.filter((n) => n.id !== nodeId)
     set({
-      graphNodes: recalculateContainerBounds(remainingNodes),
+      graphNodes: reflowGraphStacks(remainingNodes),
       graphEdges: state.graphEdges.filter(
         (e) => e.source !== nodeId && e.target !== nodeId,
       ),
