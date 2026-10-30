@@ -34,7 +34,7 @@ Visualització is designed for high-performance audio reactivity, combining math
   - Floating playback toolbar (`Toolbar`), FPS badge, and audio telemetry overlay positioned within the 3D viewport canvas, featuring responsive auto-scaling (`ResizeObserver`) to prevent clipping on narrow viewports.
   - Universal portal-based modal dialog system (`BaseModalDialog` rendered via `createPortal` at `z-[9999]`) with backdrop blur overlay escaping nested pane stacking contexts.
 - **100-Step History & Undo/Redo Engine**:
-  - 100-snapshot immutable JSON history stack (`UndoRedoManager`) tracking node hierarchy mutations, connection routing, and parameter adjustments.
+  - 100-step Semantic Action Delta history stack (`UndoRedoManager`) tracking node hierarchy mutations, connection routing, and parameter adjustments with minimal memory footprint.
   - Continuous input coalescing for 60 FPS slider adjustments and 500ms debounced formula keystrokes, ensuring a single gesture yields exactly one undoable step.
   - Global keyboard shortcut bindings (`Ctrl+Z`, `Cmd+Z`, `Ctrl+Y`, `Ctrl+Shift+Z`) with text input focus protection and tactile toolbar controls.
 - **Preset Serialization & Import/Export Suite**:

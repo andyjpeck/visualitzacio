@@ -117,11 +117,11 @@ This plan implements the complete Studio workspace for Visualització in 5 test-
 - Implement standard preset JSON schema validation, file import/export, clipboard copy/paste, and drag-and-drop.
 
 ### Tasks
-- [x] **Task 4.1: 100-Step Undo/Redo Engine with Input Coalescing**
-  - Create `src/ui/history/undo-redo-manager.ts` maintaining a 100-snapshot history stack.
+- [x] **Task 4.1: 100-Step Semantic Action Delta Undo/Redo Engine with Input Coalescing**
+  - Create `src/ui/history/undo-redo-manager.ts` maintaining a 100-step Semantic Action Delta stack to store only what changed between history frames.
   - Implement input coalescing on pointer release (`onPointerUp`) and 500ms typing debounces.
   - Bind global keyboard shortcuts (`Ctrl+Z`, `Ctrl+Y` / `Ctrl+Shift+Z`) and toolbar buttons.
-  - *Verification:* Write unit tests in `src/ui/history/undo-redo-manager.test.ts` verifying coalescing and 100-step boundaries.
+  - *Verification:* Write unit tests in `src/ui/history/undo-redo-manager.test.ts` verifying delta diffing, memory conservation, coalescing, and 100-step boundaries.
 - [x] **Task 4.2: Preset JSON Schema & Serializer**
   - Define `PresetSchema` in `src/contracts/preset-schema.ts`.
   - Implement `serializePreset()` extracting preset metadata, node graph topology, and parameter states.

@@ -624,11 +624,18 @@ export const useAppStore = create<AppState>((set, get) => ({
   setFocusedParamKey: (focusedParamKey) => set({ focusedParamKey }),
   setGraphNodes: (nodesOrUpdater) =>
     set((state) => {
-      undoRedoManager.record(getHistorySnapshotFromState(state), { description: 'Reorder Layers' })
       const updatedNodes =
         typeof nodesOrUpdater === 'function'
           ? nodesOrUpdater(state.graphNodes)
           : nodesOrUpdater
+      undoRedoManager.recordDelta({
+        type: 'reorder-nodes',
+        description: 'Reorder Layers',
+        reorderedNodeIds: {
+          before: state.graphNodes.map((n) => n.id),
+          after: updatedNodes.map((n) => n.id),
+        },
+      })
       const updatedEdges = syncNamedBufferEdges(updatedNodes, state.graphEdges)
       return {
         graphNodes: updatedNodes,
@@ -646,7 +653,6 @@ export const useAppStore = create<AppState>((set, get) => ({
     })),
   addGraphNode: (node) =>
     set((state) => {
-      undoRedoManager.record(getHistorySnapshotFromState(state), { description: 'Add Layer' })
       // The ONLY node allowed at top level is master-frame-buffer.
       // Any other node must be a child of a buffer.
       const resolvedParentId =
@@ -669,6 +675,13 @@ export const useAppStore = create<AppState>((set, get) => ({
           }
         : node
 
+      undoRedoManager.recordDelta({
+        type: 'add-node',
+        description: 'Add Layer',
+        addedNodes: [normalizedNode],
+        addedEdges: [],
+      })
+
       const updatedNodes = [...state.graphNodes, normalizedNode]
       return {
         graphNodes: reflowGraphStacks(updatedNodes),
@@ -684,8 +697,6 @@ export const useAppStore = create<AppState>((set, get) => ({
       return false
     }
 
-    undoRedoManager.record(getHistorySnapshotFromState(state), { description: 'Delete Layer' })
-
     // Recursively collect all descendant child node IDs
     const idsToRemove = new Set<string>([nodeId])
     let added = true
@@ -698,6 +709,23 @@ export const useAppStore = create<AppState>((set, get) => ({
         }
       }
     }
+
+    const removedNodesList = state.graphNodes.filter((n) => idsToRemove.has(n.id))
+    const removedEdgesList = state.graphEdges.filter(
+      (e) => idsToRemove.has(e.source) || idsToRemove.has(e.target),
+    )
+    const deletedIndices = removedNodesList.map((n) => ({
+      id: n.id,
+      index: state.graphNodes.findIndex((gn) => gn.id === n.id),
+    }))
+
+    undoRedoManager.recordDelta({
+      type: 'delete-node',
+      description: 'Delete Layer',
+      deletedNodes: removedNodesList,
+      deletedEdges: removedEdgesList,
+      deletedIndices,
+    })
 
     const remainingNodes = state.graphNodes.filter((n) => !idsToRemove.has(n.id))
     const remainingEdges = state.graphEdges.filter(
@@ -719,7 +747,29 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
   updateGraphNodeData: (nodeId, patch, options) =>
     set((state) => {
-      undoRedoManager.record(getHistorySnapshotFromState(state), options)
+      const target = state.graphNodes.find((n) => n.id === nodeId)
+      if (target) {
+        const beforeData: Record<string, unknown> = {}
+        const afterData: Record<string, unknown> = {}
+        for (const key of Object.keys(patch)) {
+          beforeData[key] = (target.data as Record<string, unknown>)[key]
+          afterData[key] = (patch as Record<string, unknown>)[key]
+        }
+        undoRedoManager.recordDelta(
+          {
+            type: 'update-node',
+            description: options?.description ?? 'Update Node Data',
+            modifiedNodes: [
+              {
+                id: nodeId,
+                beforeData,
+                afterData,
+              },
+            ],
+          },
+          options,
+        )
+      }
       const updatedNodes = state.graphNodes.map((node) =>
         node.id === nodeId
           ? { ...node, data: { ...node.data, ...patch } }
@@ -738,8 +788,6 @@ export const useAppStore = create<AppState>((set, get) => ({
       const targetNode = state.graphNodes.find((n) => n.id === nodeId)
       if (!targetNode || targetNode.id === 'master-frame-buffer') return state
 
-      undoRedoManager.record(getHistorySnapshotFromState(state), { description: 'Reparent Layer' })
-
       // Fallback to master-frame-buffer if parentId is empty or invalid
       const targetParentId = parentId || 'master-frame-buffer'
       const parentNode = state.graphNodes.find((n) => n.id === targetParentId)
@@ -749,6 +797,16 @@ export const useAppStore = create<AppState>((set, get) => ({
         targetParentId,
         state.graphNodes.filter((n) => n.id !== nodeId),
       )
+
+      undoRedoManager.recordDelta({
+        type: 'reparent-node',
+        description: 'Reparent Layer',
+        nodeId,
+        beforeParentId: targetNode.parentId ?? null,
+        afterParentId: targetParentId,
+        beforePosition: targetNode.position,
+        afterPosition: newPos,
+      })
 
       const updatedNodes = state.graphNodes.map((n) => {
         if (n.id === nodeId) {
@@ -879,8 +937,32 @@ export const useAppStore = create<AppState>((set, get) => ({
     const template = getTemplateById(templateId)
     if (!template) return
     const state = get()
-    undoRedoManager.record(getHistorySnapshotFromState(state), {
+    const previousFb = {
+      selectedTemplateId: state.selectedTemplateId,
+      feedbackEnabled: state.feedbackEnabled,
+      feedbackBlendMode: state.feedbackBlendMode,
+      feedbackOpacity: state.feedbackOpacity,
+      feedbackScale: state.feedbackScale,
+      feedbackRotation: state.feedbackRotation,
+      feedbackPositionX: state.feedbackPositionX,
+      feedbackPositionY: state.feedbackPositionY,
+      isCustomFeedbackConfig: state.isCustomFeedbackConfig,
+    }
+    const nextFb = {
+      selectedTemplateId: template.id,
+      feedbackEnabled: template.config.feedback,
+      feedbackBlendMode: template.config.blendMode,
+      feedbackOpacity: template.config.opacity,
+      feedbackScale: template.config.scale,
+      feedbackRotation: template.config.rotation,
+      feedbackPositionX: template.config.positionX,
+      feedbackPositionY: template.config.positionY,
+      isCustomFeedbackConfig: false,
+    }
+    undoRedoManager.recordDelta({
+      type: 'update-feedback',
       description: `Apply Template ${template.name}`,
+      feedback: { before: previousFb, after: nextFb },
     })
     set({
       selectedTemplateId: template.id,
@@ -899,8 +981,13 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   setTargetFps: (targetFps) =>
     set((state) => {
-      undoRedoManager.record(getHistorySnapshotFromState(state), {
+      undoRedoManager.recordDelta({
+        type: 'update-settings',
         description: 'Change Target FPS',
+        settings: {
+          before: { targetFps: state.targetFps },
+          after: { targetFps },
+        },
       })
       return {
         targetFps,
@@ -910,8 +997,13 @@ export const useAppStore = create<AppState>((set, get) => ({
     }),
   setResolutionScale: (resolutionScale) =>
     set((state) => {
-      undoRedoManager.record(getHistorySnapshotFromState(state), {
+      undoRedoManager.recordDelta({
+        type: 'update-settings',
         description: 'Change Resolution Scale',
+        settings: {
+          before: { resolutionScale: state.resolutionScale },
+          after: { resolutionScale },
+        },
       })
       return {
         resolutionScale,
@@ -921,8 +1013,13 @@ export const useAppStore = create<AppState>((set, get) => ({
     }),
   setAudioBands: (bands) =>
     set((state) => {
-      undoRedoManager.record(getHistorySnapshotFromState(state), {
+      undoRedoManager.recordDelta({
+        type: 'update-settings',
         description: 'Change Audio Bands',
+        settings: {
+          before: { audioBands: state.audioBands },
+          after: { audioBands: { ...state.audioBands, ...bands } },
+        },
       })
       return {
         audioBands: {
@@ -935,8 +1032,13 @@ export const useAppStore = create<AppState>((set, get) => ({
     }),
   resetAudioBands: () =>
     set((state) => {
-      undoRedoManager.record(getHistorySnapshotFromState(state), {
+      undoRedoManager.recordDelta({
+        type: 'update-settings',
         description: 'Reset Audio Bands',
+        settings: {
+          before: { audioBands: state.audioBands },
+          after: { audioBands: { ...DEFAULT_AUDIO_BANDS } },
+        },
       })
       return {
         audioBands: { ...DEFAULT_AUDIO_BANDS },
@@ -1082,11 +1184,38 @@ export const useAppStore = create<AppState>((set, get) => ({
     }
 
     const state = get()
-    undoRedoManager.record(getHistorySnapshotFromState(state), {
+    const fb = result.feedbackConfig
+    const beforeSnapshot = getHistorySnapshotFromState(state)
+    const afterSnapshot: HistorySnapshot = {
+      graphNodes: result.nodes,
+      graphEdges: result.edges,
+      targetFps: result.targetFps ?? state.targetFps,
+      resolutionScale: result.resolutionScale ?? state.resolutionScale,
+      audioBands: result.audioBands ?? state.audioBands,
+      selectedNodeId: 'master-frame-buffer',
+      feedbackConfig: fb
+        ? {
+            selectedTemplateId: fb.selectedTemplateId ?? state.selectedTemplateId,
+            feedbackEnabled: fb.feedbackEnabled,
+            feedbackBlendMode: fb.feedbackBlendMode,
+            feedbackOpacity: fb.feedbackOpacity,
+            feedbackScale: fb.feedbackScale,
+            feedbackRotation: fb.feedbackRotation,
+            feedbackPositionX: fb.feedbackPositionX,
+            feedbackPositionY: fb.feedbackPositionY,
+            isCustomFeedbackConfig: fb.isCustomFeedbackConfig ?? false,
+          }
+        : beforeSnapshot.feedbackConfig,
+    }
+    undoRedoManager.recordDelta({
+      type: 'preset-load',
       description: `Load Preset ${result.metadata?.name ?? ''}`.trim(),
+      fullSnapshotFallback: {
+        before: beforeSnapshot,
+        after: afterSnapshot,
+      },
     })
 
-    const fb = result.feedbackConfig
     set({
       graphNodes: result.nodes,
       graphEdges: result.edges,
