@@ -1,5 +1,6 @@
 import React, { useCallback, useRef, useState } from 'react'
 import {
+  AlertTriangle,
   Crown,
   Eye,
   EyeOff,
@@ -15,6 +16,8 @@ import { useAppStore } from '../store/app-store'
 import type { RenderEngine } from '../../engine/render-engine'
 import { FRAME_BUFFER_TEMPLATES } from '../../engine/frame-buffer/frame-buffer-templates'
 import type { ResolutionScale } from '../../contracts/preset-settings'
+import { BaseModalDialog } from '../dialogs/base-modal-dialog'
+import { isNodeDirty } from './component-preset-utils'
 
 import type { ParameterOption } from './parameter-row'
 
@@ -162,12 +165,20 @@ export function ParameterInspector({
     [selectedNodeId, graphNodes, updateGraphNodeData],
   )
 
-  const handleApplyTemplate = useCallback(
+  const [pendingTemplateId, setPendingTemplateId] = useState<string | null>(null)
+
+  const appliedTemplateId = typeof selectedNode?.data?.appliedTemplateId === 'string'
+    ? selectedNode.data.appliedTemplateId
+    : ''
+  const dropdownValue = pendingTemplateId ?? appliedTemplateId
+
+  const applyTemplateConfig = useCallback(
     (templateId: string) => {
       const template = FRAME_BUFFER_TEMPLATES.find((t) => t.id === templateId)
       if (!template || !selectedNodeId) return
 
       updateGraphNodeData(selectedNodeId, {
+        appliedTemplateId: template.id,
         feedback: template.config.feedback,
         blendMode: template.config.blendMode,
         opacity: template.config.opacity,
@@ -176,9 +187,38 @@ export function ParameterInspector({
         positionX: template.config.positionX,
         positionY: template.config.positionY,
       })
+      setPendingTemplateId(null)
     },
     [selectedNodeId, updateGraphNodeData],
   )
+
+  const handleTemplateDropdownChange = useCallback(
+    (templateId: string) => {
+      if (!templateId || !selectedNode) return
+
+      // If the node has customized parameters or already applied template, warn before overwriting
+      if (isNodeDirty(selectedNode)) {
+        setPendingTemplateId(templateId)
+      } else {
+        applyTemplateConfig(templateId)
+      }
+    },
+    [selectedNode, applyTemplateConfig],
+  )
+
+  const handleCancelApplyTemplate = useCallback(() => {
+    setPendingTemplateId(null)
+  }, [])
+
+  const handleConfirmApplyTemplate = useCallback(() => {
+    if (pendingTemplateId) {
+      applyTemplateConfig(pendingTemplateId)
+    }
+  }, [pendingTemplateId, applyTemplateConfig])
+
+  const pendingTemplate = pendingTemplateId
+    ? FRAME_BUFFER_TEMPLATES.find((t) => t.id === pendingTemplateId)
+    : null
 
   const fileInputRef = useRef<HTMLInputElement | null>(null)
   const [isDragOverImage, setIsDragOverImage] = useState(false)
@@ -316,8 +356,8 @@ export function ParameterInspector({
           {isFrameBuffer && (
             <select
               data-testid="component-preset-dropdown"
-              onChange={(e) => handleApplyTemplate(e.target.value)}
-              defaultValue=""
+              value={dropdownValue}
+              onChange={(e) => handleTemplateDropdownChange(e.target.value)}
               aria-label="Component Preset Selector"
               title="Apply a built-in frame buffer template preset"
               className="px-2 py-1 rounded bg-black/50 border border-purple-500/30 text-[11px] font-mono text-purple-300 focus:outline-none focus:border-purple-400 cursor-pointer"
@@ -792,6 +832,58 @@ export function ParameterInspector({
           </>
         )}
       </div>
+
+      {/* Dirty-State Confirmation Modal */}
+      {pendingTemplate && selectedNode && (
+        <BaseModalDialog
+          isOpen={Boolean(pendingTemplate)}
+          onClose={handleCancelApplyTemplate}
+          title="Overwrite Component Parameters?"
+          icon={<AlertTriangle className="w-4 h-4 text-amber-400" />}
+          maxWidthClass="max-w-md"
+          headerTestId="overwrite-template-modal-header"
+        >
+          <div className="flex flex-col gap-4 text-xs font-mono select-none">
+            <p className="text-slate-300 leading-relaxed">
+              This layer <span className="font-bold text-white">&quot;{String(selectedNode.data?.label || selectedNode.id)}&quot;</span> has customized parameters. Applying the <span className="font-bold text-purple-300">&quot;{pendingTemplate.name}&quot;</span> template will overwrite your current settings.
+            </p>
+
+            <div className="p-3 rounded-lg bg-black/40 border border-purple-500/30 flex flex-col gap-1.5">
+              <span className="text-[10px] text-purple-400 uppercase font-bold tracking-wider">
+                Template Preview: {pendingTemplate.name}
+              </span>
+              <p className="text-[11px] text-slate-400">
+                {pendingTemplate.description}
+              </p>
+              <div className="grid grid-cols-2 gap-x-2 gap-y-1 mt-1 text-[10px] text-slate-300">
+                <div>Blend Mode: <span className="text-white font-semibold">{pendingTemplate.config.blendMode}</span></div>
+                <div>Feedback: <span className="text-white font-semibold">{pendingTemplate.config.feedback ? 'Enabled' : 'Disabled'}</span></div>
+                <div>Opacity: <span className="text-white font-semibold">{pendingTemplate.config.opacity}</span></div>
+                <div>Scale: <span className="text-white font-semibold">{pendingTemplate.config.scale}</span></div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-white/10">
+              <button
+                type="button"
+                data-testid="cancel-overwrite-template-btn"
+                onClick={handleCancelApplyTemplate}
+                className="px-3 py-1.5 rounded-lg border border-white/10 hover:border-white/20 text-slate-300 hover:text-white transition-colors cursor-pointer"
+              >
+                Keep Current
+              </button>
+              <button
+                type="button"
+                data-testid="confirm-overwrite-template-btn"
+                onClick={handleConfirmApplyTemplate}
+                className="px-3 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-500 text-white font-semibold shadow-lg shadow-purple-600/30 transition-all cursor-pointer"
+              >
+                Overwrite & Apply
+              </button>
+            </div>
+          </div>
+        </BaseModalDialog>
+      )}
     </div>
   )
 }

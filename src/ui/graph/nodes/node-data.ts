@@ -17,6 +17,7 @@ export interface MasterFrameBufferNodeData extends BaseNodeData {
 }
 
 export interface FrameBufferNodeData extends BaseNodeData {
+  appliedTemplateId?: string
   saveTo?: string
   loadFrom?: string
   blendMode?: string

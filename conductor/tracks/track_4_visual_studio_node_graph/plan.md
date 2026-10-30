@@ -53,7 +53,7 @@ This plan implements the complete Studio workspace for Visualització in 5 test-
 - [x] **Task 2.4: Graph State Synchronization with `RenderEngine`**
   - Synchronize React Flow nodes/edges with the `RenderEngine` node tree and `BufferPool` in real time.
   - *Verification:* Write integration tests in `src/ui/graph/graph-engine-sync.test.tsx` verifying engine node additions and removals.
-- [ ] **Task 2.5: Layer Tree View with Interactive Semantic Tag Highlighting**
+- [x] **Task 2.5: Layer Tree View with Interactive Semantic Tag Highlighting**
   - Implement collapsible Outliner Tree view component as an alternative/companion to the 2D node graph canvas.
   - Render execution sequence badges, container hierarchies, and layer controls (bypass, re-order, delete).
   - Implement interactive semantic tag highlighting: hovering on any `@NAME` buffer tag illuminates all producers and consumers in matching neon glow.
@@ -71,17 +71,17 @@ This plan implements the complete Studio workspace for Visualització in 5 test-
 - Add component preset selector with dirty-state confirmation guards.
 
 ### Tasks
-- [ ] **Task 3.1: Docked Parameter Inspector Shell**
+- [x] **Task 3.1: Docked Parameter Inspector Shell**
   - Create `src/ui/inspector/parameter-inspector.tsx` displaying node header, component preset selector, and parameter rows.
   - *Verification:* Write tests in `src/ui/inspector/parameter-inspector.test.tsx` verifying node selection binding.
-- [ ] **Task 3.2: Universal Parameter Row (`ParameterRow`) with `f(x)` Mode Toggle**
+- [x] **Task 3.2: Universal Parameter Row (`ParameterRow`) with `f(x)` Mode Toggle**
   - Create `ParameterRow` supporting fixed controls (rotary knobs, range sliders, toggles, dropdowns) and `f(x)` formula toggle.
   - *Verification:* Write tests in `src/ui/inspector/parameter-row.test.tsx` verifying mode toggle and value persistence.
-- [ ] **Task 3.3: Inline Autocomplete & 60 FPS Sparkline Integration**
+- [x] **Task 3.3: Inline Autocomplete & 60 FPS Sparkline Integration**
   - Integrate `ExpressionInput` with inline autocomplete dropdown triggering on `$` and `#`.
   - Mount `ExpressionSparkline` for live 180-frame telemetry and direct DOM numeric readouts.
   - *Verification:* Write tests in `src/ui/inspector/expression-autocomplete.test.tsx` verifying autocomplete keyboard navigation.
-- [ ] **Task 3.4: Component Preset Selector & Dirty-State Confirmation Modal**
+- [x] **Task 3.4: Component Preset Selector & Dirty-State Confirmation Modal**
   - Add component preset dropdown to inspector header with built-in templates.
   - Integrate dirty-state confirmation modal (`BaseModalDialog`) protecting modified components from accidental overwrite.
   - *Verification:* Write tests in `src/ui/inspector/component-preset-selector.test.tsx` verifying dirty-state detection and modal confirmation.
