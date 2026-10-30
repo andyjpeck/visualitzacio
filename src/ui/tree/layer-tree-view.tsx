@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import {
+  Activity,
   AlertTriangle,
   ChevronDown,
   ChevronRight,
@@ -22,7 +23,6 @@ import {
   CONTAINER_HEADER_HEIGHT,
   CONTAINER_PADDING,
   CHILD_GAP,
-  getNextChildPosition,
   reflowGraphStacks,
 } from '../graph/layout/container-bounds'
 
@@ -52,7 +52,7 @@ export function LayerTreeView({
   const setSelectedNodeId = useAppStore((state) => state.setSelectedNodeId)
   const updateGraphNodeData = useAppStore((state) => state.updateGraphNodeData)
   const removeGraphNode = useAppStore((state) => state.removeGraphNode)
-  const addGraphNode = useAppStore((state) => state.addGraphNode)
+  const addLayerNode = useAppStore((state) => state.addLayerNode)
   const hoveredBufferTag = useAppStore((state) => state.hoveredBufferTag)
   const setHoveredBufferTag = useAppStore((state) => state.setHoveredBufferTag)
 
@@ -379,60 +379,12 @@ export function LayerTreeView({
 
   const handleAddChild = (
     parentId: string,
-    type: 'testVisual' | 'staticImage' | 'frameBuffer',
+    type: 'testVisual' | 'staticImage' | 'frameBuffer' | 'duperscopeNode',
     e: React.MouseEvent,
   ) => {
     e.stopPropagation()
     setOpenAddMenuId(null)
-
-    const childCount = graphNodes.filter((n) => n.parentId === parentId).length
-    const newId = `${type}-${Date.now().toString(36)}`
-    const childPos = getNextChildPosition(parentId, graphNodes)
-
-    let childNode: Node
-    if (type === 'testVisual') {
-      childNode = {
-        id: newId,
-        type: 'testVisual',
-        parentId,
-        extent: 'parent',
-        position: childPos,
-        data: {
-          label: `Synth ${childCount + 1}`,
-          shape: 'Crystal',
-          scale: 1.0,
-        },
-      }
-    } else if (type === 'staticImage') {
-      childNode = {
-        id: newId,
-        type: 'staticImage',
-        parentId,
-        extent: 'parent',
-        position: childPos,
-        data: {
-          label: `Image Layer ${childCount + 1}`,
-          fitMode: 'contain',
-        },
-      }
-    } else {
-      childNode = {
-        id: newId,
-        type: 'frameBuffer',
-        parentId,
-        extent: 'parent',
-        position: childPos,
-        data: {
-          label: `Buffer ${childCount + 1}`,
-          blendMode: 'screen',
-          feedback: true,
-          opacity: 0.9,
-        },
-      }
-    }
-
-    addGraphNode(childNode)
-    setSelectedNodeId(newId)
+    addLayerNode(type, parentId)
   }
 
   // Recursive tree renderer for nodes
@@ -550,6 +502,7 @@ export function LayerTreeView({
               {!isMaster && isFrameBuffer && <Layers className="w-3.5 h-3.5 text-purple-400" />}
               {node.type === 'testVisual' && <Sparkles className="w-3.5 h-3.5 text-cyber-cyan" />}
               {node.type === 'staticImage' && <ImageIcon className="w-3.5 h-3.5 text-emerald-400" />}
+              {node.type === 'duperscopeNode' && <Activity data-testid="duperscope-icon-badge" className="w-3.5 h-3.5 text-cyan-400" />}
             </div>
 
             {/* Label (Double-click to Rename Inline) */}
@@ -688,6 +641,16 @@ export function LayerTreeView({
                     aria-label="Add Child Layer Menu"
                     className="absolute right-0 top-full mt-1 w-44 rounded-xl bg-[#140e24]/98 border border-purple-500/40 shadow-[0_12px_40px_rgba(0,0,0,0.85)] backdrop-blur-2xl p-1 flex flex-col gap-0.5 text-xs font-mono z-50"
                   >
+                    <button
+                      type="button"
+                      onClick={(e) => handleAddChild(node.id, 'duperscopeNode', e)}
+                      data-testid={`tree-add-duperscope-btn-${node.id}`}
+                      title="Add a programmable audio-reactive Duperscope generative synthesizer"
+                      className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-cyan-950/60 text-slate-300 hover:text-cyan-300 transition-colors text-left cursor-pointer"
+                    >
+                      <Activity className="w-3.5 h-3.5 text-cyan-400" />
+                      <span>Duperscope</span>
+                    </button>
                     <button
                       type="button"
                       onClick={(e) => handleAddChild(node.id, 'testVisual', e)}

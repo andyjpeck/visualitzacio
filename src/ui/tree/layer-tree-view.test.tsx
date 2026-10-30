@@ -535,4 +535,41 @@ describe('WorkspacePane Component', () => {
     expect(screen.queryByTestId('delete-container-modal-header')).not.toBeInTheDocument()
     expect(screen.queryByTestId('layer-tree-item-synth-child')).not.toBeInTheDocument()
   })
+
+  it('adds, renders dedicated icon badge, renames, and deletes a Duperscope layer', () => {
+    render(<LayerTreeView />)
+
+    // Open Add menu on source-buffer
+    const addBtn = screen.getByTestId('tree-add-child-btn-source-buffer')
+    fireEvent.click(addBtn)
+
+    // Click Duperscope option
+    const addDuperscopeBtn = screen.getByTestId('tree-add-duperscope-btn-source-buffer')
+    fireEvent.click(addDuperscopeBtn)
+
+    // Find the newly created node in the store
+    const nodes = useAppStore.getState().graphNodes
+    const createdScope = nodes.find((n) => n.type === 'duperscopeNode' && n.parentId === 'source-buffer')
+    expect(createdScope).toBeDefined()
+    expect(useAppStore.getState().selectedNodeId).toBe(createdScope!.id)
+
+    // Verify dedicated scope icon badge is rendered
+    expect(screen.getByTestId('duperscope-icon-badge')).toBeInTheDocument()
+
+    // Inline rename
+    const labelSpan = screen.getByTestId(`tree-label-${createdScope!.id}`)
+    fireEvent.doubleClick(labelSpan)
+
+    const renameInput = screen.getByTestId(`tree-rename-input-${createdScope!.id}`)
+    fireEvent.change(renameInput, { target: { value: 'Laser Beam' } })
+    fireEvent.keyDown(renameInput, { key: 'Enter' })
+
+    expect(useAppStore.getState().graphNodes.find((n) => n.id === createdScope!.id)?.data.label).toBe('Laser Beam')
+
+    // Delete Duperscope layer
+    const deleteBtn = screen.getByTestId(`tree-delete-btn-${createdScope!.id}`)
+    fireEvent.click(deleteBtn)
+
+    expect(useAppStore.getState().graphNodes.some((n) => n.id === createdScope!.id)).toBe(false)
+  })
 })

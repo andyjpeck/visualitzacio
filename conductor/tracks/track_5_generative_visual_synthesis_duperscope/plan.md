@@ -72,7 +72,7 @@ This plan implements **Duperscope** (`DuperscopeNode`) and its 4-phase multi-sta
 - Build the Duperscope section in `ParameterInspector` with the Component Preset Selector, audio/draw mode dropdowns, `opacity` `f(x)` row, and 4-phase script editors (`init`, `beat`, `frame`, `point`) featuring local variable autocomplete and inline error diagnostics.
 
 ### Tasks
-- [ ] **Task 4.1: Outliner Layer Creation & Duperscope Icon Badge**
+- [x] **Task 4.1: Outliner Layer Creation & Duperscope Icon Badge**
   - Update `LayerTreeView.tsx` to include **"+ Duperscope"** in the Add Layer menu and render a dedicated scope icon badge for `duperscopeNode` items.
   - *Verification:* Update `src/ui/tree/layer-tree-view.test.tsx` to verify adding, renaming, reordering, and deleting a Duperscope layer.
 - [ ] **Task 4.2: Duperscope Inspector Controls, 4-Phase Script Editor & Autocomplete**
