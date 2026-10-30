@@ -5,7 +5,7 @@ This plan implements **Duperscope** (`DuperscopeNode`) and its 4-phase multi-sta
 
 ---
 
-## Phase 1: Multi-Statement Script Compiler & 4-Phase Execution Engine
+## Phase 1: Multi-Statement Script Compiler & 4-Phase Execution Engine [checkpoint: 0bb1833]
 
 ### Goals
 - Build `DuperscopeCompiler` to parse, validate, and pre-compile multi-statement scripts (`init`, `beat`, `frame`, `point`) with comment stripping and read-only variable guards.
@@ -33,7 +33,7 @@ This plan implements **Duperscope** (`DuperscopeNode`) and its 4-phase multi-sta
 - Implement pre-allocated **Instanced Screen-Space Quad Ribbon** rendering for `'lines'` and `'lineLoop'` draw modes (supporting `linesize` from `1px` to `128px` and per-vertex RGBA gradients) and custom circular particle shader rendering for `'points'` mode.
 
 ### Tasks
-- [ ] **Task 2.1: Custom GLSL Shaders for Instanced Quad Ribbons & Circular Points**
+- [~] **Task 2.1: Custom GLSL Shaders for Instanced Quad Ribbons & Circular Points**
   - Create `src/engine/nodes/duperscope-shaders.ts` defining:
     1. Screen-space quad ribbon vertex/fragment shader for `'lines'` and `'lineLoop'`, expanding each segment $[P_k, P_{k+1}]$ along its 2D perpendicular normal by `linesize * 0.5` pixels with 1:1 aspect projection (`x / $ASPECT`) and `skip` discard.
     2. Anti-aliased circular particle vertex/fragment shader for `'points'` mode with per-point `gl_PointSize = aSize * uPixelRatio` and 1:1 aspect projection.
