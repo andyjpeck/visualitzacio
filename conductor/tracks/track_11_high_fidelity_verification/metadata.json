@@ -3,7 +3,7 @@
   "type": "chore",
   "status": "completed",
   "created_at": "2026-10-30T10:25:00-07:00",
-  "updated_at": "2026-10-30T10:37:00-07:00",
+  "updated_at": "2026-10-30T11:26:00-07:00",
   "description": "High-Fidelity Verification Overhaul: Real Chromium E2E Playwright actionability checks for modal/dialog stacking, WebGL pipeline & non-empty pixel smoke tests, Chrome DevTools MCP visual inspection rules, and updated Conductor 3-tier quality gates.",
   "github_issue": {
     "number": 9,
@@ -11,5 +11,14 @@
   },
   "branch": "issue-9-verification-fidelity",
   "agent": "Antigravity",
-  "tasks": []
+  "tasks": [
+    { "id": "1.1", "name": "Audit & Refactor Floating UI Elements to Portals", "status": "completed" },
+    { "id": "1.2", "name": "Modal Actionability Unit Test Suite", "status": "completed" },
+    { "id": "2.1", "name": "Preset Deserialization & Scene Wiring Smoke Tests", "status": "completed" },
+    { "id": "2.2", "name": "Non-Empty Geometry & Shader Validation Assertions", "status": "completed" },
+    { "id": "3.1", "name": "Install & Configure Playwright", "status": "completed" },
+    { "id": "3.2", "name": "E2E Smoke Tests for UI Actionability & Canvas Rendering", "status": "completed" },
+    { "id": "4.1", "name": "Update Conductor Guidelines & Workflow", "status": "completed" },
+    { "id": "4.2", "name": "Final Quality Gates & Verification", "status": "completed" }
+  ]
 }
