@@ -5,6 +5,9 @@ import type { AudioManager } from '../../audio/audio-manager'
 /** Strict regex allowing only alphanumeric characters, dashes, and underscores (no slashes, dots, or protocols). */
 export const PRESET_NAME_REGEX = /^[a-zA-Z0-9_-]+$/
 
+/** Disallowed prototype pollution and reserved property identifiers. */
+const RESERVED_NAMES = new Set(['__proto__', 'prototype', 'constructor'])
+
 export interface UseUrlPresetLoaderOptions {
   audioManager?: AudioManager | null
   onSuccess?: (presetName: string) => void
@@ -28,7 +31,7 @@ export function extractSanitizedPresetName(search: string): string | null {
 
   // Strip trailing .json extension if provided
   const cleanName = rawPreset.trim().replace(/\.json$/i, '')
-  if (!PRESET_NAME_REGEX.test(cleanName)) {
+  if (!PRESET_NAME_REGEX.test(cleanName) || RESERVED_NAMES.has(cleanName.toLowerCase())) {
     console.warn(`[Security] Rejected unsafe preset parameter: "${rawPreset}"`)
     return null
   }
@@ -84,7 +87,10 @@ export function useUrlPresetLoader(
     const baseUrl = rawBase.endsWith('/') ? rawBase : `${rawBase}/`
     const presetUrl = `${baseUrl}presets/${presetName}.json`
 
-    fetch(presetUrl)
+    const abortController = new AbortController()
+    let isCancelled = false
+
+    fetch(presetUrl, { signal: abortController.signal })
       .then(async (res) => {
         if (!res.ok) {
           throw new Error(`Failed to load preset "${presetName}" (HTTP ${res.status})`)
@@ -92,11 +98,16 @@ export function useUrlPresetLoader(
         return res.json()
       })
       .then(async (presetJson) => {
+        if (isCancelled) return
         const result = loadPreset(presetJson)
         if (!result.success) {
           const errMsg = result.errors?.join('; ') ?? 'Preset deserialization failed'
           setError(errMsg)
-          optionsRef.current.onError?.(errMsg)
+          if (optionsRef.current.onError) {
+            optionsRef.current.onError(errMsg)
+          } else {
+            console.error(`[UrlPresetLoader] ${errMsg}`)
+          }
           return
         }
 
@@ -107,7 +118,7 @@ export function useUrlPresetLoader(
           try {
             setSourceType('sample')
             await optionsRef.current.audioManager.playSample()
-            setIsPlaying(true)
+            if (!isCancelled) setIsPlaying(true)
           } catch (audioErr) {
             // Autoplay policy may require user interaction first
             console.info('[UrlPresetLoader] Audio autoplay deferred pending user interaction', audioErr)
@@ -115,13 +126,25 @@ export function useUrlPresetLoader(
         }
       })
       .catch((err) => {
+        if (isCancelled || (err as Error).name === 'AbortError') return
         const errMsg = (err as Error).message
         setError(errMsg)
-        optionsRef.current.onError?.(errMsg)
+        if (optionsRef.current.onError) {
+          optionsRef.current.onError(errMsg)
+        } else {
+          console.error(`[UrlPresetLoader] ${errMsg}`)
+        }
       })
       .finally(() => {
-        setIsLoading(false)
+        if (!isCancelled) {
+          setIsLoading(false)
+        }
       })
+
+    return () => {
+      isCancelled = true
+      abortController.abort()
+    }
   }, [loadPreset, setIsPlaying, setSourceType])
 
   return { isLoading, loadedPresetName, error }

@@ -63,7 +63,7 @@ You must read and adhere to:
 
 ### 4. Delivery, Collapsible Copy & Quick Preview Link (Mandatory) 📋⚡
 Whenever you generate a new preset or modify an existing preset:
-1. Save the validated JSON file to `presets/<preset-name>.json` (and ensure it is mirrored to `public/presets/<preset-name>.json`).
+1. Save the validated JSON file to `presets/<preset-name>.json`.
 2. **Render the complete JSON inside a collapsible `<details>` widget (starting collapsed)**:
    - Inside the `<details>` widget, enclose the full JSON in a fenced Markdown code block (```json ... ```), which provides a native 1-click **"Copy"** button in the UI.
    - Do not display the JSON expanded by default.

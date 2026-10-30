@@ -35,6 +35,12 @@ describe('useUrlPresetLoader & Security Sanitization', () => {
       expect(extractSanitizedPresetName('?preset=sub\\preset')).toBeNull()
     })
 
+    it('rejects prototype pollution property names', () => {
+      expect(extractSanitizedPresetName('?preset=__proto__')).toBeNull()
+      expect(extractSanitizedPresetName('?preset=prototype')).toBeNull()
+      expect(extractSanitizedPresetName('?preset=constructor')).toBeNull()
+    })
+
     it('rejects arbitrary external URLs and protocol schemes', () => {
       expect(extractSanitizedPresetName('?preset=https://evil.com/payload')).toBeNull()
       expect(extractSanitizedPresetName('?preset=http://localhost:8080/evil')).toBeNull()
@@ -115,10 +121,25 @@ describe('useUrlPresetLoader & Security Sanitization', () => {
 
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringContaining('/presets/quadrant-mirrored-spectrum.json'),
+        expect.any(Object),
       )
       expect(loadPresetSpy).toHaveBeenCalledWith(mockPresetData)
       expect(onSuccess).toHaveBeenCalledWith('quadrant-mirrored-spectrum')
       expect(result.current.isLoading).toBe(false)
+      expect(result.current.error).toBeNull()
+    })
+
+    it('does not trigger fetch or set error when query is malicious or absent', () => {
+      window.history.pushState({}, '', '/visualitzacio/?preset=../../etc/passwd')
+      global.fetch = vi.fn()
+
+      const onError = vi.fn()
+      const { result } = renderHook(() => useUrlPresetLoader({ onError }))
+
+      expect(global.fetch).not.toHaveBeenCalled()
+      expect(onError).not.toHaveBeenCalled()
+      expect(result.current.isLoading).toBe(false)
+      expect(result.current.loadedPresetName).toBeNull()
       expect(result.current.error).toBeNull()
     })
 
@@ -153,7 +174,37 @@ describe('useUrlPresetLoader & Security Sanitization', () => {
       expect(useAppStore.getState().sourceType).toBe('sample')
     })
 
-    it('sets error and calls onError if fetch fails', async () => {
+    it('handles audio autoplay rejection gracefully without failing preset load', async () => {
+      window.history.pushState({}, '', '/visualitzacio/?preset=quadrant-mirrored-spectrum&play=1')
+
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          schemaVersion: 2,
+          metadata: { name: 'Autoplay Blocked', version: 2, created: '2026-10-30T00:00:00Z' },
+          settings: { targetFps: 60, resolutionScale: 1, audioBands: { bassMin: 20, bassMax: 250, midMin: 250, midMax: 4000, trebleMin: 4000, trebleMax: 16000 } },
+          root: { id: 'master-frame-buffer', type: 'masterFrameBuffer', params: {}, children: [] },
+        }),
+      })
+
+      const mockAudioManager = {
+        playSample: vi.fn().mockRejectedValue(new Error('The play() request was interrupted')),
+      } as unknown as AudioManager
+
+      const { result } = renderHook(() =>
+        useUrlPresetLoader({ audioManager: mockAudioManager }),
+      )
+
+      await waitFor(() => {
+        expect(result.current.loadedPresetName).toBe('quadrant-mirrored-spectrum')
+      })
+
+      expect(result.current.isLoading).toBe(false)
+      expect(result.current.error).toBeNull()
+    })
+
+    it('sets error and calls onError if fetch fails with HTTP error', async () => {
       window.history.pushState({}, '', '/visualitzacio/?preset=nonexistent')
 
       global.fetch = vi.fn().mockResolvedValue({
@@ -169,6 +220,48 @@ describe('useUrlPresetLoader & Security Sanitization', () => {
       })
 
       expect(onError).toHaveBeenCalledWith(expect.stringContaining('HTTP 404'))
+      expect(result.current.isLoading).toBe(false)
+      expect(result.current.loadedPresetName).toBeNull()
+    })
+
+    it('handles network connection rejection (TypeError: Failed to fetch)', async () => {
+      window.history.pushState({}, '', '/visualitzacio/?preset=quadrant-mirrored-spectrum')
+
+      global.fetch = vi.fn().mockRejectedValue(new TypeError('Failed to fetch'))
+
+      const onError = vi.fn()
+      const { result } = renderHook(() => useUrlPresetLoader({ onError }))
+
+      await waitFor(() => {
+        expect(result.current.error).toBe('Failed to fetch')
+      })
+
+      expect(onError).toHaveBeenCalledWith('Failed to fetch')
+      expect(result.current.isLoading).toBe(false)
+    })
+
+    it('handles preset schema deserialization failure', async () => {
+      window.history.pushState({}, '', '/visualitzacio/?preset=corrupt-preset')
+
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => ({ invalid: 'data' }),
+      })
+
+      vi.spyOn(useAppStore.getState(), 'loadPreset').mockReturnValue({
+        success: false,
+        errors: ['Schema validation failed: missing root'],
+      })
+
+      const onError = vi.fn()
+      const { result } = renderHook(() => useUrlPresetLoader({ onError }))
+
+      await waitFor(() => {
+        expect(result.current.error).toContain('Schema validation failed: missing root')
+      })
+
+      expect(onError).toHaveBeenCalledWith(expect.stringContaining('Schema validation failed'))
       expect(result.current.isLoading).toBe(false)
       expect(result.current.loadedPresetName).toBeNull()
     })
