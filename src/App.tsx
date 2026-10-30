@@ -14,6 +14,7 @@ import type { RenderEngine } from './engine/render-engine'
 import { useAppStore } from './ui/store/app-store'
 import { useUndoRedoShortcuts } from './ui/history/use-undo-redo-shortcuts'
 import { usePresetDropAndPaste } from './ui/hooks/use-preset-drop-and-paste'
+import { useUrlPresetLoader } from './ui/hooks/use-url-preset-loader'
 import { Upload } from 'lucide-react'
 
 /**
@@ -32,6 +33,9 @@ export function App(): React.ReactElement {
 
   // Bind global drag-and-drop preset JSON and clipboard paste
   const { isDraggingPreset } = usePresetDropAndPaste()
+
+  // Automatically load preset and trigger playback from URL (?preset=<name>&play=1)
+  useUrlPresetLoader({ audioManager })
 
   // Synchronize dynamic frequency band cutoffs to audio analyzer
   useEffect(() => {

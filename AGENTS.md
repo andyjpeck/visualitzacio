@@ -13,7 +13,7 @@ If your task involves **creating, modifying, debugging, or designing visual pres
   - [`expression-language.md`](docs/preset-authoring/expression-language.md) — Expression syntax, telemetry variables, and audio functions
   - [`duperscope-scripting.md`](docs/preset-authoring/duperscope-scripting.md) — 4-phase procedural mathematics lifecycle
   - [`frame-buffer-compositing.md`](docs/preset-authoring/frame-buffer-compositing.md) — Feedback loops, blend modes, and transforms
-- **Mandatory Output Rule**: Whenever you generate or update a preset, always provide the complete JSON in a single-click copyable markdown code block (` ```json ... ``` `).
+- **Mandatory Output Rule**: Whenever you generate or update a preset, provide the complete JSON inside a collapsed `<details>` block with a copy button, followed immediately by the 1-click preview link (`?preset=<name>&play=1`).
 
 ---
 

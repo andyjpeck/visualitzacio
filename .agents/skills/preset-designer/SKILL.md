@@ -61,12 +61,29 @@ You must read and adhere to:
    ```
 3. Ensure all Duperscope scripts (`init`, `beat`, `frame`, `point`) compile cleanly with zero syntax errors.
 
-### 4. Delivery & One-Click Copy Requirement (Mandatory) 📋⚡
+### 4. Delivery, Collapsible Copy & Quick Preview Link (Mandatory) 📋⚡
 Whenever you generate a new preset or modify an existing preset:
-1. Save the validated JSON file to `presets/<preset-name>.json`.
-2. **ALWAYS include the complete, formatted JSON in a standalone fenced Markdown code block (` ```json ... ``` `) in your final response.**
-   - The chat interface renders every fenced code block with a native one-click **"Copy"** button in the upper corner.
-   - **Never truncate** or merely link to the file on disk without providing the full code block. The user must be able to copy the entire preset JSON with a single click directly from the message.
+1. Save the validated JSON file to `presets/<preset-name>.json` (and ensure it is mirrored to `public/presets/<preset-name>.json`).
+2. **Render the complete JSON inside a collapsible `<details>` widget (starting collapsed)**:
+   - Inside the `<details>` widget, enclose the full JSON in a fenced Markdown code block (```json ... ```), which provides a native 1-click **"Copy"** button in the UI.
+   - Do not display the JSON expanded by default.
+   - Example structure:
+     ```markdown
+     <details>
+     <summary>📋 <b>Preset JSON (click to expand)</b></summary>
+
+     ```json
+     {
+       "schemaVersion": 2,
+       ...
+     }
+     ```
+     </details>
+     ```
+3. **Render the Quick Preview Link immediately underneath the collapsed block**:
+   - Provide a direct deep-link that auto-loads the preset and triggers audio playback:
+     `🌐 **[Preview in Visualització (Local)](http://localhost:5173/visualitzacio/?preset=<preset-name>&play=1)**`
+     *(And optionally the production link: `https://andyjpeck.github.io/visualitzacio/?preset=<preset-name>&play=1`)*
 
 ---
 

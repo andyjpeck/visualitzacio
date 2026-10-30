@@ -1,0 +1,149 @@
+{
+  "schemaVersion": 2,
+  "metadata": {
+    "name": "Quadrant Mirrored Spectrum",
+    "author": "Stateless Preset Designer",
+    "version": 2,
+    "description": "Dual frequency spectrum lines composed into 'myframe' along the bottom and right edges with ping-pong feedback (sand-smear sideways drift and phosphor decay), replicated across 4 symmetric quadrants, featuring beat-reactive zoom bounce and angular twist on the master output canvas.",
+    "created": "2026-10-30T19:55:00.000Z",
+    "modified": "2026-10-30T23:15:00.000Z"
+  },
+  "settings": {
+    "targetFps": 60,
+    "resolutionScale": 1,
+    "audioBands": {
+      "bassMin": 20,
+      "bassMax": 250,
+      "midMin": 250,
+      "midMax": 4000,
+      "trebleMin": 4000,
+      "trebleMax": 16000
+    }
+  },
+  "feedback": {
+    "selectedTemplateId": "custom",
+    "feedbackEnabled": true,
+    "feedbackBlendMode": "replace",
+    "feedbackOpacity": 0.93,
+    "feedbackScale": 1,
+    "feedbackRotation": 0,
+    "feedbackPositionX": 0.006,
+    "feedbackPositionY": 0,
+    "isCustomFeedbackConfig": true
+  },
+  "root": {
+    "id": "master-frame-buffer",
+    "type": "masterFrameBuffer",
+    "label": "Master Output",
+    "params": {
+      "blendMode": "replace",
+      "outputBlendMode": "replace",
+      "inputBlendMode": "none",
+      "opacity": 1,
+      "scale": "1.0 + #BEAT(0.35) * 0.12",
+      "rotation": "#BEAT(0.35) * 4.0",
+      "positionX": 0,
+      "positionY": 0
+    },
+    "children": [
+      {
+        "id": "myframe",
+        "type": "frameBuffer",
+        "label": "myframe (Spectrum Frame Generator)",
+        "params": {
+          "saveTo": "@FRAME",
+          "outputBlendMode": "none",
+          "feedback": true,
+          "opacity": 0.93,
+          "scale": 1,
+          "positionX": 0.006,
+          "positionY": 0
+        },
+        "children": [
+          {
+            "id": "myline-bottom",
+            "type": "duperscopeNode",
+            "label": "myline (Bottom Spectrum Line)",
+            "params": {
+              "drawMode": "lines",
+              "audioMode": "spectrum",
+              "channel": "center",
+              "opacity": 1,
+              "initCode": "n = 256;",
+              "beatCode": "linesize = 5.0;",
+              "frameCode": "linesize = 3.5; r = 0.1 + $BASS * 0.4; g = 0.75; b = 1.0;",
+              "pointCode": "x = -1.0 + (i * 2.0); y = -1.0 + (v * 0.45); r = 0.1 + i * 0.5; g = 0.7 + (1.0 - i) * 0.3; b = 1.0;"
+            }
+          },
+          {
+            "id": "myline-right",
+            "type": "duperscopeNode",
+            "label": "myline (Right Spectrum Line)",
+            "params": {
+              "drawMode": "lines",
+              "audioMode": "spectrum",
+              "channel": "center",
+              "opacity": 1,
+              "initCode": "n = 256;",
+              "beatCode": "linesize = 5.0;",
+              "frameCode": "linesize = 3.5; r = 0.2 + $BASS * 0.4; g = 0.70; b = 1.0;",
+              "pointCode": "y = 1.0 - (i * 2.0); x = 1.0 - (v * 0.45); r = 0.2 + (1.0 - i) * 0.4; g = 0.6 + i * 0.4; b = 1.0;"
+            }
+          }
+        ]
+      },
+      {
+        "id": "quadrant-upper-left",
+        "type": "frameBuffer",
+        "label": "myframe (Upper-Left Quadrant)",
+        "params": {
+          "loadFrom": "@FRAME",
+          "scale": 0.5,
+          "positionX": -0.5,
+          "positionY": 0.5,
+          "outputBlendMode": "additive"
+        }
+      },
+      {
+        "id": "quadrant-upper-right",
+        "type": "frameBuffer",
+        "label": "myframe (Upper-Right Quadrant - Flipped Y-Axis)",
+        "params": {
+          "loadFrom": "@FRAME",
+          "scale": 0.5,
+          "flipX": true,
+          "positionX": 0.5,
+          "positionY": 0.5,
+          "outputBlendMode": "additive"
+        }
+      },
+      {
+        "id": "quadrant-lower-left",
+        "type": "frameBuffer",
+        "label": "myframe (Lower-Left Quadrant - Flipped X-Axis)",
+        "params": {
+          "loadFrom": "@FRAME",
+          "scale": 0.5,
+          "flipY": true,
+          "positionX": -0.5,
+          "positionY": -0.5,
+          "outputBlendMode": "additive"
+        }
+      },
+      {
+        "id": "quadrant-lower-right",
+        "type": "frameBuffer",
+        "label": "myframe (Lower-Right Quadrant - Flipped X & Y Axes)",
+        "params": {
+          "loadFrom": "@FRAME",
+          "scale": 0.5,
+          "flipX": true,
+          "flipY": true,
+          "positionX": 0.5,
+          "positionY": -0.5,
+          "outputBlendMode": "additive"
+        }
+      }
+    ]
+  }
+}
