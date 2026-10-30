@@ -54,7 +54,7 @@ This plan implements **Duperscope** (`DuperscopeNode`) and its 4-phase multi-sta
 - Integrate `duperscopeNode` into `node-data.ts`, `useAppStore`, `UndoRedoManager`, Preset Schema v2 serializer/deserializer, and `ViewportCanvas`.
 
 ### Tasks
-- [ ] **Task 3.1: Built-in Duperscope Template Catalog**
+- [x] **Task 3.1: Built-in Duperscope Template Catalog**
   - Create `src/engine/nodes/duperscope-templates.ts` with the 4 classic generative templates and default Duperscope node parameters.
   - Update `src/ui/inspector/component-preset-utils.ts` (`isNodeDirty`) to detect modified parameters or script blocks on `duperscopeNode`.
   - *Verification:* Write unit tests in `src/engine/nodes/duperscope-templates.test.ts` verifying that all built-in templates compile cleanly and evaluate without error.

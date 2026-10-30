@@ -1,4 +1,5 @@
 import type { Node } from '@xyflow/react'
+import { DEFAULT_DUPERSCOPE_CONFIG } from '../../engine/nodes/duperscope-templates'
 
 /**
  * Determines whether a graph node has modified / customized parameters
@@ -36,6 +37,20 @@ export function isNodeDirty(node?: Node | null): boolean {
 
     // An existing template was already configured
     if (typeof data.appliedTemplateId === 'string' && data.appliedTemplateId !== 'clean-slate') return true
+  }
+
+  // For Duperscope nodes, check scripts, modes, channel, and appliedTemplateId
+  if (node.type === 'duperscopeNode') {
+    if (typeof data.appliedTemplateId === 'string' && data.appliedTemplateId !== 'clean-slate') return true
+    if (data.drawMode && data.drawMode !== DEFAULT_DUPERSCOPE_CONFIG.drawMode) return true
+    if (data.audioMode && data.audioMode !== DEFAULT_DUPERSCOPE_CONFIG.audioMode) return true
+    if (data.channel && data.channel !== DEFAULT_DUPERSCOPE_CONFIG.channel) return true
+    if (data.opacity !== undefined && data.opacity !== 1.0 && data.opacity !== 1) return true
+
+    if (data.initCode !== undefined && data.initCode !== DEFAULT_DUPERSCOPE_CONFIG.initCode) return true
+    if (data.beatCode !== undefined && data.beatCode !== DEFAULT_DUPERSCOPE_CONFIG.beatCode) return true
+    if (data.frameCode !== undefined && data.frameCode !== DEFAULT_DUPERSCOPE_CONFIG.frameCode) return true
+    if (data.pointCode !== undefined && data.pointCode !== DEFAULT_DUPERSCOPE_CONFIG.pointCode) return true
   }
 
   return false
