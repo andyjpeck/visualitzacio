@@ -447,4 +447,49 @@ describe('WorkspacePane Component', () => {
     // Synth child should be visible again
     expect(screen.getByTestId('layer-tree-item-synth-child')).toBeInTheDocument()
   })
+
+  it('dismisses the add child layer dialog when pressing esc key', () => {
+    render(<LayerTreeView />)
+
+    const addBtn = screen.getByTestId('tree-add-child-btn-master-frame-buffer')
+    expect(addBtn).toBeInTheDocument()
+
+    // Dialog menu should initially be closed
+    expect(screen.queryByTestId('tree-add-child-menu-master-frame-buffer')).not.toBeInTheDocument()
+
+    // Click '+' button to open dialog
+    fireEvent.click(addBtn)
+    expect(screen.getByTestId('tree-add-child-menu-master-frame-buffer')).toBeInTheDocument()
+
+    // Press Escape key
+    fireEvent.keyDown(document, { key: 'Escape' })
+
+    // Dialog menu should now be dismissed
+    expect(screen.queryByTestId('tree-add-child-menu-master-frame-buffer')).not.toBeInTheDocument()
+  })
+
+  it('dismisses the add child layer dialog when clicking outside of it', () => {
+    render(<LayerTreeView />)
+
+    const addBtn = screen.getByTestId('tree-add-child-btn-master-frame-buffer')
+
+    // Click '+' button to open dialog
+    fireEvent.click(addBtn)
+    const dialogMenu = screen.getByTestId('tree-add-child-menu-master-frame-buffer')
+    expect(dialogMenu).toBeInTheDocument()
+
+    // Clicking inside the dialog does not dismiss it
+    fireEvent.pointerDown(dialogMenu)
+    expect(screen.getByTestId('tree-add-child-menu-master-frame-buffer')).toBeInTheDocument()
+
+    // Clicking outside on document dismisses it
+    fireEvent.pointerDown(document.body)
+    expect(screen.queryByTestId('tree-add-child-menu-master-frame-buffer')).not.toBeInTheDocument()
+
+    // Test with mousedown as well
+    fireEvent.click(addBtn)
+    expect(screen.getByTestId('tree-add-child-menu-master-frame-buffer')).toBeInTheDocument()
+    fireEvent.mouseDown(document.body)
+    expect(screen.queryByTestId('tree-add-child-menu-master-frame-buffer')).not.toBeInTheDocument()
+  })
 })

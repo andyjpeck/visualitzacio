@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import {
   ChevronDown,
   ChevronRight,
@@ -61,6 +61,41 @@ export function LayerTreeView({
   // Add child menu dropdown state: nodeId -> boolean
   const [openAddMenuId, setOpenAddMenuId] = useState<string | null>(null)
   const addMenuRef = useRef<HTMLDivElement>(null)
+
+  // Dismiss add child menu dialog on outside click or 'Escape' key
+  useEffect(() => {
+    if (!openAddMenuId) return
+
+    const handlePointerDown = (e: MouseEvent | PointerEvent) => {
+      const target = e.target as globalThis.Node | null
+      if (addMenuRef.current && target && !addMenuRef.current.contains(target)) {
+        // If clicking on the trigger button itself, let the button's onClick handle toggle
+        const triggerBtn = (e.target as Element)?.closest?.(
+          `[data-testid="tree-add-child-btn-${openAddMenuId}"]`,
+        )
+        if (triggerBtn) return
+
+        setOpenAddMenuId(null)
+      }
+    }
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' || e.key === 'Esc') {
+        e.stopPropagation()
+        setOpenAddMenuId(null)
+      }
+    }
+
+    document.addEventListener('pointerdown', handlePointerDown)
+    document.addEventListener('mousedown', handlePointerDown)
+    document.addEventListener('keydown', handleKeyDown)
+
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown)
+      document.removeEventListener('mousedown', handlePointerDown)
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [openAddMenuId])
 
   // Drag and drop state
   const [draggedNodeId, setDraggedNodeId] = useState<string | null>(null)
@@ -638,6 +673,8 @@ export function LayerTreeView({
                   <div
                     ref={addMenuRef}
                     data-testid={`tree-add-child-menu-${node.id}`}
+                    role="dialog"
+                    aria-label="Add Child Layer Menu"
                     className="absolute right-0 top-full mt-1 w-44 rounded-xl bg-[#140e24]/98 border border-purple-500/40 shadow-[0_12px_40px_rgba(0,0,0,0.85)] backdrop-blur-2xl p-1 flex flex-col gap-0.5 text-xs font-mono z-50"
                   >
                     <button
