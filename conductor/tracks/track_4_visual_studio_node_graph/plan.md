@@ -122,14 +122,14 @@ This plan implements the complete Studio workspace for Visualització in 5 test-
   - Implement input coalescing on pointer release (`onPointerUp`) and 500ms typing debounces.
   - Bind global keyboard shortcuts (`Ctrl+Z`, `Ctrl+Y` / `Ctrl+Shift+Z`) and toolbar buttons.
   - *Verification:* Write unit tests in `src/ui/history/undo-redo-manager.test.ts` verifying delta diffing, memory conservation, coalescing, and 100-step boundaries.
-- [x] **Task 4.2: Preset JSON Schema & Serializer**
-  - Define `PresetSchema` in `src/contracts/preset-schema.ts`.
-  - Implement `serializePreset()` extracting preset metadata, node graph topology, and parameter states.
+- [x] **Task 4.2: Preset JSON Schema v2 & Serializer**
+  - Define `PresetSchema` (Version 2) in `src/contracts/preset-schema.ts` with nested `root` hierarchy, sibling execution array order, and dynamic buffer edge derivation.
+  - Implement `serializePreset()` extracting preset metadata, clean recursive node tree, and parameter states without redundant parent IDs or edges.
   - *Verification:* Write unit tests in `src/engine/presets/preset-serializer.test.ts` verifying JSON output schema.
 - [x] **Task 4.3: Preset Deserializer & Import Handlers**
-  - Implement `deserializePreset()` validating schema and reconstructing the node graph and engine pipeline.
+  - Implement `deserializePreset()` validating schema and reconstructing the node graph and engine pipeline, with full backwards-compatibility for v1 presets.
   - Implement export via `.json` download and clipboard copy, and import via file input, clipboard paste, and drag-and-drop onto viewport.
-  - Trigger automatic DAG layout upon preset load.
+  - Trigger automatic DAG layout upon preset load and dynamic buffer edge reconstruction via `syncNamedBufferEdges`.
   - **Cleanup:** Remove temporary Phase 2/3 "Copy JSON" graph action bar button and `window.__getGraphLayout` helper once formal preset serializer/importer is active.
   - *Verification:* Write roundtrip tests in `src/engine/presets/preset-roundtrip.test.ts` (serialize $\to$ deserialize $\to$ render).
 

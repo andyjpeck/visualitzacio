@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { Edge, Node } from '@xyflow/react'
+import type { Node } from '@xyflow/react'
 import { DEFAULT_AUDIO_BANDS } from '../../contracts/preset-settings'
 import { serializePresetToJson } from './preset-serializer'
 import { deserializePreset } from './preset-deserializer'
@@ -39,18 +39,12 @@ describe('Preset Roundtrip & Deserializer Suite (Task 4.3)', () => {
       label: 'Crystal Synthesizer',
       opacity: 0.8,
       formula: '1.0 + $BASS * 0.75',
+      loadFrom: '@KALEIDO',
     },
-  }
-
-  const edge: Edge = {
-    id: 'e1',
-    source: 'synth-crystal',
-    target: 'buffer-alpha',
   }
 
   it('performs lossless roundtrip: serialize -> JSON -> deserialize', () => {
     const originalNodes = [masterNode, childBuffer, childSynth]
-    const originalEdges = [edge]
 
     const serializedJson = serializePresetToJson({
       name: 'Roundtrip Test Preset',
@@ -60,7 +54,6 @@ describe('Preset Roundtrip & Deserializer Suite (Task 4.3)', () => {
       resolutionScale: 0.5,
       audioBands: { ...DEFAULT_AUDIO_BANDS, bassMax: 350 },
       graphNodes: originalNodes,
-      graphEdges: originalEdges,
       feedbackConfig: {
         selectedTemplateId: 'feedback-vortex',
         feedbackEnabled: true,
@@ -108,9 +101,10 @@ describe('Preset Roundtrip & Deserializer Suite (Task 4.3)', () => {
     expect(restoredMaster?.style?.width).toBeGreaterThan(0)
     expect(restoredMaster?.style?.height).toBeGreaterThan(0)
 
-    // Verify edges
+    // Verify edges are dynamically reconstructed from saveTo / loadFrom tags
     expect(result.edges).toHaveLength(1)
-    expect(result.edges[0].id).toBe('e1')
+    expect(result.edges[0].source).toBe('buffer-alpha')
+    expect(result.edges[0].target).toBe('synth-crystal')
   })
 
   it('gracefully handles malformed JSON string with syntax error reporting', () => {

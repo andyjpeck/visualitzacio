@@ -1,6 +1,6 @@
 import type { AudioBandsSettings, ResolutionScale } from './preset-settings'
 
-export const CURRENT_PRESET_SCHEMA_VERSION = 1
+export const CURRENT_PRESET_SCHEMA_VERSION = 2
 
 export interface PresetMetadata {
   name: string
@@ -15,9 +15,12 @@ export interface PresetNode {
   id: string
   type: string
   label?: string
+  params: Record<string, unknown>
+  children?: PresetNode[]
+
+  // Legacy v1 schema fields (retained for backward compatibility)
   parentId?: string
   executionIndex?: number
-  params: Record<string, unknown>
 }
 
 export interface PresetEdge {
@@ -51,7 +54,10 @@ export interface Preset {
   metadata: PresetMetadata
   settings: PresetSettingsData
   feedback?: PresetFeedbackConfig
-  nodes: PresetNode[]
+  root?: PresetNode
+
+  // Legacy v1 format fields
+  nodes?: PresetNode[]
   edges?: PresetEdge[]
 }
 
@@ -65,6 +71,7 @@ const ALLOWED_RESOLUTION_SCALES = new Set([1.0, 0.75, 0.5, 0.25])
 
 /**
  * Validates an arbitrary object or parsed JSON payload against the Preset schema.
+ * Supports both canonical v2 nested format (root + children) and legacy v1 flat format.
  */
 export function validatePreset(raw: unknown): ValidationResult {
   const errors: string[] = []
@@ -112,10 +119,85 @@ export function validatePreset(raw: unknown): ValidationResult {
     }
   }
 
-  // 4. nodes
-  if (!Array.isArray(obj.nodes) || obj.nodes.length === 0) {
-    errors.push('Preset must contain a non-empty "nodes" array.')
-  } else {
+  // 4. nodes (v2 canonical 'root' or v1 legacy 'nodes' array)
+  if (obj.root && typeof obj.root === 'object' && !Array.isArray(obj.root)) {
+    // Canonical v2 Nested Tree Validation
+    const rootNode = obj.root as Record<string, unknown>
+    const nodeIds = new Set<string>()
+
+    if (typeof rootNode.id !== 'string' || rootNode.id.trim() === '') {
+      errors.push('Root node must have a non-empty string "id".')
+    } else {
+      nodeIds.add(rootNode.id)
+    }
+
+    if (typeof rootNode.type !== 'string' || rootNode.type.trim() === '') {
+      errors.push('Root node must have a non-empty string "type".')
+    }
+
+    if (rootNode.type !== 'masterFrameBuffer' && rootNode.id !== 'master-frame-buffer') {
+      errors.push('Root node must be the Master Output container node.')
+    }
+
+    if (
+      rootNode.params !== undefined &&
+      (typeof rootNode.params !== 'object' || Array.isArray(rootNode.params) || rootNode.params === null)
+    ) {
+      errors.push('Root node params must be an object if defined.')
+    }
+
+    function validateChildNodes(children: unknown[], parentPath: string): void {
+      for (let i = 0; i < children.length; i++) {
+        const child = children[i]
+        const currentPath = `${parentPath}.children[${i}]`
+        if (!child || typeof child !== 'object' || Array.isArray(child)) {
+          errors.push(`Node at ${currentPath} must be a valid object.`)
+          continue
+        }
+        const c = child as Record<string, unknown>
+        if (typeof c.id !== 'string' || c.id.trim() === '') {
+          errors.push(`Node at ${currentPath} must have a non-empty string "id".`)
+        } else {
+          if (nodeIds.has(c.id)) {
+            errors.push(`Duplicate node id "${c.id}" found at ${currentPath}.`)
+          }
+          nodeIds.add(c.id)
+        }
+
+        if (typeof c.type !== 'string' || c.type.trim() === '') {
+          errors.push(`Node at ${currentPath} must have a non-empty string "type".`)
+        }
+
+        if (c.type === 'masterFrameBuffer' || c.id === 'master-frame-buffer') {
+          errors.push(`Additional Master Output found at ${currentPath}. Exactly one root Master Output is allowed.`)
+        }
+
+        if (
+          c.params !== undefined &&
+          (typeof c.params !== 'object' || Array.isArray(c.params) || c.params === null)
+        ) {
+          errors.push(`Node "${c.id || i}" params must be an object if defined.`)
+        }
+
+        if (c.children !== undefined) {
+          if (!Array.isArray(c.children)) {
+            errors.push(`Node "${c.id || i}" children must be an array if defined.`)
+          } else {
+            validateChildNodes(c.children, currentPath)
+          }
+        }
+      }
+    }
+
+    if (rootNode.children !== undefined) {
+      if (!Array.isArray(rootNode.children)) {
+        errors.push('Root node "children" must be an array if defined.')
+      } else {
+        validateChildNodes(rootNode.children, 'root')
+      }
+    }
+  } else if (Array.isArray(obj.nodes) && obj.nodes.length > 0) {
+    // Legacy v1 Flat Array Validation
     const nodeIds = new Set<string>()
     let masterCount = 0
 
@@ -163,9 +245,11 @@ export function validatePreset(raw: unknown): ValidationResult {
         }
       }
     }
+  } else {
+    errors.push('Preset must contain a "root" node object (or legacy "nodes" array).')
   }
 
-  // 5. edges (optional)
+  // 5. edges (legacy optional)
   if (obj.edges !== undefined) {
     if (!Array.isArray(obj.edges)) {
       errors.push('Preset "edges" must be an array if provided.')

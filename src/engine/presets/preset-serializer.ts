@@ -3,7 +3,6 @@ import type { AudioBandsSettings, ResolutionScale } from '../../contracts/preset
 import {
   CURRENT_PRESET_SCHEMA_VERSION,
   type Preset,
-  type PresetEdge,
   type PresetFeedbackConfig,
   type PresetNode,
   validatePreset,
@@ -24,13 +23,13 @@ export interface SerializePresetOptions {
 /**
  * Extracts a portable, validated Preset object from the current application state.
  *
- * Topological relationships are preserved via parentId and sibling executionIndex,
- * without persisting ephemeral canvas pixel coordinates.
+ * Encodes containment and execution hierarchy naturally using nested JSON `children` arrays,
+ * completely eliminating redundant `parentId`, `executionIndex`, and `edges` fields.
  */
 export function serializePreset(options: SerializePresetOptions): Preset {
   const now = new Date().toISOString()
 
-  // Group child nodes by parent to assign deterministic executionIndex
+  // Group child nodes by parent to preserve deterministic sibling execution order
   const nodesByParent = new Map<string | undefined, Node[]>()
   for (const node of options.graphNodes) {
     const parent = node.parentId
@@ -48,34 +47,34 @@ export function serializePreset(options: SerializePresetOptions): Preset {
     })
   }
 
-  const serializedNodes: PresetNode[] = []
+  // Find root Master Output container
+  const rootNode =
+    options.graphNodes.find(
+      (n) => n.id === 'master-frame-buffer' || n.type === 'masterFrameBuffer',
+    ) ??
+    options.graphNodes.find((n) => !n.parentId) ??
+    options.graphNodes[0]
 
-  for (const node of options.graphNodes) {
-    const siblings = nodesByParent.get(node.parentId) ?? []
-    const executionIndex = siblings.findIndex((s) => s.id === node.id)
+  if (!rootNode) {
+    throw new Error('Cannot serialize preset: no root Master Output node found.')
+  }
 
-    // Separate UI display label from functional parameters
+  function serializeTreeNode(node: Node): PresetNode {
     const dataCopy = { ...node.data }
     const label = typeof dataCopy.label === 'string' ? dataCopy.label : undefined
     delete dataCopy.label
 
-    serializedNodes.push({
+    const children = nodesByParent.get(node.id) ?? []
+    const serializedChildren = children.map(serializeTreeNode)
+
+    return {
       id: node.id,
       type: node.type ?? 'default',
-      label,
-      parentId: node.parentId,
-      executionIndex: executionIndex >= 0 ? executionIndex : 0,
+      ...(label && label !== node.id ? { label } : {}),
       params: dataCopy,
-    })
+      ...(serializedChildren.length > 0 ? { children: serializedChildren } : {}),
+    }
   }
-
-  const serializedEdges: PresetEdge[] | undefined = options.graphEdges?.map((edge) => ({
-    id: edge.id,
-    source: edge.source,
-    target: edge.target,
-    sourceHandle: edge.sourceHandle ?? undefined,
-    targetHandle: edge.targetHandle ?? undefined,
-  }))
 
   const preset: Preset = {
     schemaVersion: CURRENT_PRESET_SCHEMA_VERSION,
@@ -91,9 +90,8 @@ export function serializePreset(options: SerializePresetOptions): Preset {
       resolutionScale: options.resolutionScale,
       audioBands: { ...options.audioBands },
     },
-    feedback: options.feedbackConfig,
-    nodes: serializedNodes,
-    edges: serializedEdges && serializedEdges.length > 0 ? serializedEdges : undefined,
+    ...(options.feedbackConfig ? { feedback: options.feedbackConfig } : {}),
+    root: serializeTreeNode(rootNode),
   }
 
   const validation = validatePreset(preset)

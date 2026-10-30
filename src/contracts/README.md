@@ -16,6 +16,8 @@ The `contracts` directory contains core TypeScript data contracts, interfaces, a
 
 - [**`preset-schema.ts`**](file:///C:/Users/andyj/Documents/visualitzacio/src/contracts/preset-schema.ts):
   - Defines portable JSON preset specification contracts (`Preset`, `PresetMetadata`, `PresetNode`, `PresetEdge`, `PresetFeedbackConfig`, `PresetSettingsData`).
+  - Supports Schema Version 2: canonical nested tree (`root` with recursive `children`), with sibling execution order inferred from array sequence and buffer wiring dynamically derived from `saveTo`/`loadFrom` named tags.
+  - Maintains full backwards-compatibility validation and deserialization for legacy Schema Version 1 flat `nodes` arrays and explicit `edges`.
   - Provides `validatePreset()` to enforce structural integrity, single Master Output constraints, parent validation, and schema versioning.
 
 - [**`renderer-like.ts`**](file:///C:/Users/andyj/Documents/visualitzacio/src/contracts/renderer-like.ts):

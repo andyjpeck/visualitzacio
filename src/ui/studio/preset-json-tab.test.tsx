@@ -24,7 +24,8 @@ describe('PresetJsonTab Component', () => {
 
     expect(screen.getByTestId('preset-json-tab')).toBeInTheDocument()
     const textarea = screen.getByTestId('json-editor-textarea') as HTMLTextAreaElement
-    expect(textarea.value).toContain('"schemaVersion": 1')
+    expect(textarea.value).toContain('"schemaVersion": 2')
+    expect(textarea.value).toContain('"root"')
     expect(textarea.value).toContain('master-frame-buffer')
     expect(screen.getByText('LIVE PRESET SYNCHRONIZED')).toBeInTheDocument()
   })
@@ -44,7 +45,8 @@ describe('PresetJsonTab Component', () => {
 
     expect(writeTextMock).toHaveBeenCalledTimes(1)
     const copiedStr = writeTextMock.mock.calls[0][0]
-    expect(copiedStr).toContain('"schemaVersion": 1')
+    expect(copiedStr).toContain('"schemaVersion": 2')
+    expect(copiedStr).toContain('"root"')
     expect(screen.getByText('Copied!')).toBeInTheDocument()
   })
 
