@@ -64,15 +64,6 @@ export function App(): React.ReactElement {
         isLive && !isHudVisible ? 'cursor-none' : ''
       }`}
     >
-      {/* Top Floating Controls Toolbar (on top of all panes and canvas) */}
-      <div
-        className={`transition-opacity duration-300 relative z-50 ${
-          isHudVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'
-        }`}
-      >
-        <Toolbar audioManager={audioManager} />
-      </div>
-
       {/* Resizable Studio Split-View Workspace */}
       <StudioSplitView
         preview={
@@ -80,13 +71,14 @@ export function App(): React.ReactElement {
             {/* 3D Viewport Canvas */}
             <ViewportCanvas onEngineReady={handleEngineReady} />
 
-            {/* Floating HUD Elements (auto-hide in Live Mode) */}
+            {/* Floating HUD Elements & Playback Toolbar (floats within playback window, auto-hides in Live Mode) */}
             <div
               className={`transition-opacity duration-300 ${
                 isHudVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'
               }`}
             >
               <FpsBadge />
+              <Toolbar audioManager={audioManager} />
               <AudioTelemetryOverlay engine={engine} />
             </div>
           </div>

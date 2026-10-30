@@ -20,13 +20,14 @@ import { AudioErrorToast } from './audio-error-toast'
 
 export interface ToolbarProps {
   audioManager: AudioManager | null
+  className?: string
 }
 
 /**
  * Top floating glassmorphic toolbar for audio playback controls, source selection,
  * volume, FPS counter toggle, preset settings modal, and expression testbed f(x).
  */
-export function Toolbar({ audioManager }: ToolbarProps): React.ReactElement {
+export function Toolbar({ audioManager, className = '' }: ToolbarProps): React.ReactElement {
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const isPlaying = useAppStore((state) => state.isPlaying)
@@ -170,8 +171,8 @@ export function Toolbar({ audioManager }: ToolbarProps): React.ReactElement {
         className="hidden"
       />
 
-      {/* Top Floating Glassmorphic Toolbar */}
-      <header className="fixed top-4 right-4 z-40 flex items-center gap-2 p-1.5 rounded-xl backdrop-blur-md bg-cyber-void/85 border border-white/10 shadow-2xl select-none">
+      {/* Top Floating Glassmorphic Toolbar (floats within playback window) */}
+      <header className={`absolute top-4 right-4 z-40 flex items-center gap-2 p-1.5 rounded-xl backdrop-blur-md bg-cyber-void/85 border border-white/10 shadow-2xl select-none ${className}`}>
         {/* Play / Pause (Controls Sample/File playback; disabled when Mic is active) */}
         <button
           type="button"

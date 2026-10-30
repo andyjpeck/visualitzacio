@@ -76,7 +76,7 @@ export function AudioTelemetryOverlay({
   return (
     <div
       data-testid="audio-telemetry-overlay"
-      className="fixed bottom-4 left-4 z-40 p-3 rounded-lg backdrop-blur-md bg-cyber-void/85 border border-white/10 shadow-xl space-y-2 select-none w-64 pointer-events-none"
+      className="absolute bottom-4 left-4 z-40 p-3 rounded-lg backdrop-blur-md bg-cyber-void/85 border border-white/10 shadow-xl space-y-2 select-none w-64 pointer-events-none"
     >
       <div className="flex items-center justify-between border-b border-white/10 pb-1.5">
         <span className="font-mono text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
