@@ -6,3 +6,5 @@ This directory contains reusable scene and media nodes that implement the `Visua
 
 - `static-image-node.ts`: `StaticImageNode` implementing `VisualNode`. Displays static image textures with aspect-ratio preservation (`cover`, `contain`, `stretch`), dynamic expression opacity modulation, named buffer registration with `BufferPool`, and Base64 data URL encoding for local file uploads and JSON preset serialization.
 - `static-image-node.test.ts`: Vitest unit tests verifying aspect-ratio scaling across portrait/landscape/square ratios, dynamic opacity evaluation, BufferPool registration, Base64 texture loading, and resource disposal.
+- `duperscope-compiler.ts`: `DuperscopeCompiler` implementing multi-statement script compilation, comment stripping (`//` and `/* ... */`), statement splitting by semicolons/newlines, read-only variable guards (`i`, `v`, and `n` in `point`), and sandboxed `expr-eval` AST validation across all 4 lifecycle phases (`init`, `beat`, `frame`, `point`).
+- `duperscope-compiler.test.ts`: Unit test suite verifying comment stripping, statement splitting, AST compilation, read-only guards, error reporting, and sandboxing.
