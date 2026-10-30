@@ -41,8 +41,10 @@ export function Toolbar({ audioManager, className = '' }: ToolbarProps): React.R
   const setAudioFileName = useAppStore((state) => state.setAudioFileName)
   const audioError = useAppStore((state) => state.audioError)
   const setAudioError = useAppStore((state) => state.setAudioError)
-  const showFpsOverlay = useAppStore((state) => state.showFpsOverlay)
-  const toggleFpsOverlay = useAppStore((state) => state.toggleFpsOverlay)
+  const showDebugData = useAppStore(
+    (state) => state.showDebugData ?? state.showFpsOverlay,
+  )
+  const toggleDebugData = useAppStore((state) => state.toggleDebugData)
   const toggleDialog = useAppStore((state) => state.toggleDialog)
   const studioMode = useAppStore((state) => state.studioMode)
   const toggleStudioMode = useAppStore((state) => state.toggleStudioMode)
@@ -74,10 +76,10 @@ export function Toolbar({ audioManager, className = '' }: ToolbarProps): React.R
       }
 
       // If preview pane is narrow (< 480px) and FPS badge is shown, position toolbar on row 2
-      const isNarrowWithFps = showFpsOverlay && parentWidth < 480
-      setIsNarrow(isNarrowWithFps)
+      const isNarrowWithDebug = showDebugData && parentWidth < 480
+      setIsNarrow(isNarrowWithDebug)
 
-      const leftReserved = isNarrowWithFps ? 16 : showFpsOverlay ? 135 : 16
+      const leftReserved = isNarrowWithDebug ? 16 : showDebugData ? 135 : 16
       const rightReserved = 16
       const availableWidth = Math.max(100, parentWidth - leftReserved - rightReserved)
 
@@ -108,7 +110,7 @@ export function Toolbar({ audioManager, className = '' }: ToolbarProps): React.R
       resizeObserver.disconnect()
       window.removeEventListener('resize', updateScale)
     }
-  }, [showFpsOverlay, sourceType, audioFileName, isPlaying])
+  }, [showDebugData, sourceType, audioFileName, isPlaying])
 
   const handlePlayPause = async () => {
     if (!audioManager || isMicActive) return
@@ -349,14 +351,15 @@ export function Toolbar({ audioManager, className = '' }: ToolbarProps): React.R
           <Redo2 className="w-4 h-4" />
         </button>
 
-        {/* FPS Badge Toggle */}
+        {/* Debug Data Overlay Toggle (FPS tracker & Audio DSP Telemetry) */}
         <button
           type="button"
-          onClick={toggleFpsOverlay}
-          aria-label="Toggle FPS overlay"
-          title={showFpsOverlay ? 'Hide FPS Counter' : 'Show FPS Counter'}
+          data-testid="toolbar-debug-data-btn"
+          onClick={toggleDebugData}
+          aria-label="Toggle debug data overlay"
+          title={showDebugData ? 'Hide Debug Data' : 'Show Debug Data'}
           className={`p-2 rounded-lg border transition-colors cursor-pointer ${
-            showFpsOverlay
+            showDebugData
               ? 'bg-cyber-cyan/15 border-cyber-cyan/30 text-cyber-cyan'
               : 'bg-white/5 border-transparent text-slate-400 hover:text-white'
           }`}

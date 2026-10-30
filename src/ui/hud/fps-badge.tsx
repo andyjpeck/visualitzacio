@@ -6,12 +6,14 @@ import { useAppStore } from '../store/app-store'
  * Displays current measured FPS against target with cyberpunk status color-coding.
  */
 export function FpsBadge(): React.ReactElement | null {
-  const showFpsOverlay = useAppStore((state) => state.showFpsOverlay)
+  const showDebugData = useAppStore(
+    (state) => state.showDebugData ?? state.showFpsOverlay,
+  )
   const currentFps = useAppStore((state) => state.currentFps)
   const targetFps = useAppStore((state) => state.targetFps)
   const toggleDialog = useAppStore((state) => state.toggleDialog)
 
-  if (!showFpsOverlay) return null
+  if (!showDebugData) return null
 
   // Determine badge color:
   // - Nominal (Cyan): currentFps >= targetFps

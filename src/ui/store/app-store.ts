@@ -343,6 +343,7 @@ export interface AppState {
 
   // HUD & UI overlay state
   showFpsOverlay: boolean
+  showDebugData: boolean
   dialogStack: DialogId[]
   isPresetSettingsOpen: boolean
   currentFps: number
@@ -395,6 +396,8 @@ export interface AppState {
 
   setShowFpsOverlay: (show: boolean) => void
   toggleFpsOverlay: () => void
+  setShowDebugData: (show: boolean) => void
+  toggleDebugData: () => void
 
   // Studio Mode & Split-View Actions (Track 4)
   setStudioMode: (mode: StudioMode) => void
@@ -532,6 +535,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   audioLoadingStage: '',
 
   showFpsOverlay: true,
+  showDebugData: true,
   dialogStack: [],
   isPresetSettingsOpen: false,
   currentFps: 60,
@@ -584,9 +588,20 @@ export const useAppStore = create<AppState>((set, get) => ({
       audioLoadingStage: stage !== undefined ? stage : state.audioLoadingStage,
     })),
 
-  setShowFpsOverlay: (showFpsOverlay) => set({ showFpsOverlay }),
+  setShowFpsOverlay: (showFpsOverlay) =>
+    set({ showFpsOverlay, showDebugData: showFpsOverlay }),
   toggleFpsOverlay: () =>
-    set((state) => ({ showFpsOverlay: !state.showFpsOverlay })),
+    set((state) => {
+      const next = !(state.showDebugData ?? state.showFpsOverlay)
+      return { showFpsOverlay: next, showDebugData: next }
+    }),
+  setShowDebugData: (showDebugData) =>
+    set({ showDebugData, showFpsOverlay: showDebugData }),
+  toggleDebugData: () =>
+    set((state) => {
+      const next = !(state.showDebugData ?? state.showFpsOverlay)
+      return { showDebugData: next, showFpsOverlay: next }
+    }),
 
   setStudioMode: (studioMode) => {
     saveStudioModeToStorage(studioMode)

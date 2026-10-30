@@ -11,6 +11,7 @@ describe('useAppStore (Zustand State Plane)', () => {
       volume: 0.8,
       audioError: null,
       showFpsOverlay: true,
+      showDebugData: true,
       isPresetSettingsOpen: false,
       currentFps: 60,
       targetFps: 60,
@@ -29,13 +30,19 @@ describe('useAppStore (Zustand State Plane)', () => {
     expect(useAppStore.getState().sourceType).toBe('mic')
   })
 
-  it('toggles FPS overlay and preset settings modal', () => {
+  it('toggles debug data overlay and preset settings modal', () => {
     const store = useAppStore.getState()
+    expect(store.showDebugData).toBe(true)
     expect(store.showFpsOverlay).toBe(true)
     expect(store.isPresetSettingsOpen).toBe(false)
 
-    store.toggleFpsOverlay()
+    store.toggleDebugData()
+    expect(useAppStore.getState().showDebugData).toBe(false)
     expect(useAppStore.getState().showFpsOverlay).toBe(false)
+
+    store.toggleFpsOverlay()
+    expect(useAppStore.getState().showDebugData).toBe(true)
+    expect(useAppStore.getState().showFpsOverlay).toBe(true)
 
     store.togglePresetSettings()
     expect(useAppStore.getState().isPresetSettingsOpen).toBe(true)

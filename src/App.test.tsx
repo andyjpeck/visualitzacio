@@ -24,6 +24,7 @@ describe('App Component', () => {
       currentFps: 60,
       targetFps: 60,
       showFpsOverlay: true,
+      showDebugData: true,
       resolutionScale: 1.0,
       isPresetSettingsOpen: false,
     })

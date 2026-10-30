@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react'
 import type { RenderEngine } from '../../engine/render-engine'
+import { useAppStore } from '../store/app-store'
 
 export interface AudioTelemetryOverlayProps {
   engine: RenderEngine | null
@@ -12,6 +13,9 @@ export interface AudioTelemetryOverlayProps {
 export function AudioTelemetryOverlay({
   engine,
 }: AudioTelemetryOverlayProps): React.ReactElement | null {
+  const showDebugData = useAppStore(
+    (state) => state.showDebugData ?? state.showFpsOverlay,
+  )
   const bassBarRef = useRef<HTMLDivElement>(null)
   const midBarRef = useRef<HTMLDivElement>(null)
   const trebleBarRef = useRef<HTMLDivElement>(null)
@@ -22,7 +26,7 @@ export function AudioTelemetryOverlay({
   const frameRef = useRef<HTMLSpanElement>(null)
 
   useEffect(() => {
-    if (!engine) return
+    if (!engine || !showDebugData) return
 
     let rafId: number
     const updateDOM = () => {
@@ -71,7 +75,9 @@ export function AudioTelemetryOverlay({
     return () => {
       cancelAnimationFrame(rafId)
     }
-  }, [engine])
+  }, [engine, showDebugData])
+
+  if (!showDebugData) return null
 
   return (
     <div

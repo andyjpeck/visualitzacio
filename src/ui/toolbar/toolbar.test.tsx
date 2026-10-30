@@ -14,6 +14,7 @@ describe('Toolbar Component', () => {
       volume: 0.8,
       audioError: null,
       showFpsOverlay: true,
+      showDebugData: true,
       isPresetSettingsOpen: false,
     })
 
@@ -84,13 +85,17 @@ describe('Toolbar Component', () => {
     expect(await screen.findByText(/Microphone permission denied/i)).toBeInTheDocument()
   })
 
-  it('toggles FPS badge overlay visibility', () => {
+  it('toggles debug data overlay visibility (FPS tracker and audio telemetry)', () => {
     render(<Toolbar audioManager={mockAudioManager} />)
 
-    const fpsToggleButton = screen.getByRole('button', { name: /toggle fps/i })
-    fireEvent.click(fpsToggleButton)
+    const debugToggleButton = screen.getByRole('button', { name: /toggle debug data/i })
+    expect(debugToggleButton).toHaveAttribute('title', 'Hide Debug Data')
 
+    fireEvent.click(debugToggleButton)
+
+    expect(useAppStore.getState().showDebugData).toBe(false)
     expect(useAppStore.getState().showFpsOverlay).toBe(false)
+    expect(debugToggleButton).toHaveAttribute('title', 'Show Debug Data')
   })
 
   it('opens Preset Performance Settings modal on gear click', () => {

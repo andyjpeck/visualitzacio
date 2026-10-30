@@ -7,6 +7,7 @@ describe('FpsBadge (HUD)', () => {
   beforeEach(() => {
     useAppStore.setState({
       showFpsOverlay: true,
+      showDebugData: true,
       currentFps: 60,
       targetFps: 60,
       isPresetSettingsOpen: false,
@@ -44,8 +45,8 @@ describe('FpsBadge (HUD)', () => {
     expect(useAppStore.getState().isPresetSettingsOpen).toBe(true)
   })
 
-  it('renders nothing when showFpsOverlay is false', () => {
-    useAppStore.setState({ showFpsOverlay: false })
+  it('renders nothing when showFpsOverlay or showDebugData is false', () => {
+    useAppStore.setState({ showFpsOverlay: false, showDebugData: false })
     const { container } = render(<FpsBadge />)
     expect(container.firstChild).toBeNull()
   })
