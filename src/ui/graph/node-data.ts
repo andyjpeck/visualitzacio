@@ -14,6 +14,17 @@ export interface MasterFrameBufferNodeData extends BaseNodeData {
   outputBlendMode?: string
   opacity?: number | string
   resolutionScale?: number
+  scale?: number | string
+  scaleX?: number | string
+  scaleY?: number | string
+  flipX?: boolean | number | string
+  flipY?: boolean | number | string
+  rotation?: number | string
+  positionX?: number | string
+  positionY?: number | string
+  offsetX?: number | string
+  offsetY?: number | string
+  loadFrom?: string
 }
 
 export interface FrameBufferNodeData extends BaseNodeData {
@@ -33,6 +44,8 @@ export interface FrameBufferNodeData extends BaseNodeData {
   rotation?: number | string
   positionX?: number | string
   positionY?: number | string
+  offsetX?: number | string
+  offsetY?: number | string
 }
 
 export interface StaticImageNodeData extends BaseNodeData {
@@ -59,4 +72,8 @@ export interface TestVisualNodeData extends BaseNodeData {
   shape?: string
   reactive?: boolean
   scale?: number | string
+  positionX?: number | string
+  positionY?: number | string
+  offsetX?: number | string
+  offsetY?: number | string
 }

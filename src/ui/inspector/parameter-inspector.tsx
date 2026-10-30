@@ -668,6 +668,68 @@ export function ParameterInspector({
             />
 
             <ParameterRow
+              label="Scale X"
+              value={data.scaleX !== undefined ? (data.scaleX as number | string) : (data.scale !== undefined ? (data.scale as number | string) : 1.0)}
+              savedFormula={typeof data.scaleX_formula === 'string' ? data.scaleX_formula : undefined}
+              tooltip="Independent horizontal scale multiplier (defaults to uniform Scale)"
+              min={0.1}
+              max={2.0}
+              step={0.01}
+              type="slider"
+              isFocused={focusedParamKey === 'scaleX'}
+              onChange={(val) => handleUpdate('scaleX', val, true)}
+              engine={engine}
+            />
+
+            <ParameterRow
+              label="Scale Y"
+              value={data.scaleY !== undefined ? (data.scaleY as number | string) : (data.scale !== undefined ? (data.scale as number | string) : 1.0)}
+              savedFormula={typeof data.scaleY_formula === 'string' ? data.scaleY_formula : undefined}
+              tooltip="Independent vertical scale multiplier (defaults to uniform Scale)"
+              min={0.1}
+              max={2.0}
+              step={0.01}
+              type="slider"
+              isFocused={focusedParamKey === 'scaleY'}
+              onChange={(val) => handleUpdate('scaleY', val, true)}
+              engine={engine}
+            />
+
+            <ParameterRow
+              label="Flip X"
+              value={Boolean(data.flipX)}
+              tooltip="Mirror horizontally across the vertical Y axis (scaleX: -1)"
+              type="toggle"
+              allowExpression={true}
+              isFocused={focusedParamKey === 'flipX'}
+              onChange={(val) => handleUpdate('flipX', val)}
+            />
+
+            <ParameterRow
+              label="Flip Y"
+              value={Boolean(data.flipY)}
+              tooltip="Mirror vertically across the horizontal X axis (scaleY: -1)"
+              type="toggle"
+              allowExpression={true}
+              isFocused={focusedParamKey === 'flipY'}
+              onChange={(val) => handleUpdate('flipY', val)}
+            />
+
+            <ParameterRow
+              label="Rotation"
+              value={data.rotation !== undefined ? (data.rotation as number | string) : 0.0}
+              savedFormula={typeof data.rotation_formula === 'string' ? data.rotation_formula : undefined}
+              tooltip="Angular rotation in degrees applied each frame pass (-180° to +180°)"
+              min={-180}
+              max={180}
+              step={1}
+              type="slider"
+              isFocused={focusedParamKey === 'rotation'}
+              onChange={(val) => handleUpdate('rotation', val, true)}
+              engine={engine}
+            />
+
+            <ParameterRow
               label="Offset X"
               value={
                 data.offsetX !== undefined
@@ -722,93 +784,6 @@ export function ParameterInspector({
               }}
               engine={engine}
             />
-          </>
-        )}
-
-        {/* FrameBuffer Specific Parameters */}
-        {isFrameBuffer && (
-          <>
-            <ParameterRow
-              label="Scale X"
-              value={data.scaleX !== undefined ? (data.scaleX as number | string) : (data.scale !== undefined ? (data.scale as number | string) : 1.0)}
-              savedFormula={typeof data.scaleX_formula === 'string' ? data.scaleX_formula : undefined}
-              tooltip="Independent horizontal scale multiplier (defaults to uniform Scale)"
-              min={0.1}
-              max={2.0}
-              step={0.01}
-              type="slider"
-              isFocused={focusedParamKey === 'scaleX'}
-              onChange={(val) => handleUpdate('scaleX', val, true)}
-              engine={engine}
-            />
-
-            <ParameterRow
-              label="Scale Y"
-              value={data.scaleY !== undefined ? (data.scaleY as number | string) : (data.scale !== undefined ? (data.scale as number | string) : 1.0)}
-              savedFormula={typeof data.scaleY_formula === 'string' ? data.scaleY_formula : undefined}
-              tooltip="Independent vertical scale multiplier (defaults to uniform Scale)"
-              min={0.1}
-              max={2.0}
-              step={0.01}
-              type="slider"
-              isFocused={focusedParamKey === 'scaleY'}
-              onChange={(val) => handleUpdate('scaleY', val, true)}
-              engine={engine}
-            />
-
-            <ParameterRow
-              label="Flip X"
-              value={Boolean(data.flipX)}
-              tooltip="Mirror horizontally across the vertical Y axis (scaleX: -1)"
-              type="toggle"
-              allowExpression={true}
-              isFocused={focusedParamKey === 'flipX'}
-              onChange={(val) => handleUpdate('flipX', val)}
-            />
-
-            <ParameterRow
-              label="Flip Y"
-              value={Boolean(data.flipY)}
-              tooltip="Mirror vertically across the horizontal X axis (scaleY: -1)"
-              type="toggle"
-              allowExpression={true}
-              isFocused={focusedParamKey === 'flipY'}
-              onChange={(val) => handleUpdate('flipY', val)}
-            />
-
-            <ParameterRow
-              label="Feedback Loop"
-              value={Boolean(data.feedback)}
-              tooltip="Enables dual-FBO ping-pong feedback loop to create recursive motion trails"
-              type="toggle"
-              allowExpression={false}
-              isFocused={focusedParamKey === 'feedback'}
-              onChange={(val) => handleUpdate('feedback', val)}
-            />
-
-            <ParameterRow
-              label="Rotation"
-              value={data.rotation !== undefined ? (data.rotation as number | string) : 0.0}
-              savedFormula={typeof data.rotation_formula === 'string' ? data.rotation_formula : undefined}
-              tooltip="Angular rotation in degrees applied each frame pass (-180° to +180°)"
-              min={-180}
-              max={180}
-              step={1}
-              type="slider"
-              isFocused={focusedParamKey === 'rotation'}
-              onChange={(val) => handleUpdate('rotation', val, true)}
-              engine={engine}
-            />
-
-            <ParameterRow
-              label="Publish Output (@NAME)"
-              value={String(data.saveTo || '')}
-              tooltip="Publish this buffer's rendered texture to a named virtual bus (e.g. @IMAGE) for other nodes to sample"
-              type="text"
-              allowExpression={false}
-              isFocused={focusedParamKey === 'saveTo'}
-              onChange={(val) => handleUpdate('saveTo', val)}
-            />
 
             <ParameterRow
               label="Sample Input (@NAME)"
@@ -822,17 +797,29 @@ export function ParameterInspector({
           </>
         )}
 
-        {/* Master Output Specific Parameters */}
-        {isMaster && (
-          <ParameterRow
-            label="Sample Input (@NAME)"
-            value={String(data.loadFrom || '')}
-            tooltip="Sample a texture from a named virtual bus (e.g. @IMAGE) into this buffer"
-            type="text"
-            allowExpression={false}
-            isFocused={focusedParamKey === 'loadFrom'}
-            onChange={(val) => handleUpdate('loadFrom', val)}
-          />
+        {/* FrameBuffer Specific Parameters */}
+        {isFrameBuffer && (
+          <>
+            <ParameterRow
+              label="Feedback Loop"
+              value={Boolean(data.feedback)}
+              tooltip="Enables dual-FBO ping-pong feedback loop to create recursive motion trails"
+              type="toggle"
+              allowExpression={false}
+              isFocused={focusedParamKey === 'feedback'}
+              onChange={(val) => handleUpdate('feedback', val)}
+            />
+
+            <ParameterRow
+              label="Publish Output (@NAME)"
+              value={String(data.saveTo || '')}
+              tooltip="Publish this buffer's rendered texture to a named virtual bus (e.g. @IMAGE) for other nodes to sample"
+              type="text"
+              allowExpression={false}
+              isFocused={focusedParamKey === 'saveTo'}
+              onChange={(val) => handleUpdate('saveTo', val)}
+            />
+          </>
         )}
 
         {/* Static Image Parameters */}
@@ -1093,6 +1080,16 @@ export function ParameterInspector({
               allowExpression={false}
               isFocused={focusedParamKey === 'shape'}
               onChange={(val) => handleUpdate('shape', val)}
+            />
+
+            <ParameterRow
+              label="Audio Reactive"
+              value={Boolean(data.reactive)}
+              tooltip="Modulate 3D mesh vertex vibration and scale with real-time audio FFT"
+              type="toggle"
+              allowExpression={false}
+              isFocused={focusedParamKey === 'reactive'}
+              onChange={(val) => handleUpdate('reactive', val)}
             />
 
             <ParameterRow
