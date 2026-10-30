@@ -7,6 +7,10 @@ import {
 } from '../../contracts/preset-settings'
 import type { Preset } from '../../contracts/preset-schema'
 import { getTemplateById } from '../../engine/frame-buffer/frame-buffer-templates'
+import {
+  DEFAULT_DUPERSCOPE_CONFIG,
+  getDuperscopeTemplateById,
+} from '../../engine/nodes/duperscope-templates'
 import { serializePreset, serializePresetToJson } from '../../engine/presets/preset-serializer'
 import { deserializePreset } from '../../engine/presets/preset-deserializer'
 import type { AudioSourceType } from '../../audio/audio-manager'
@@ -417,6 +421,11 @@ export interface AppState {
   removeGraphNode: (nodeId: string) => boolean
   updateGraphNodeData: (nodeId: string, patch: Record<string, unknown>, options?: RecordOptions) => void
   setNodeParent: (nodeId: string, parentId: string) => void
+  addLayerNode: (
+    type: 'frameBuffer' | 'staticImage' | 'duperscopeNode' | 'testVisual',
+    parentId?: string,
+  ) => string
+  applyDuperscopeTemplate: (nodeId: string, templateId: string) => void
 
   // Dialog Stack Navigation Actions
   openDialog: (id: DialogId) => void
@@ -841,6 +850,103 @@ export const useAppStore = create<AppState>((set, get) => ({
         canRedo: undoRedoManager.canRedo(),
       }
     }),
+  addLayerNode: (type, parentId) => {
+    const state = get()
+    const targetParentId = parentId || 'master-frame-buffer'
+    const childCount = state.graphNodes.filter((n) => n.parentId === targetParentId).length
+    const childPos = getNextChildPosition(targetParentId, state.graphNodes)
+    const newId = `${type}-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 6)}`
+
+    let childNode: Node
+    if (type === 'duperscopeNode') {
+      childNode = {
+        id: newId,
+        type: 'duperscopeNode',
+        parentId: targetParentId,
+        extent: 'parent',
+        position: childPos,
+        data: {
+          label: `Duperscope ${childCount + 1}`,
+          drawMode: DEFAULT_DUPERSCOPE_CONFIG.drawMode,
+          audioMode: DEFAULT_DUPERSCOPE_CONFIG.audioMode,
+          channel: DEFAULT_DUPERSCOPE_CONFIG.channel,
+          opacity: DEFAULT_DUPERSCOPE_CONFIG.opacity,
+          initCode: DEFAULT_DUPERSCOPE_CONFIG.initCode,
+          beatCode: DEFAULT_DUPERSCOPE_CONFIG.beatCode,
+          frameCode: DEFAULT_DUPERSCOPE_CONFIG.frameCode,
+          pointCode: DEFAULT_DUPERSCOPE_CONFIG.pointCode,
+        },
+      }
+    } else if (type === 'testVisual') {
+      childNode = {
+        id: newId,
+        type: 'testVisual',
+        parentId: targetParentId,
+        extent: 'parent',
+        position: childPos,
+        data: {
+          label: `Synth ${childCount + 1}`,
+          shape: 'Crystal',
+          scale: 1.0,
+        },
+      }
+    } else if (type === 'staticImage') {
+      childNode = {
+        id: newId,
+        type: 'staticImage',
+        parentId: targetParentId,
+        extent: 'parent',
+        position: childPos,
+        data: {
+          label: `Image Layer ${childCount + 1}`,
+          fitMode: 'contain',
+        },
+      }
+    } else {
+      childNode = {
+        id: newId,
+        type: 'frameBuffer',
+        parentId: targetParentId,
+        extent: 'parent',
+        position: childPos,
+        data: {
+          label: `Buffer ${childCount + 1}`,
+          blendMode: 'screen',
+          feedback: true,
+          opacity: 0.9,
+        },
+      }
+    }
+
+    state.addGraphNode(childNode)
+    set({ selectedNodeId: newId })
+    return newId
+  },
+  applyDuperscopeTemplate: (nodeId, templateId) => {
+    const template = getDuperscopeTemplateById(templateId)
+    if (!template) return
+
+    const state = get()
+    const targetNode = state.graphNodes.find((n) => n.id === nodeId)
+    if (!targetNode) return
+
+    const patch: Record<string, unknown> = {
+      appliedTemplateId: template.id,
+      drawMode: template.drawMode,
+      audioMode: template.audioMode,
+      channel: template.channel,
+      opacity: template.opacity,
+      initCode: template.initCode,
+      beatCode: template.beatCode,
+      frameCode: template.frameCode,
+      pointCode: template.pointCode,
+      opacity_formula: undefined,
+    }
+
+    state.updateGraphNodeData(nodeId, patch, {
+      description: `Apply Template ${template.name}`,
+    })
+  },
   // Dialog Stack Actions
   openDialog: (id: DialogId) =>
     set((state) => {

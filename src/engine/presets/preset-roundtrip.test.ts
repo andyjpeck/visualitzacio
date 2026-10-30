@@ -126,4 +126,52 @@ describe('Preset Roundtrip & Deserializer Suite (Task 4.3)', () => {
     expect(result.success).toBe(false)
     expect(result.errors.length).toBeGreaterThan(0)
   })
+
+  it('preserves duperscopeNode scripts and mode parameters across serialize/deserialize roundtrip', () => {
+    const scopeNode: Node = {
+      id: 'duperscope-1',
+      type: 'duperscopeNode',
+      parentId: 'master-frame-buffer',
+      position: { x: 20, y: 65 },
+      data: {
+        label: 'Laser Tunnel',
+        drawMode: 'lineLoop',
+        audioMode: 'spectrum',
+        channel: 'center',
+        opacity: 0.85,
+        initCode: 'n = 360; angle = 0;',
+        beatCode: 'angle = angle + 0.1;',
+        frameCode: 'angle = angle + 0.015;',
+        pointCode: 'x = cos(i * 2 * PI); y = sin(i * 2 * PI);',
+        appliedTemplateId: 'oscilloscope-tunnel',
+      },
+    }
+
+    const json = serializePresetToJson({
+      name: 'Duperscope Roundtrip Preset',
+      targetFps: 60,
+      resolutionScale: 1.0,
+      audioBands: DEFAULT_AUDIO_BANDS,
+      graphNodes: [masterNode, scopeNode],
+    })
+
+    const result = deserializePreset(json)
+    expect(result.success).toBe(true)
+    expect(result.nodes).toHaveLength(2)
+
+    const restoredScope = result.nodes.find((n) => n.id === 'duperscope-1')
+    expect(restoredScope).toBeDefined()
+    expect(restoredScope?.type).toBe('duperscopeNode')
+    expect(restoredScope?.parentId).toBe('master-frame-buffer')
+    expect(restoredScope?.data.label).toBe('Laser Tunnel')
+    expect(restoredScope?.data.drawMode).toBe('lineLoop')
+    expect(restoredScope?.data.audioMode).toBe('spectrum')
+    expect(restoredScope?.data.channel).toBe('center')
+    expect(restoredScope?.data.opacity).toBe(0.85)
+    expect(restoredScope?.data.initCode).toBe('n = 360; angle = 0;')
+    expect(restoredScope?.data.beatCode).toBe('angle = angle + 0.1;')
+    expect(restoredScope?.data.frameCode).toBe('angle = angle + 0.015;')
+    expect(restoredScope?.data.pointCode).toBe('x = cos(i * 2 * PI); y = sin(i * 2 * PI);')
+    expect(restoredScope?.data.appliedTemplateId).toBe('oscilloscope-tunnel')
+  })
 })

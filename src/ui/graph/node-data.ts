@@ -39,6 +39,18 @@ export interface StaticImageNodeData extends BaseNodeData {
   opacity?: number | string
 }
 
+export interface DuperscopeNodeData extends BaseNodeData {
+  appliedTemplateId?: string
+  drawMode?: 'lines' | 'lineLoop' | 'points'
+  audioMode?: 'waveform' | 'spectrum'
+  channel?: 'center' | 'left' | 'right'
+  opacity?: number | string
+  initCode?: string
+  beatCode?: string
+  frameCode?: string
+  pointCode?: string
+}
+
 export interface TestVisualNodeData extends BaseNodeData {
   shape?: string
   reactive?: boolean

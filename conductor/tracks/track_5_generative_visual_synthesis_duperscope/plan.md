@@ -58,7 +58,7 @@ This plan implements **Duperscope** (`DuperscopeNode`) and its 4-phase multi-sta
   - Create `src/engine/nodes/duperscope-templates.ts` with the 4 classic generative templates and default Duperscope node parameters.
   - Update `src/ui/inspector/component-preset-utils.ts` (`isNodeDirty`) to detect modified parameters or script blocks on `duperscopeNode`.
   - *Verification:* Write unit tests in `src/engine/nodes/duperscope-templates.test.ts` verifying that all built-in templates compile cleanly and evaluate without error.
-- [ ] **Task 3.2: Store, Preset Schema v2 & ViewportCanvas Reconciliation**
+- [x] **Task 3.2: Store, Preset Schema v2 & ViewportCanvas Reconciliation**
   - Add `DuperscopeNodeData` to `src/ui/graph/node-data.ts`.
   - Update `useAppStore` (`addLayerNode` / `applyDuperscopeTemplate`), `preset-serializer.ts`, `preset-deserializer.ts`, and `ViewportCanvas.tsx` to instantiate, update, serialize, and dispose `DuperscopeNode` instances.
   - *Verification:* Write unit and roundtrip tests in `src/engine/presets/preset-roundtrip.test.ts` and `src/ui/store/app-store.test.ts` verifying `duperscopeNode` creation, template application, undo/redo deltas, and JSON v2 roundtrip fidelity.

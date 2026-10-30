@@ -379,4 +379,56 @@ describe('useAppStore (Zustand State Plane)', () => {
     expect(useAppStore.getState().selectedTemplateId).toBe('feedback-vortex')
     expect(useAppStore.getState().feedbackOpacity).toBe(0.96)
   })
+
+  it('creates and attaches a new duperscopeNode via addLayerNode', () => {
+    const store = useAppStore.getState()
+    const initialCount = store.graphNodes.length
+
+    const newId = store.addLayerNode('duperscopeNode')
+    expect(typeof newId).toBe('string')
+
+    const state = useAppStore.getState()
+    expect(state.graphNodes.length).toBe(initialCount + 1)
+    expect(state.selectedNodeId).toBe(newId)
+
+    const createdNode = state.graphNodes.find((n) => n.id === newId)
+    expect(createdNode).toBeDefined()
+    expect(createdNode?.type).toBe('duperscopeNode')
+    expect(createdNode?.parentId).toBe('master-frame-buffer')
+    expect(createdNode?.data.drawMode).toBe('lines')
+    expect(createdNode?.data.audioMode).toBe('waveform')
+    expect(createdNode?.data.initCode).toBe('n = 200;')
+    expect(state.canUndo).toBe(true)
+
+    // Verify undo removes it
+    store.undo()
+    expect(useAppStore.getState().graphNodes.length).toBe(initialCount)
+    expect(useAppStore.getState().graphNodes.some((n) => n.id === newId)).toBe(false)
+  })
+
+  it('applies built-in duperscope template and restores previous values on undo/redo', () => {
+    const store = useAppStore.getState()
+    const newId = store.addLayerNode('duperscopeNode')
+
+    // Apply template
+    store.applyDuperscopeTemplate(newId, 'oscilloscope-tunnel')
+
+    const nodeAfter = useAppStore.getState().graphNodes.find((n) => n.id === newId)
+    expect(nodeAfter?.data.appliedTemplateId).toBe('oscilloscope-tunnel')
+    expect(nodeAfter?.data.drawMode).toBe('lineLoop')
+    expect(nodeAfter?.data.audioMode).toBe('waveform')
+    expect(nodeAfter?.data.initCode).toContain('angle = 0;')
+
+    // Undo template
+    store.undo()
+    const nodeUndone = useAppStore.getState().graphNodes.find((n) => n.id === newId)
+    expect(nodeUndone?.data.appliedTemplateId).toBeUndefined()
+    expect(nodeUndone?.data.drawMode).toBe('lines')
+
+    // Redo template
+    store.redo()
+    const nodeRedone = useAppStore.getState().graphNodes.find((n) => n.id === newId)
+    expect(nodeRedone?.data.appliedTemplateId).toBe('oscilloscope-tunnel')
+    expect(nodeRedone?.data.drawMode).toBe('lineLoop')
+  })
 })

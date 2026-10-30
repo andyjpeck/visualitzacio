@@ -138,6 +138,9 @@ export interface SemanticActionDelta {
 }
 
 function deepClone<T>(obj: T): T {
+  if (typeof structuredClone === 'function') {
+    return structuredClone(obj)
+  }
   return JSON.parse(JSON.stringify(obj))
 }
 
@@ -458,15 +461,25 @@ export function applySemanticDelta(
       const posPatch = isUndo ? mod.beforePosition : mod.afterPosition
       const parentPatch = isUndo ? mod.beforeParentId : mod.afterParentId
 
+      let nextData = node.data as Record<string, unknown>
+      if (dataPatch) {
+        nextData = { ...nextData }
+        for (const [k, v] of Object.entries(dataPatch)) {
+          if (v === undefined) {
+            delete nextData[k]
+          } else {
+            nextData[k] = typeof v === 'object' && v !== null ? deepClone(v) : v
+          }
+        }
+      }
+
       return {
         ...node,
         ...(posPatch ? { position: deepClone(posPatch) } : {}),
         ...(parentPatch !== undefined
           ? { parentId: parentPatch ?? undefined }
           : {}),
-        ...(dataPatch
-          ? { data: { ...(node.data as Record<string, unknown>), ...deepClone(dataPatch) } }
-          : {}),
+        ...(dataPatch ? { data: nextData } : {}),
       }
     })
   }

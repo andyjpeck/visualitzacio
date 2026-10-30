@@ -4,6 +4,7 @@ import { ViewportCanvas } from './viewport-canvas'
 import { useAppStore } from '../store/app-store'
 import { TestVisualNode } from '../../engine/visual-node'
 import { FrameBufferNode } from '../../engine/frame-buffer/frame-buffer-node'
+import { DuperscopeNode } from '../../engine/nodes/duperscope-node'
 import type { RenderEngine } from '../../engine/render-engine'
 
 // Mock Three.js WebGLRenderer for jsdom
@@ -131,6 +132,44 @@ describe('ViewportCanvas', () => {
 
     expect(childBufferNode.getChildren()).not.toContain(nestedSynth)
     expect(masterNode.getChildren()).toContain(nestedSynth)
+
+    unmount()
+  })
+
+  it('instantiates and synchronizes DuperscopeNode in the engine when duperscopeNode exists in graphNodes', () => {
+    let capturedEngine: RenderEngine | null = null
+    const { unmount } = render(
+      <ViewportCanvas
+        onEngineReady={(engine) => {
+          capturedEngine = engine
+        }}
+      />,
+    )
+
+    expect(capturedEngine).not.toBeNull()
+
+    // Add duperscopeNode
+    let scopeId = ''
+    act(() => {
+      scopeId = useAppStore.getState().addLayerNode('duperscopeNode')
+    })
+
+    const allNodes = capturedEngine!.getAllNodes()
+    const scopeNode = allNodes.find((n) => n instanceof DuperscopeNode) as DuperscopeNode
+    expect(scopeNode).toBeDefined()
+    expect(scopeNode.drawMode).toBe('lines')
+    expect(scopeNode.audioMode).toBe('waveform')
+
+    // Update draw mode and script
+    act(() => {
+      useAppStore.getState().updateGraphNodeData(scopeId, {
+        drawMode: 'lineLoop',
+        initCode: 'n = 360;',
+      })
+    })
+
+    expect(scopeNode.drawMode).toBe('lineLoop')
+    expect(scopeNode.getScripts().init).toBe('n = 360;')
 
     unmount()
   })

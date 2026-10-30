@@ -3,6 +3,14 @@ import { RenderEngine } from '../../engine/render-engine'
 import { TestVisualNode } from '../../engine/visual-node'
 import { FrameBufferNode } from '../../engine/frame-buffer/frame-buffer-node'
 import { StaticImageNode, type ImageFitMode } from '../../engine/nodes/static-image-node'
+import {
+  DuperscopeNode,
+  type DuperscopeDrawMode,
+} from '../../engine/nodes/duperscope-node'
+import type {
+  DuperscopeAudioMode,
+  DuperscopeChannel,
+} from '../../engine/nodes/duperscope-runner'
 import type { VisualNode } from '../../contracts/renderer-like'
 import {
   type ExpressionEngine,
@@ -180,6 +188,21 @@ export function ViewportCanvas({
             expressionEngine: exprEngine,
           })
           nodeMap.set(gNode.id, vNode)
+        } else if (gNode.type === 'duperscopeNode') {
+          vNode = new DuperscopeNode({
+            id: gNode.id,
+            name: String(gNode.data.label || 'Duperscope'),
+            drawMode: (gNode.data.drawMode as DuperscopeDrawMode) || 'lines',
+            audioMode: (gNode.data.audioMode as DuperscopeAudioMode) || 'waveform',
+            channel: (gNode.data.channel as DuperscopeChannel) || 'center',
+            opacity: (gNode.data.opacity as string | number) ?? 1.0,
+            initCode: gNode.data.initCode !== undefined ? String(gNode.data.initCode) : undefined,
+            beatCode: gNode.data.beatCode !== undefined ? String(gNode.data.beatCode) : undefined,
+            frameCode: gNode.data.frameCode !== undefined ? String(gNode.data.frameCode) : undefined,
+            pointCode: gNode.data.pointCode !== undefined ? String(gNode.data.pointCode) : undefined,
+            expressionEngine: exprEngine,
+          })
+          nodeMap.set(gNode.id, vNode)
         }
       }
 
@@ -254,6 +277,38 @@ export function ViewportCanvas({
         }
         if (gNode.data.saveTo !== undefined) {
           vNode.setSaveTo((gNode.data.saveTo as string) || null)
+        }
+      } else if (vNode instanceof DuperscopeNode) {
+        if (gNode.data.drawMode) {
+          vNode.drawMode = gNode.data.drawMode as DuperscopeDrawMode
+        }
+        if (gNode.data.audioMode) {
+          vNode.audioMode = gNode.data.audioMode as DuperscopeAudioMode
+        }
+        if (gNode.data.channel) {
+          vNode.channel = gNode.data.channel as DuperscopeChannel
+        }
+        if (gNode.data.opacity !== undefined) {
+          vNode.setOpacity(gNode.data.opacity as string | number)
+        }
+        const currentScripts = vNode.getScripts()
+        const nextInit = gNode.data.initCode !== undefined ? String(gNode.data.initCode) : currentScripts.init
+        const nextBeat = gNode.data.beatCode !== undefined ? String(gNode.data.beatCode) : currentScripts.beat
+        const nextFrame = gNode.data.frameCode !== undefined ? String(gNode.data.frameCode) : currentScripts.frame
+        const nextPoint = gNode.data.pointCode !== undefined ? String(gNode.data.pointCode) : currentScripts.point
+
+        if (
+          nextInit !== currentScripts.init ||
+          nextBeat !== currentScripts.beat ||
+          nextFrame !== currentScripts.frame ||
+          nextPoint !== currentScripts.point
+        ) {
+          vNode.setScripts({
+            init: nextInit,
+            beat: nextBeat,
+            frame: nextFrame,
+            point: nextPoint,
+          })
         }
       }
     }
