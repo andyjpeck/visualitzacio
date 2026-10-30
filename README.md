@@ -33,7 +33,14 @@ Visualització is designed for high-performance audio reactivity, combining math
   - Underlying `@xyflow/react` visual node graph engine (`VisualNodeGraph`) with Dagre hierarchical auto-layout, container bounds enforcement, and connection cycle prevention.
   - Floating playback toolbar (`Toolbar`), FPS badge, and audio telemetry overlay positioned within the 3D viewport canvas, featuring responsive auto-scaling (`ResizeObserver`) to prevent clipping on narrow viewports.
   - Universal portal-based modal dialog system (`BaseModalDialog` rendered via `createPortal` at `z-[9999]`) with backdrop blur overlay escaping nested pane stacking contexts.
-  - Fast diagnostic "Copy JSON" export button and `window.__getGraphLayout` console helper.
+- **100-Step History & Undo/Redo Engine**:
+  - 100-snapshot immutable JSON history stack (`UndoRedoManager`) tracking node hierarchy mutations, connection routing, and parameter adjustments.
+  - Continuous input coalescing for 60 FPS slider adjustments and 500ms debounced formula keystrokes, ensuring a single gesture yields exactly one undoable step.
+  - Global keyboard shortcut bindings (`Ctrl+Z`, `Cmd+Z`, `Ctrl+Y`, `Ctrl+Shift+Z`) with text input focus protection and tactile toolbar controls.
+- **Preset Serialization & Import/Export Suite**:
+  - Standardized JSON preset schema (`PresetSchema` v1) encoding metadata, performance configurations, audio frequency bands, ping-pong feedback settings, and pure topological component hierarchies without ephemeral pixel coordinates.
+  - Complete import and export pipeline: download `.json` preset files, copy preset JSON to clipboard, load via file input, paste from clipboard (`Ctrl+V`), and drag-and-drop `.json` files directly onto the 3D viewport canvas.
+  - Automatic DAG layout executed upon preset loading for pristine visual presentation.
 - **Universal Parameter Inspector & `f(x)` Expressions**:
   - Docked inspector panel with single-column layout, parameter and dropdown tooltips, and component preset selector (`ComponentPresetSelector`) with dirty-state confirmation guards.
   - Seamless toggle between tactile fixed controls and dynamic mathematical expressions (`ParameterRow`) with AST formula preservation.
@@ -72,7 +79,8 @@ visualitzacio/
     ├── engine/            # 60 FPS Two-Plane RenderEngine, scheduler, and 3D scenes
     │   ├── expressions/   # Mathematical parser, AST compiler, tokens, validator, and DSP functions
     │   ├── frame-buffer/  # FrameBufferNode, dual-FBO ping-pong, CompositingShader, BufferPool, and templates
-    │   └── nodes/         # Reusable visual nodes (StaticImageNode)
+    │   ├── nodes/         # Reusable visual nodes (StaticImageNode)
+    │   └── presets/       # Schema-validated Preset serializer, deserializer, and roundtrip engine
     ├── test/              # Vitest test setup and headless mocks (AudioContext, WebGL)
     │   └── fixtures/      # Reusable mock factories
     └── ui/                # React 19 user interface
@@ -80,7 +88,8 @@ visualitzacio/
         ├── dialogs/       # Reusable portal BaseModalDialog shell and stack history navigation
         ├── expressions/   # Sparkline canvas, formula input, quick-reference, and preset catalog
         ├── graph/         # Interactive visual node graph, custom node cards, and DAG auto-layout
-        ├── hooks/         # Viewport dialog dragging and Escape key listeners
+        ├── history/       # 100-step immutable JSON history engine and undo/redo keyboard shortcuts
+        ├── hooks/         # Viewport dialog dragging, Escape key, and preset drag-and-drop/paste listeners
         ├── hud/           # Real-time audio telemetry overlay, FPS badge, and formula testbed
         ├── inspector/     # Docked parameter inspector, ParameterRow, and autocomplete
         ├── settings/      # Preset performance configuration modal and DSP boundary tuning

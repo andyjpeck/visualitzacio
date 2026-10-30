@@ -142,10 +142,10 @@ This plan implements the complete Studio workspace for Visualització in 5 test-
 - Perform comprehensive end-to-end testing, documentation updates, and pre-upload code review.
 
 ### Tasks
-- [ ] **Task 5.1: App-Level Integration & Smoke Testing**
+- [x] **Task 5.1: App-Level Integration & Smoke Testing**
   - Update `src/App.tsx` and `src/ui/toolbar/toolbar.tsx` with Studio Mode, Undo/Redo, and Preset Export/Import controls.
   - *Verification:* Run full test suite (`npm test`), `oxlint`, and `npm run build`.
-- [ ] **Task 5.2: Documentation & README Synchronization**
+- [x] **Task 5.2: Documentation & README Synchronization**
   - Update root `README.md`, `conductor/tracks.md`, `conductor/tasks.md`, and all newly created directory READMEs.
 - [ ] **Task 5.3: Stateless Code Review & Track Completion Protocol**
   - Execute stateless code review subagent, address any findings, and prepare branch for merge to main.
