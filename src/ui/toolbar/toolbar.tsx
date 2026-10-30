@@ -16,8 +16,6 @@ import {
   Settings,
   Undo2,
   Upload,
-  Volume2,
-  VolumeX,
 } from 'lucide-react'
 import { useAppStore } from '../store/app-store'
 import type { AudioManager } from '../../audio/audio-manager'
@@ -31,7 +29,7 @@ export interface ToolbarProps {
 
 /**
  * Top floating glassmorphic toolbar for audio playback controls, source selection,
- * volume, FPS counter toggle, preset settings modal, and expression testbed f(x).
+ * FPS counter toggle, preset settings modal, and expression testbed f(x).
  */
 export function Toolbar({ audioManager, className = '' }: ToolbarProps): React.ReactElement {
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -45,8 +43,6 @@ export function Toolbar({ audioManager, className = '' }: ToolbarProps): React.R
   const setSourceType = useAppStore((state) => state.setSourceType)
   const audioFileName = useAppStore((state) => state.audioFileName)
   const setAudioFileName = useAppStore((state) => state.setAudioFileName)
-  const volume = useAppStore((state) => state.volume)
-  const setVolume = useAppStore((state) => state.setVolume)
   const audioError = useAppStore((state) => state.audioError)
   const setAudioError = useAppStore((state) => state.setAudioError)
   const showFpsOverlay = useAppStore((state) => state.showFpsOverlay)
@@ -269,14 +265,6 @@ export function Toolbar({ audioManager, className = '' }: ToolbarProps): React.R
     }
   }
 
-  const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = parseFloat(e.target.value)
-    setVolume(val)
-    if (audioManager) {
-      audioManager.setVolume(val)
-    }
-  }
-
   return (
     <>
       {/* Hidden Audio File Input */}
@@ -393,25 +381,6 @@ export function Toolbar({ audioManager, className = '' }: ToolbarProps): React.R
           audioLoadingProgress={audioLoadingProgress}
           audioLoadingStage={audioLoadingStage}
         />
-
-        {/* Volume Slider */}
-        <div className="flex items-center gap-2 px-2 py-1 bg-white/5 rounded-lg border border-white/5">
-          {volume === 0 ? (
-            <VolumeX className="w-3.5 h-3.5 text-slate-500" />
-          ) : (
-            <Volume2 className="w-3.5 h-3.5 text-slate-400" />
-          )}
-          <input
-            type="range"
-            min="0"
-            max="1"
-            step="0.05"
-            value={volume}
-            onChange={handleVolumeChange}
-            aria-label="Volume slider"
-            className="w-16 h-1 bg-white/20 rounded-lg appearance-none cursor-pointer accent-cyber-cyan"
-          />
-        </div>
 
         {/* Undo Action */}
         <button
