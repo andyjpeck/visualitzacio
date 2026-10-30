@@ -841,6 +841,7 @@ export function ParameterInspector({
           title="Overwrite Component Parameters?"
           icon={<AlertTriangle className="w-4 h-4 text-amber-400" />}
           maxWidthClass="max-w-md"
+          className="border-amber-500/40 shadow-amber-500/20"
           headerTestId="overwrite-template-modal-header"
         >
           <div className="flex flex-col gap-4 text-xs font-mono select-none">
