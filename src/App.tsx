@@ -13,6 +13,8 @@ import { AudioAnalyzer } from './audio/audio-analyzer'
 import type { RenderEngine } from './engine/render-engine'
 import { useAppStore } from './ui/store/app-store'
 import { useUndoRedoShortcuts } from './ui/history/use-undo-redo-shortcuts'
+import { usePresetDropAndPaste } from './ui/hooks/use-preset-drop-and-paste'
+import { Upload } from 'lucide-react'
 
 /**
  * Root Application component integrating the WebGL RenderEngine canvas,
@@ -27,6 +29,9 @@ export function App(): React.ReactElement {
 
   // Bind global Ctrl+Z / Ctrl+Y undo/redo shortcuts
   useUndoRedoShortcuts()
+
+  // Bind global drag-and-drop preset JSON and clipboard paste
+  const { isDraggingPreset } = usePresetDropAndPaste()
 
   // Synchronize dynamic frequency band cutoffs to audio analyzer
   useEffect(() => {
@@ -101,6 +106,22 @@ export function App(): React.ReactElement {
 
       {/* Modals & Dialogs (Stack Managed) */}
       <PresetSettingsModal />
+
+      {/* Preset File Drag & Drop Viewport Overlay */}
+      {isDraggingPreset && (
+        <div
+          data-testid="preset-drag-overlay"
+          className="absolute inset-0 z-[10000] bg-cyber-void/85 backdrop-blur-md border-4 border-dashed border-cyber-cyan flex flex-col items-center justify-center pointer-events-none animate-in fade-in duration-150"
+        >
+          <Upload className="w-16 h-16 text-cyber-cyan animate-bounce mb-4" />
+          <span className="text-2xl font-bold text-cyber-cyan tracking-wider uppercase font-mono">
+            Drop Preset JSON to Import
+          </span>
+          <span className="text-sm text-slate-300 mt-2 font-mono">
+            Release anywhere to load the composition pipeline
+          </span>
+        </div>
+      )}
     </div>
   )
 }

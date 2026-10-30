@@ -268,4 +268,69 @@ describe('Toolbar Component', () => {
     fireEvent.click(redoBtn)
     expect(redoMock).toHaveBeenCalledTimes(1)
   })
+
+  it('handles Export Preset, Copy Preset JSON, and Import Preset actions', async () => {
+    const writeTextMock = vi.fn().mockResolvedValue(undefined)
+    Object.assign(navigator, {
+      clipboard: {
+        writeText: writeTextMock,
+      },
+    })
+
+    const createObjectURLMock = vi.fn().mockReturnValue('blob:mock-url')
+    const revokeObjectURLMock = vi.fn()
+    window.URL.createObjectURL = createObjectURLMock
+    window.URL.revokeObjectURL = revokeObjectURLMock
+    const anchorClickSpy = vi
+      .spyOn(HTMLAnchorElement.prototype, 'click')
+      .mockImplementation(() => {})
+
+    render(<Toolbar audioManager={mockAudioManager} />)
+
+    // 1. Export Preset (.json download)
+    const exportBtn = screen.getByTestId('toolbar-export-preset-btn')
+    expect(exportBtn).toBeInTheDocument()
+    await act(async () => {
+      fireEvent.click(exportBtn)
+    })
+    expect(createObjectURLMock).toHaveBeenCalledTimes(1)
+    expect(anchorClickSpy).toHaveBeenCalledTimes(1)
+
+    // 2. Copy Preset JSON
+    const copyBtn = screen.getByTestId('toolbar-copy-preset-btn')
+    expect(copyBtn).toBeInTheDocument()
+    await act(async () => {
+      fireEvent.click(copyBtn)
+    })
+    expect(writeTextMock).toHaveBeenCalledTimes(1)
+    const copiedJson = JSON.parse(writeTextMock.mock.calls[0][0])
+    expect(copiedJson.schemaVersion).toBe(1)
+    expect(copiedJson.nodes).toBeDefined()
+
+    // 3. Import Preset file selection
+    const importBtn = screen.getByTestId('toolbar-import-preset-btn')
+    const fileInput = screen.getByTestId('toolbar-preset-file-input') as HTMLInputElement
+    expect(importBtn).toBeInTheDocument()
+
+    const mockPresetJson = JSON.stringify({
+      schemaVersion: 1,
+      metadata: { name: 'Imported Preset', version: 1 },
+      settings: { targetFps: 60, resolutionScale: 1.0, audioBands: useAppStore.getState().audioBands },
+      nodes: [{ id: 'master-frame-buffer', type: 'masterFrameBuffer', params: { opacity: 0.42 } }],
+    })
+    const file = new File([mockPresetJson], 'imported.json', { type: 'application/json' })
+
+    await act(async () => {
+      fireEvent.change(fileInput, { target: { files: [file] } })
+    })
+
+    await vi.waitFor(() => {
+      const master = useAppStore
+        .getState()
+        .graphNodes.find((n) => n.id === 'master-frame-buffer')
+      expect(master?.data.opacity).toBe(0.42)
+    })
+
+    anchorClickSpy.mockRestore()
+  })
 })

@@ -1,7 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react'
 import {
   Activity,
+  Check,
+  Copy,
   Disc,
+  Download,
   FileAudio,
   Loader2,
   Maximize2,
@@ -12,6 +15,7 @@ import {
   Redo2,
   Settings,
   Undo2,
+  Upload,
   Volume2,
   VolumeX,
 } from 'lucide-react'
@@ -54,6 +58,61 @@ export function Toolbar({ audioManager, className = '' }: ToolbarProps): React.R
   const canRedo = useAppStore((state) => state.canRedo)
   const undo = useAppStore((state) => state.undo)
   const redo = useAppStore((state) => state.redo)
+  const exportPresetJson = useAppStore((state) => state.exportPresetJson)
+  const loadPreset = useAppStore((state) => state.loadPreset)
+  const presetFileInputRef = useRef<HTMLInputElement>(null)
+  const [copiedPreset, setCopiedPreset] = useState(false)
+  const copyPresetTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (copyPresetTimeoutRef.current) {
+        clearTimeout(copyPresetTimeoutRef.current)
+      }
+    }
+  }, [])
+
+  const handleExportPreset = () => {
+    const jsonStr = exportPresetJson()
+    const blob = new Blob([jsonStr], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `preset-${Date.now()}.json`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+  }
+
+  const handleCopyPresetJson = () => {
+    const jsonStr = exportPresetJson()
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      navigator.clipboard.writeText(jsonStr).catch(() => {})
+    }
+    setCopiedPreset(true)
+    if (copyPresetTimeoutRef.current) {
+      clearTimeout(copyPresetTimeoutRef.current)
+    }
+    copyPresetTimeoutRef.current = setTimeout(() => setCopiedPreset(false), 2000)
+  }
+
+  const handlePresetFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = (event) => {
+      const text = event.target?.result
+      if (typeof text === 'string') {
+        const result = loadPreset(text)
+        if (!result.success) {
+          setAudioError(result.errors?.join('; ') ?? 'Failed to import preset.')
+        }
+      }
+    }
+    reader.readAsText(file)
+    e.target.value = ''
+  }
   const isAudioLoading = useAppStore((state) => state.isAudioLoading)
   const audioLoadingProgress = useAppStore((state) => state.audioLoadingProgress)
   const audioLoadingStage = useAppStore((state) => state.audioLoadingStage)
@@ -379,6 +438,56 @@ export function Toolbar({ audioManager, className = '' }: ToolbarProps): React.R
         >
           <Redo2 className="w-4 h-4" />
         </button>
+
+        {/* Export Preset (.json) Action */}
+        <button
+          type="button"
+          data-testid="toolbar-export-preset-btn"
+          onClick={handleExportPreset}
+          title="Export Preset (.json file download)"
+          aria-label="Export Preset"
+          className="p-2 rounded-lg bg-white/5 text-slate-300 hover:text-white hover:bg-white/10 transition-colors border border-transparent hover:border-white/10 cursor-pointer"
+        >
+          <Download className="w-4 h-4" />
+        </button>
+
+        {/* Copy Preset JSON Action */}
+        <button
+          type="button"
+          data-testid="toolbar-copy-preset-btn"
+          onClick={handleCopyPresetJson}
+          title={copiedPreset ? 'Copied to Clipboard!' : 'Copy Preset JSON to Clipboard'}
+          aria-label="Copy Preset JSON"
+          className="p-2 rounded-lg bg-white/5 text-slate-300 hover:text-white hover:bg-white/10 transition-colors border border-transparent hover:border-white/10 cursor-pointer"
+        >
+          {copiedPreset ? (
+            <Check className="w-4 h-4 text-emerald-400" />
+          ) : (
+            <Copy className="w-4 h-4" />
+          )}
+        </button>
+
+        {/* Import Preset (.json) Action */}
+        <button
+          type="button"
+          data-testid="toolbar-import-preset-btn"
+          onClick={() => presetFileInputRef.current?.click()}
+          title="Import Preset (.json file or paste Ctrl+V)"
+          aria-label="Import Preset"
+          className="p-2 rounded-lg bg-white/5 text-slate-300 hover:text-white hover:bg-white/10 transition-colors border border-transparent hover:border-white/10 cursor-pointer"
+        >
+          <Upload className="w-4 h-4" />
+        </button>
+        <input
+          ref={presetFileInputRef}
+          type="file"
+          data-testid="toolbar-preset-file-input"
+          accept=".json,application/json"
+          onChange={handlePresetFileSelect}
+          className="hidden"
+          aria-hidden="true"
+          tabIndex={-1}
+        />
 
         {/* FPS Badge Toggle */}
         <button

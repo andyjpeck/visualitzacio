@@ -5,7 +5,10 @@ import {
   type AudioBandsSettings,
   type ResolutionScale,
 } from '../../contracts/preset-settings'
+import type { Preset } from '../../contracts/preset-schema'
 import { getTemplateById } from '../../engine/frame-buffer/frame-buffer-templates'
+import { serializePreset, serializePresetToJson } from '../../engine/presets/preset-serializer'
+import { deserializePreset } from '../../engine/presets/preset-deserializer'
 import type { AudioSourceType } from '../../audio/audio-manager'
 import {
   getNextChildPosition,
@@ -456,6 +459,11 @@ export interface AppState {
   recordHistorySnapshot: (description?: string, options?: RecordOptions) => void
   commitHistoryCoalescing: () => void
   clearHistory: () => void
+
+  // Preset Import/Export Actions (Track 4 Task 4.3)
+  exportPreset: (name?: string) => Preset
+  exportPresetJson: (name?: string, space?: number) => string
+  loadPreset: (presetOrJson: Preset | string) => { success: boolean; errors?: string[] }
 }
 
 function getHistorySnapshotFromState(state: AppState): HistorySnapshot {
@@ -513,7 +521,7 @@ function toggleDialogInStack(stack: DialogId[], id: DialogId): DialogId[] {
   return next
 }
 
-export const useAppStore = create<AppState>((set) => ({
+export const useAppStore = create<AppState>((set, get) => ({
   isPlaying: false,
   sourceType: 'sample',
   volume: 0.8,
@@ -669,7 +677,7 @@ export const useAppStore = create<AppState>((set) => ({
       }
     }),
   removeGraphNode: (nodeId) => {
-    const state = useAppStore.getState()
+    const state = get()
     const nodeToRemove = state.graphNodes.find((n) => n.id === nodeId)
     // Master Output cannot be deleted (Permanent root anchor)
     if (!nodeToRemove || nodeToRemove.type === 'masterFrameBuffer' || nodeId === 'master-frame-buffer') {
@@ -870,7 +878,7 @@ export const useAppStore = create<AppState>((set) => ({
   applyFrameBufferTemplate: (templateId) => {
     const template = getTemplateById(templateId)
     if (!template) return
-    const state = useAppStore.getState()
+    const state = get()
     undoRedoManager.record(getHistorySnapshotFromState(state), {
       description: `Apply Template ${template.name}`,
     })
@@ -939,7 +947,7 @@ export const useAppStore = create<AppState>((set) => ({
 
   // 100-Step History & Undo/Redo Engine Actions (Track 4 Task 4.1)
   undo: () => {
-    const state = useAppStore.getState()
+    const state = get()
     const current = getHistorySnapshotFromState(state)
     const restored = undoRedoManager.undo(current)
     if (!restored) return false
@@ -970,7 +978,7 @@ export const useAppStore = create<AppState>((set) => ({
     return true
   },
   redo: () => {
-    const state = useAppStore.getState()
+    const state = get()
     const current = getHistorySnapshotFromState(state)
     const restored = undoRedoManager.redo(current)
     if (!restored) return false
@@ -1001,7 +1009,7 @@ export const useAppStore = create<AppState>((set) => ({
     return true
   },
   recordHistorySnapshot: (description, options) => {
-    const state = useAppStore.getState()
+    const state = get()
     undoRedoManager.record(getHistorySnapshotFromState(state), {
       ...options,
       description: description ?? options?.description,
@@ -1017,5 +1025,92 @@ export const useAppStore = create<AppState>((set) => ({
   clearHistory: () => {
     undoRedoManager.clear()
     set({ canUndo: false, canRedo: false })
+  },
+
+  // Preset Import/Export Actions (Track 4 Task 4.3)
+  exportPreset: (name?: string): Preset => {
+    const state = get()
+    return serializePreset({
+      name: name ?? 'Visualització Composition',
+      targetFps: state.targetFps,
+      resolutionScale: state.resolutionScale,
+      audioBands: state.audioBands,
+      graphNodes: state.graphNodes,
+      graphEdges: state.graphEdges,
+      feedbackConfig: {
+        selectedTemplateId: state.selectedTemplateId,
+        feedbackEnabled: state.feedbackEnabled,
+        feedbackBlendMode: state.feedbackBlendMode,
+        feedbackOpacity: state.feedbackOpacity,
+        feedbackScale: state.feedbackScale,
+        feedbackRotation: state.feedbackRotation,
+        feedbackPositionX: state.feedbackPositionX,
+        feedbackPositionY: state.feedbackPositionY,
+        isCustomFeedbackConfig: state.isCustomFeedbackConfig,
+      },
+    })
+  },
+  exportPresetJson: (name?: string, space = 2): string => {
+    const state = get()
+    return serializePresetToJson(
+      {
+        name: name ?? 'Visualització Composition',
+        targetFps: state.targetFps,
+        resolutionScale: state.resolutionScale,
+        audioBands: state.audioBands,
+        graphNodes: state.graphNodes,
+        graphEdges: state.graphEdges,
+        feedbackConfig: {
+          selectedTemplateId: state.selectedTemplateId,
+          feedbackEnabled: state.feedbackEnabled,
+          feedbackBlendMode: state.feedbackBlendMode,
+          feedbackOpacity: state.feedbackOpacity,
+          feedbackScale: state.feedbackScale,
+          feedbackRotation: state.feedbackRotation,
+          feedbackPositionX: state.feedbackPositionX,
+          feedbackPositionY: state.feedbackPositionY,
+          isCustomFeedbackConfig: state.isCustomFeedbackConfig,
+        },
+      },
+      space,
+    )
+  },
+  loadPreset: (presetOrJson): { success: boolean; errors?: string[] } => {
+    const result = deserializePreset(presetOrJson)
+    if (!result.success) {
+      return { success: false, errors: result.errors }
+    }
+
+    const state = get()
+    undoRedoManager.record(getHistorySnapshotFromState(state), {
+      description: `Load Preset ${result.metadata?.name ?? ''}`.trim(),
+    })
+
+    const fb = result.feedbackConfig
+    set({
+      graphNodes: result.nodes,
+      graphEdges: result.edges,
+      targetFps: result.targetFps ?? state.targetFps,
+      resolutionScale: result.resolutionScale ?? state.resolutionScale,
+      audioBands: result.audioBands ?? state.audioBands,
+      selectedNodeId: 'master-frame-buffer',
+      ...(fb
+        ? {
+            selectedTemplateId: fb.selectedTemplateId ?? state.selectedTemplateId,
+            feedbackEnabled: fb.feedbackEnabled,
+            feedbackBlendMode: fb.feedbackBlendMode,
+            feedbackOpacity: fb.feedbackOpacity,
+            feedbackScale: fb.feedbackScale,
+            feedbackRotation: fb.feedbackRotation,
+            feedbackPositionX: fb.feedbackPositionX,
+            feedbackPositionY: fb.feedbackPositionY,
+            isCustomFeedbackConfig: fb.isCustomFeedbackConfig ?? false,
+          }
+        : {}),
+      canUndo: undoRedoManager.canUndo(),
+      canRedo: undoRedoManager.canRedo(),
+    })
+
+    return { success: true }
   },
 }))

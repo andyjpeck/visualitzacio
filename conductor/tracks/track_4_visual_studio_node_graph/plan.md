@@ -126,7 +126,7 @@ This plan implements the complete Studio workspace for Visualització in 5 test-
   - Define `PresetSchema` in `src/contracts/preset-schema.ts`.
   - Implement `serializePreset()` extracting preset metadata, node graph topology, and parameter states.
   - *Verification:* Write unit tests in `src/engine/presets/preset-serializer.test.ts` verifying JSON output schema.
-- [ ] **Task 4.3: Preset Deserializer & Import Handlers**
+- [x] **Task 4.3: Preset Deserializer & Import Handlers**
   - Implement `deserializePreset()` validating schema and reconstructing the node graph and engine pipeline.
   - Implement export via `.json` download and clipboard copy, and import via file input, clipboard paste, and drag-and-drop onto viewport.
   - Trigger automatic DAG layout upon preset load.

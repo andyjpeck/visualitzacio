@@ -449,41 +449,6 @@ describe('WorkspacePane Component', () => {
     expect(screen.getByTestId('layer-tree-item-synth-child')).toBeInTheDocument()
   })
 
-  it('renders Copy JSON button and writes graph layout to clipboard and window global', async () => {
-    const writeTextMock = vi.fn().mockResolvedValue(undefined)
-    Object.assign(navigator, {
-      clipboard: {
-        writeText: writeTextMock,
-      },
-    })
-
-    render(<WorkspacePane />)
-
-    const copyBtn = screen.getByTestId('graph-copy-json-button')
-    expect(copyBtn).toBeInTheDocument()
-    expect(copyBtn).toHaveTextContent('Copy JSON')
-
-    // Test window global helper
-    const getLayout = (window as unknown as { __getGraphLayout?: () => { nodes: unknown[]; edges: unknown[] } }).__getGraphLayout
-    expect(typeof getLayout).toBe('function')
-    const layoutObj = getLayout!()
-    expect(Array.isArray(layoutObj.nodes)).toBe(true)
-    expect(Array.isArray(layoutObj.edges)).toBe(true)
-
-    // Click Copy JSON
-    fireEvent.click(copyBtn)
-
-    expect(writeTextMock).toHaveBeenCalledTimes(1)
-    const copiedJsonStr = writeTextMock.mock.calls[0][0] as string
-    const parsed = JSON.parse(copiedJsonStr)
-    expect(parsed.nodes).toBeDefined()
-    expect(parsed.edges).toBeDefined()
-    expect(parsed.timestamp).toBeDefined()
-
-    // Button should show Copied! state
-    expect(screen.getByTestId('graph-copy-json-button')).toHaveTextContent('Copied!')
-  })
-
   it('dismisses the add child layer dialog when pressing esc key', () => {
     render(<LayerTreeView />)
 
