@@ -1,6 +1,9 @@
 import React, { useCallback, useRef, useState } from 'react'
 import {
+  Activity,
+  AlertCircle,
   AlertTriangle,
+  CheckCircle2,
   Crown,
   Eye,
   EyeOff,
@@ -18,6 +21,15 @@ import { FRAME_BUFFER_TEMPLATES } from '../../engine/frame-buffer/frame-buffer-t
 import type { ResolutionScale } from '../../contracts/preset-settings'
 import { BaseModalDialog } from '../dialogs/base-modal-dialog'
 import { isNodeDirty } from './component-preset-utils'
+import {
+  DUPERSCOPE_TEMPLATES,
+  getDuperscopeTemplateById,
+} from '../../engine/nodes/duperscope-templates'
+import {
+  DuperscopeCompiler,
+  type DuperscopePhase,
+} from '../../engine/nodes/duperscope-compiler'
+import { ExpressionAutocomplete } from './expression-autocomplete'
 
 import type { ParameterOption } from './parameter-row'
 
@@ -54,6 +66,23 @@ const FIT_MODE_OPTIONS: ParameterOption[] = [
   { label: 'Stretch', value: 'stretch', tooltip: 'Stretches image to fill entire canvas width and height disregarding aspect ratio.' },
 ]
 
+const DUPERSCOPE_DRAW_MODE_OPTIONS: ParameterOption[] = [
+  { label: 'Lines (Ribbon Quad)', value: 'lines', tooltip: 'Screen-space quad ribbon with variable stroke thickness' },
+  { label: 'Line Loop (Closed Ribbon)', value: 'lineLoop', tooltip: 'Closed screen-space quad ribbon connecting last vertex back to first' },
+  { label: 'Points (Particles)', value: 'points', tooltip: 'Anti-aliased circular particle points' },
+]
+
+const DUPERSCOPE_AUDIO_MODE_OPTIONS: ParameterOption[] = [
+  { label: 'Waveform (Oscilloscope)', value: 'waveform', tooltip: 'Time-domain audio oscilloscope waveform' },
+  { label: 'Spectrum (Logarithmic FFT)', value: 'spectrum', tooltip: 'Logarithmic frequency spectrum from 20 Hz to 20,000 Hz' },
+]
+
+const DUPERSCOPE_CHANNEL_OPTIONS: ParameterOption[] = [
+  { label: 'Center (Mono Mix)', value: 'center', tooltip: 'Primary mixed mono audio stream' },
+  { label: 'Left Channel', value: 'left', tooltip: 'Left stereo channel audio stream' },
+  { label: 'Right Channel', value: 'right', tooltip: 'Right stereo channel audio stream' },
+]
+
 const SHAPE_OPTIONS: ParameterOption[] = [
   { label: 'Crystal Wireframe', value: 'Crystal', tooltip: 'Complex facet-refracting crystalline polyhedron geometry.' },
   { label: 'Cube Wireframe', value: 'Cube', tooltip: 'Classic geometric 3D cube mesh with rotating axes.' },
@@ -72,6 +101,107 @@ const RESOLUTION_OPTIONS: ParameterOption[] = [
  * Docked Parameter Inspector panel mounted in the top Studio split-view pane.
  * Reflects and mutates properties of the selected node in real time.
  */
+
+interface DuperscopePhaseEditorProps {
+  phase: DuperscopePhase
+  title: string
+  description: string
+  code: string
+  onChange: (code: string) => void
+  compiler: DuperscopeCompiler
+}
+
+function DuperscopePhaseEditor({
+  phase,
+  title,
+  description,
+  code,
+  onChange,
+  compiler,
+}: DuperscopePhaseEditorProps): React.ReactElement {
+  const [prevCode, setPrevCode] = useState(code)
+  const [localCode, setLocalCode] = useState(code)
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null)
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  if (code !== prevCode) {
+    setPrevCode(code)
+    setLocalCode(code)
+  }
+
+  const compilation = compiler.compilePhase(localCode, phase)
+
+  const handleTextChange = (newVal: string) => {
+    setLocalCode(newVal)
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current)
+    }
+    debounceTimerRef.current = setTimeout(() => {
+      onChange(newVal)
+    }, 500)
+  }
+
+  return (
+    <div className="flex flex-col gap-1.5 p-2.5 rounded-lg bg-white/[0.02] border border-white/10">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span className="text-[11px] font-mono font-bold text-slate-200">
+            {title}
+          </span>
+          <span className="text-[9px] font-mono text-slate-400">
+            {description}
+          </span>
+        </div>
+
+        {compilation.isValid ? (
+          <span
+            data-testid={`duperscope-valid-badge-${phase}`}
+            className="text-[9px] font-mono text-emerald-400 font-bold bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/30 flex items-center gap-1"
+          >
+            <CheckCircle2 className="w-3 h-3" /> VALID
+          </span>
+        ) : (
+          <span
+            data-testid={`duperscope-error-badge-${phase}`}
+            className="text-[9px] font-mono text-rose-400 font-bold bg-rose-500/10 px-1.5 py-0.5 rounded border border-rose-500/30 flex items-center gap-1"
+          >
+            <AlertCircle className="w-3 h-3" /> ERROR
+          </span>
+        )}
+      </div>
+
+      <div className="relative">
+        <textarea
+          ref={textareaRef}
+          data-testid={`duperscope-editor-${phase}`}
+          value={localCode}
+          onChange={(e) => handleTextChange(e.target.value)}
+          spellCheck={false}
+          rows={Math.max(2, Math.min(6, localCode.split('\n').length + 1))}
+          className="w-full bg-black/60 border border-white/15 focus:border-cyan-400/80 rounded-md p-2 text-xs font-mono text-cyan-200 placeholder-slate-600 outline-none resize-y leading-relaxed shadow-inner"
+          placeholder={`// Enter ${phase} statements (e.g. x = 0.5;)`}
+        />
+        <ExpressionAutocomplete
+          value={localCode}
+          onChange={(newVal) => handleTextChange(newVal)}
+          inputRef={textareaRef}
+          includeDuperscopeVars={true}
+        />
+      </div>
+
+      {!compilation.isValid && compilation.error && (
+        <div
+          data-testid={`duperscope-error-${phase}`}
+          className="text-[10px] font-mono text-rose-300 bg-rose-950/70 border border-rose-500/40 px-2 py-1.5 rounded flex items-start gap-1.5"
+        >
+          <AlertCircle className="w-3.5 h-3.5 text-rose-400 flex-shrink-0 mt-0.5" />
+          <span className="leading-tight">{compilation.error}</span>
+        </div>
+      )}
+    </div>
+  )
+}
+
 export function ParameterInspector({
   engine = null,
   className = '',
@@ -81,6 +211,8 @@ export function ParameterInspector({
   const graphNodes = useAppStore((state) => state.graphNodes)
   const updateGraphNodeData = useAppStore((state) => state.updateGraphNodeData)
   const setNodeParent = useAppStore((state) => state.setNodeParent)
+  const applyDuperscopeTemplate = useAppStore((state) => state.applyDuperscopeTemplate)
+  const duperscopeCompiler = React.useMemo(() => new DuperscopeCompiler(), [])
 
   // Preset-wide fallback settings
   const targetFps = useAppStore((state) => state.targetFps)
@@ -144,6 +276,7 @@ export function ParameterInspector({
   )
 
   const [pendingTemplateId, setPendingTemplateId] = useState<string | null>(null)
+  const [pendingDuperscopeTemplateId, setPendingDuperscopeTemplateId] = useState<string | null>(null)
 
   const appliedTemplateId = typeof selectedNode?.data?.appliedTemplateId === 'string'
     ? selectedNode.data.appliedTemplateId
@@ -197,6 +330,35 @@ export function ParameterInspector({
   const handleCancelApplyTemplate = useCallback(() => {
     setPendingTemplateId(null)
   }, [])
+
+  const handleDuperscopeTemplateDropdownChange = useCallback(
+    (templateId: string) => {
+      if (!templateId || !selectedNode) return
+
+      if (isNodeDirty(selectedNode)) {
+        setPendingDuperscopeTemplateId(templateId)
+      } else {
+        applyDuperscopeTemplate(selectedNode.id, templateId)
+        setPendingDuperscopeTemplateId(null)
+      }
+    },
+    [selectedNode, applyDuperscopeTemplate],
+  )
+
+  const handleCancelApplyDuperscopeTemplate = useCallback(() => {
+    setPendingDuperscopeTemplateId(null)
+  }, [])
+
+  const handleConfirmApplyDuperscopeTemplate = useCallback(() => {
+    if (pendingDuperscopeTemplateId && selectedNodeId) {
+      applyDuperscopeTemplate(selectedNodeId, pendingDuperscopeTemplateId)
+      setPendingDuperscopeTemplateId(null)
+    }
+  }, [pendingDuperscopeTemplateId, selectedNodeId, applyDuperscopeTemplate])
+
+  const pendingDuperscopeTemplate = pendingDuperscopeTemplateId
+    ? getDuperscopeTemplateById(pendingDuperscopeTemplateId)
+    : null
 
   const handleConfirmApplyTemplate = useCallback(() => {
     if (pendingTemplateId) {
@@ -308,6 +470,7 @@ export function ParameterInspector({
   const isFrameBuffer = type === 'frameBuffer'
   const isImage = type === 'staticImage'
   const isVisual = type === 'testVisual'
+  const isDuperscope = type === 'duperscopeNode'
   const isBypassed = Boolean(data.bypassed)
 
   const containerNodes = graphNodes.filter(
@@ -329,6 +492,7 @@ export function ParameterInspector({
           {isFrameBuffer && <Layers className="w-4 h-4 text-purple-400" />}
           {isImage && <ImageIcon className="w-4 h-4 text-emerald-400" />}
           {isVisual && <Sparkles className="w-4 h-4 text-cyber-cyan" />}
+          {isDuperscope && <Activity className="w-4 h-4 text-cyan-400" />}
 
           <div className="flex items-center gap-2">
             <span className="text-xs font-mono font-bold text-slate-100">
@@ -355,6 +519,32 @@ export function ParameterInspector({
                 Load Template...
               </option>
               {FRAME_BUFFER_TEMPLATES.map((tmpl) => (
+                <option
+                  key={tmpl.id}
+                  value={tmpl.id}
+                  title={tmpl.description}
+                  className="bg-cyber-dark text-slate-200"
+                >
+                  {tmpl.name}
+                </option>
+              ))}
+            </select>
+          )}
+
+          {/* Preset Selector for Duperscope */}
+          {isDuperscope && (
+            <select
+              data-testid="duperscope-preset-dropdown"
+              value={pendingDuperscopeTemplateId ?? (typeof data.appliedTemplateId === 'string' ? data.appliedTemplateId : '')}
+              onChange={(e) => handleDuperscopeTemplateDropdownChange(e.target.value)}
+              aria-label="Duperscope Preset Selector"
+              title="Apply a built-in Duperscope generative template preset"
+              className="px-2 py-1 rounded bg-black/50 border border-cyan-500/30 text-[11px] font-mono text-cyan-300 focus:outline-none focus:border-cyan-400 cursor-pointer"
+            >
+              <option value="" disabled title="Select a template preset to load">
+                Load Template...
+              </option>
+              {DUPERSCOPE_TEMPLATES.map((tmpl) => (
                 <option
                   key={tmpl.id}
                   value={tmpl.id}
@@ -735,6 +925,106 @@ export function ParameterInspector({
           </>
         )}
 
+        {/* Duperscope Parameters */}
+        {isDuperscope && (
+          <>
+            <ParameterRow
+              label="Draw Mode"
+              value={String(data.drawMode || 'lines')}
+              tooltip="Rendering primitive mode: Lines (variable quad ribbon), Line Loop (closed ribbon), or Points (particles)"
+              type="dropdown"
+              options={DUPERSCOPE_DRAW_MODE_OPTIONS}
+              allowExpression={false}
+              isFocused={focusedParamKey === 'drawMode'}
+              onChange={(val) => handleUpdate('drawMode', val)}
+            />
+
+            <ParameterRow
+              label="Audio Mode"
+              value={String(data.audioMode || 'waveform')}
+              tooltip="Real-time audio input source: Waveform (Oscilloscope) or Spectrum (Logarithmic FFT)"
+              type="dropdown"
+              options={DUPERSCOPE_AUDIO_MODE_OPTIONS}
+              allowExpression={false}
+              isFocused={focusedParamKey === 'audioMode'}
+              onChange={(val) => handleUpdate('audioMode', val)}
+            />
+
+            <ParameterRow
+              label="Channel"
+              value={String(data.channel || 'center')}
+              tooltip="Audio channel stream to sample into point variable v"
+              type="dropdown"
+              options={DUPERSCOPE_CHANNEL_OPTIONS}
+              allowExpression={false}
+              isFocused={focusedParamKey === 'channel'}
+              onChange={(val) => handleUpdate('channel', val)}
+            />
+
+            <ParameterRow
+              label="Opacity"
+              value={data.opacity !== undefined ? (data.opacity as number | string) : 1.0}
+              savedFormula={typeof data.opacity_formula === 'string' ? data.opacity_formula : undefined}
+              tooltip="Global shader opacity modulation (0.0 to 1.0)"
+              min={0}
+              max={1}
+              step={0.01}
+              type="slider"
+              isFocused={focusedParamKey === 'opacity'}
+              onChange={(val) => handleUpdate('opacity', val, true)}
+              engine={engine}
+            />
+
+            {/* 4-Phase Script Editors */}
+            <div className="flex flex-col gap-2 pt-2 border-t border-white/10">
+              <div className="flex flex-col">
+                <span className="text-xs font-mono font-bold text-cyan-300">
+                  Execution Phases (4-Phase Pipeline)
+                </span>
+                <span className="text-[10px] font-mono text-slate-400">
+                  Procedural math statements evaluated across the generative synthesis lifecycle.
+                </span>
+              </div>
+
+              <DuperscopePhaseEditor
+                phase="init"
+                title="Init Phase"
+                description="Runs on reload. Sets point count n and custom state."
+                code={String(data.initCode !== undefined ? data.initCode : 'n = 200;')}
+                compiler={duperscopeCompiler}
+                onChange={(val) => handleUpdate('initCode', val, true)}
+              />
+
+              <DuperscopePhaseEditor
+                phase="beat"
+                title="Beat Phase"
+                description="Runs on beat frames before frame pass."
+                code={String(data.beatCode || '')}
+                compiler={duperscopeCompiler}
+                onChange={(val) => handleUpdate('beatCode', val, true)}
+              />
+
+              <DuperscopePhaseEditor
+                phase="frame"
+                title="Frame Phase"
+                description="Runs once per frame. Animates colors, rotations, and n."
+                code={String(data.frameCode || '')}
+                compiler={duperscopeCompiler}
+                onChange={(val) => handleUpdate('frameCode', val, true)}
+              />
+
+              <DuperscopePhaseEditor
+                phase="point"
+                title="Point Phase"
+                description="Evaluates n times per frame for i in [0, 1] with audio v."
+                code={String(data.pointCode || '')}
+                compiler={duperscopeCompiler}
+                onChange={(val) => handleUpdate('pointCode', val, true)}
+              />
+            </div>
+          </>
+        )}
+
         {/* Test Visual Synth Parameters */}
         {isVisual && (
           <>
@@ -821,6 +1111,59 @@ export function ParameterInspector({
           </>
         )}
       </div>
+
+      {/* Duperscope Dirty-State Confirmation Modal */}
+      {pendingDuperscopeTemplate && selectedNode && (
+        <BaseModalDialog
+          isOpen={Boolean(pendingDuperscopeTemplate)}
+          onClose={handleCancelApplyDuperscopeTemplate}
+          title="Overwrite Duperscope Parameters?"
+          icon={<AlertTriangle className="w-4 h-4 text-amber-400" />}
+          maxWidthClass="max-w-md"
+          className="border-amber-500/40 shadow-amber-500/20"
+          headerTestId="overwrite-duperscope-template-modal-header"
+        >
+          <div className="flex flex-col gap-4 text-xs font-mono select-none">
+            <p className="text-slate-300 leading-relaxed">
+              This layer <span className="font-bold text-white">&quot;{String(selectedNode.data?.label || selectedNode.id)}&quot;</span> has customized parameters or scripts. Applying the <span className="font-bold text-cyan-300">&quot;{pendingDuperscopeTemplate.name}&quot;</span> template will overwrite your current settings.
+            </p>
+
+            <div className="p-3 rounded-lg bg-black/40 border border-cyan-500/30 flex flex-col gap-1.5">
+              <span className="text-[10px] text-cyan-400 uppercase font-bold tracking-wider">
+                Template Preview: {pendingDuperscopeTemplate.name}
+              </span>
+              <p className="text-[11px] text-slate-400">
+                {pendingDuperscopeTemplate.description}
+              </p>
+              <div className="grid grid-cols-2 gap-x-2 gap-y-1 mt-1 text-[10px] text-slate-300">
+                <div>Draw Mode: <span className="text-white font-semibold">{pendingDuperscopeTemplate.drawMode}</span></div>
+                <div>Audio Mode: <span className="text-white font-semibold">{pendingDuperscopeTemplate.audioMode}</span></div>
+                <div>Channel: <span className="text-white font-semibold">{pendingDuperscopeTemplate.channel}</span></div>
+                <div>Opacity: <span className="text-white font-semibold">{pendingDuperscopeTemplate.opacity}</span></div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-white/10">
+              <button
+                type="button"
+                data-testid="cancel-overwrite-duperscope-template-btn"
+                onClick={handleCancelApplyDuperscopeTemplate}
+                className="px-3 py-1.5 rounded-lg border border-white/10 hover:border-white/20 text-slate-300 hover:text-white transition-colors cursor-pointer"
+              >
+                Keep Current
+              </button>
+              <button
+                type="button"
+                data-testid="confirm-overwrite-duperscope-template-btn"
+                onClick={handleConfirmApplyDuperscopeTemplate}
+                className="px-3 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white font-semibold shadow-lg shadow-cyan-600/30 transition-all cursor-pointer"
+              >
+                Overwrite & Apply
+              </button>
+            </div>
+          </div>
+        </BaseModalDialog>
+      )}
 
       {/* Dirty-State Confirmation Modal */}
       {pendingTemplate && selectedNode && (

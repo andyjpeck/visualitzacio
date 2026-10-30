@@ -67,4 +67,42 @@ describe('ExpressionAutocomplete Component', () => {
 
     expect(onChange).toHaveBeenCalledWith('1.0 + $BASS')
   })
+
+  it('triggers autocomplete dropdown on local variable prefix when includeDuperscopeVars is true', () => {
+    const handleChange = vi.fn()
+    function DuperscopeAutocompleteWrapper() {
+      const [val, setVal] = React.useState('line')
+      const inputRef = useRef<HTMLInputElement>(null)
+
+      return (
+        <div>
+          <input
+            ref={inputRef}
+            data-testid="duperscope-code-input"
+            value={val}
+            onChange={(e) => setVal(e.target.value)}
+          />
+          <ExpressionAutocomplete
+            value={val}
+            onChange={(newVal) => {
+              setVal(newVal)
+              handleChange(newVal)
+            }}
+            inputRef={inputRef}
+            includeDuperscopeVars={true}
+          />
+        </div>
+      )
+    }
+
+    render(<DuperscopeAutocompleteWrapper />)
+
+    const dropdown = screen.getByTestId('expression-autocomplete-dropdown')
+    expect(dropdown).toBeInTheDocument()
+    expect(screen.getByText('Duperscope Variables')).toBeInTheDocument()
+    expect(screen.getByTestId('autocomplete-item-linesize')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByTestId('autocomplete-item-linesize'))
+    expect(handleChange).toHaveBeenCalledWith('linesize')
+  })
 })

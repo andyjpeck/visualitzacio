@@ -75,7 +75,7 @@ This plan implements **Duperscope** (`DuperscopeNode`) and its 4-phase multi-sta
 - [x] **Task 4.1: Outliner Layer Creation & Duperscope Icon Badge**
   - Update `LayerTreeView.tsx` to include **"+ Duperscope"** in the Add Layer menu and render a dedicated scope icon badge for `duperscopeNode` items.
   - *Verification:* Update `src/ui/tree/layer-tree-view.test.tsx` to verify adding, renaming, reordering, and deleting a Duperscope layer.
-- [ ] **Task 4.2: Duperscope Inspector Controls, 4-Phase Script Editor & Autocomplete**
+- [x] **Task 4.2: Duperscope Inspector Controls, 4-Phase Script Editor & Autocomplete**
   - Extend `expression-catalog.ts` / `ExpressionAutocomplete` to offer Duperscope local scope completions (`n`, `i`, `v`, `x`, `y`, `r`, `g`, `b`, `a`, `linesize`, `skip`) when editing Duperscope phase scripts.
   - Update `ParameterInspector.tsx` to render the Duperscope template selector (with `BaseModalDialog` dirty-state overwrite guard), `audioMode`, `channel`, `drawMode`, `opacity`, and the 4 script editors (`init`, `beat`, `frame`, `point`) with per-block validation badges and 500ms debounced undo coalescing.
   - *Verification:* Write tests in `src/ui/inspector/duperscope-inspector.test.tsx` verifying script editing, inline syntax error banners, autocomplete suggestions, and template overwrite confirmation.

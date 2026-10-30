@@ -173,3 +173,61 @@ export const QUICK_REF_FUNCS: QuickRefItem[] = [
     tooltip: 'smoothstep(edge0, edge1, x): Smooth Hermite interpolation between 0 and 1',
   },
 ]
+
+export const DUPERSCOPE_LOCAL_VARS: QuickRefItem[] = [
+  {
+    name: 'n',
+    insertText: 'n',
+    tooltip: 'n: Total number of points to evaluate and render [1 - 4096] (editable in init, beat, frame)',
+  },
+  {
+    name: 'i',
+    insertText: 'i',
+    tooltip: 'i: Normalized point index [0.0 - 1.0] across the curve/mesh (read-only in point)',
+  },
+  {
+    name: 'v',
+    insertText: 'v',
+    tooltip: 'v: Current audio sample value at point position i (read-only in point)',
+  },
+  {
+    name: 'x',
+    insertText: 'x',
+    tooltip: 'x: Horizontal screen coordinate [-1.0 to 1.0] (aspect-ratio corrected)',
+  },
+  {
+    name: 'y',
+    insertText: 'y',
+    tooltip: 'y: Vertical screen coordinate [-1.0 to 1.0]',
+  },
+  {
+    name: 'r',
+    insertText: 'r',
+    tooltip: 'r: Red vertex color channel [0.0 - 1.0]',
+  },
+  {
+    name: 'g',
+    insertText: 'g',
+    tooltip: 'g: Green vertex color channel [0.0 - 1.0]',
+  },
+  {
+    name: 'b',
+    insertText: 'b',
+    tooltip: 'b: Blue vertex color channel [0.0 - 1.0]',
+  },
+  {
+    name: 'a',
+    insertText: 'a',
+    tooltip: 'a: Alpha vertex transparency channel [0.0 - 1.0]',
+  },
+  {
+    name: 'linesize',
+    insertText: 'linesize',
+    tooltip: 'linesize: Stroke thickness in pixels [1.0 - 128.0] (or particle diameter for points mode)',
+  },
+  {
+    name: 'skip',
+    insertText: 'skip',
+    tooltip: 'skip: Flag to discard/hide the current point/segment if skip > 0.0',
+  },
+]
