@@ -94,8 +94,8 @@ visualitzacio/
         ├── inspector/     # Docked parameter inspector, ParameterRow, and autocomplete
         ├── settings/      # Preset performance configuration modal and DSP boundary tuning
         ├── store/         # Zustand global state store
-        ├── studio/        # Studio split-view workspace, dividers, and WorkspacePane
-        ├── toolbar/       # Floating transport, seek, volume, and responsive auto-scaling toolbar
+        ├── studio/        # Studio split-view workspace, dividers, WorkspacePane (Layers + JSON tabs), and PresetJsonTab
+        ├── toolbar/       # Floating transport, audio source selection, seek bar, and responsive auto-scaling toolbar
         └── tree/          # Hierarchical Layer Tree outliner with drag-and-drop reordering
 ```
 

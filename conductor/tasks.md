@@ -48,5 +48,5 @@
   - [x] Phase 1: Dependencies, Layout & Studio Shell Framework.
   - [x] Phase 2: Hierarchical Layer Tree Outliner & Node Graph Pipeline.
   - [x] Phase 3: Universal `f(x)` Parameter Inspector, Modals & Viewport Toolbar Integration.
-  - [ ] Phase 4: 100-Step Undo / Redo Engine & Preset Serialization.
+  - [x] Phase 4: 100-Step Undo / Redo Engine & Preset Serialization.
   - [ ] Phase 5: End-to-End Integration, Documentation Sync & Track Protocol.
