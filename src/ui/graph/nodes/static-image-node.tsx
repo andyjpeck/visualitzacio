@@ -1,8 +1,9 @@
-import React from 'react'
+import React, { useMemo } from 'react'
 import { Handle, type NodeProps, Position } from '@xyflow/react'
 import { Eye, EyeOff, ImageIcon } from 'lucide-react'
 import type { StaticImageNodeData } from './node-data'
 import { useAppStore } from '../../store/app-store'
+import { computeExecutionOrder } from '../execution-order'
 
 /**
  * Static Image Layer Node.
@@ -16,6 +17,8 @@ export function StaticImageNodeComponent({
 }: NodeProps & { data: StaticImageNodeData }): React.ReactElement {
   const isBypassed = data.bypassed ?? false
   const updateGraphNodeData = useAppStore((state) => state.updateGraphNodeData)
+  const graphNodes = useAppStore((state) => state.graphNodes)
+  const executionOrder = useMemo(() => computeExecutionOrder(graphNodes).get(id), [graphNodes, id])
 
   const handleToggleBypass = (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -61,8 +64,17 @@ export function StaticImageNodeComponent({
           </div>
           <div>
             {/* Line 1: User Customizable Display Name */}
-            <div className="text-xs font-mono font-bold text-emerald-200 uppercase tracking-wider">
-              {data.label || 'Static Image'}
+            <div className="text-xs font-mono font-bold text-emerald-200 uppercase tracking-wider flex items-center gap-1.5">
+              {executionOrder !== undefined && (
+                <span
+                  data-testid="execution-order-badge"
+                  className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-emerald-500/25 text-emerald-300 font-bold border border-emerald-500/40"
+                  title={`Execution Order: Pass #${executionOrder}`}
+                >
+                  #{executionOrder}
+                </span>
+              )}
+              <span>{data.label || 'Static Image'}</span>
             </div>
             {/* Line 2: Component Type */}
             <div className="text-[10px] text-emerald-400/70 font-mono">

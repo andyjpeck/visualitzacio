@@ -418,6 +418,18 @@ export class FrameBufferNode implements VisualNode {
   }
 
   /**
+   * Reorders child visual nodes to match a specified sequence.
+   */
+  setChildrenOrder(orderedChildren: VisualNode[]): void {
+    const childSet = new Set(this.children)
+    const valid = orderedChildren.filter((c) => childSet.has(c))
+    if (valid.length === this.children.length) {
+      this.children.length = 0
+      this.children.push(...valid)
+    }
+  }
+
+  /**
    * Returns a read-only list of attached child visual nodes.
    */
   getChildren(): readonly VisualNode[] {

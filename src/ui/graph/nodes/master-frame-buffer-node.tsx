@@ -1,10 +1,11 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Handle, type Node, type NodeProps, Position } from '@xyflow/react'
 import { Crown, ImageIcon, Layers, Lock, Plus, Sparkles } from 'lucide-react'
 import type { MasterFrameBufferNodeData } from './node-data'
 import { useAppStore } from '../../store/app-store'
 import { getNextChildPosition } from '../layout/container-bounds'
+import { computeExecutionOrder } from '../execution-order'
 
 /**
  * Permanent Root Master Frame Buffer Node.
@@ -22,6 +23,7 @@ export function MasterFrameBufferNodeComponent({
   const [coords, setCoords] = useState<{ top: number; left: number } | null>(null)
 
   const graphNodes = useAppStore((state) => state.graphNodes)
+  const executionOrder = useMemo(() => computeExecutionOrder(graphNodes).get(id), [graphNodes, id])
   const childCount = useAppStore(
     (state) => state.graphNodes.filter((n) => n.parentId === id).length,
   )
@@ -216,6 +218,15 @@ export function MasterFrameBufferNodeComponent({
           <div>
             {/* Line 1: User Customizable Display Name */}
             <div className="text-xs font-mono font-bold text-amber-300 uppercase tracking-wider flex items-center gap-1.5">
+              {executionOrder !== undefined && (
+                <span
+                  data-testid="execution-order-badge"
+                  className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-amber-500/25 text-amber-300 font-bold border border-amber-500/40"
+                  title={`Execution Order: Pass #${executionOrder}`}
+                >
+                  #{executionOrder}
+                </span>
+              )}
               <span>{data.label || 'Master Output'}</span>
               {hasChildren && (
                 <span className="text-[9px] px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 font-mono border border-amber-500/30">

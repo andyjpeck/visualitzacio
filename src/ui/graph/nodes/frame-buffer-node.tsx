@@ -1,10 +1,11 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Handle, type Node, type NodeProps, Position } from '@xyflow/react'
 import { Eye, EyeOff, ImageIcon, Layers, Plus, Repeat, Sparkles } from 'lucide-react'
 import type { FrameBufferNodeData } from './node-data'
 import { useAppStore } from '../../store/app-store'
 import { getNextChildPosition } from '../layout/container-bounds'
+import { computeExecutionOrder } from '../execution-order'
 
 /**
  * Offscreen Frame Buffer Node.
@@ -29,6 +30,7 @@ export function FrameBufferNodeComponent({
   const updateGraphNodeData = useAppStore((state) => state.updateGraphNodeData)
   const addGraphNode = useAppStore((state) => state.addGraphNode)
   const graphNodes = useAppStore((state) => state.graphNodes)
+  const executionOrder = useMemo(() => computeExecutionOrder(graphNodes).get(id), [graphNodes, id])
   const childCount = useAppStore(
     (state) => state.graphNodes.filter((n) => n.parentId === id).length,
   )
@@ -249,6 +251,15 @@ export function FrameBufferNodeComponent({
           <div>
             {/* Line 1: User Customizable Display Name */}
             <div className="text-xs font-mono font-bold text-purple-200 uppercase tracking-wider flex items-center gap-1.5">
+              {executionOrder !== undefined && (
+                <span
+                  data-testid="execution-order-badge"
+                  className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-purple-500/25 text-purple-300 font-bold border border-purple-500/40"
+                  title={`Execution Order: Pass #${executionOrder}`}
+                >
+                  #{executionOrder}
+                </span>
+              )}
               <span>{data.label || 'Frame Buffer'}</span>
               {hasChildren && (
                 <span className="text-[9px] px-1 py-0.2 rounded bg-purple-500/20 text-purple-300 font-mono border border-purple-500/30">

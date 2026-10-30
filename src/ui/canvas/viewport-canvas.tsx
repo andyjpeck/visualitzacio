@@ -262,17 +262,26 @@ export function ViewportCanvas({
       }
     }
 
-    // Pass 3: Reconcile parent-child attachments based on gNode.parentId
+    // Pass 3: Reconcile parent-child attachments and execution order based on gNode.parentId
     // Sort so container frame buffers attach to their parents before leaf visual nodes,
-    // and publisher buffers (saveTo) execute before consumer buffers (loadFrom)
+    // publisher buffers (saveTo) execute before consumer buffers (loadFrom),
+    // and siblings execute in spatial order: Y ascending (top-to-bottom), then X ascending (left-to-right)
     const sortedNodes = [...graphNodes].sort((a, b) => {
       if (a.type === 'frameBuffer' && b.type !== 'frameBuffer') return -1
       if (a.type !== 'frameBuffer' && b.type === 'frameBuffer') return 1
+
       const aPublishes = Boolean(a.data?.saveTo)
       const bPublishes = Boolean(b.data?.saveTo)
       if (aPublishes && !bPublishes) return -1
       if (!aPublishes && bPublishes) return 1
-      return 0
+
+      const aY = a.position?.y ?? 0
+      const bY = b.position?.y ?? 0
+      if (aY !== bY) return aY - bY
+
+      const aX = a.position?.x ?? 0
+      const bX = b.position?.x ?? 0
+      return aX - bX
     })
 
     for (const gNode of sortedNodes) {
@@ -295,6 +304,32 @@ export function ViewportCanvas({
         }
         targetParent.addChild(vNode)
         parentMap.set(gNode.id, targetParent)
+      }
+    }
+
+    // Pass 4: Synchronize exact execution order of children inside each container
+    const childrenByParent = new Map<string, VisualNode[]>()
+    for (const gNode of sortedNodes) {
+      if (gNode.id === 'master-frame-buffer') continue
+      const vNode = nodeMap.get(gNode.id)
+      if (!vNode) continue
+      const parentId = (gNode.parentId && nodeMap.has(gNode.parentId)) ? gNode.parentId : 'master-frame-buffer'
+      const list = childrenByParent.get(parentId) || []
+      list.push(vNode)
+      childrenByParent.set(parentId, list)
+    }
+
+    const masterChildren = childrenByParent.get('master-frame-buffer')
+    if (masterChildren) {
+      masterBuffer.setChildrenOrder(masterChildren)
+    }
+
+    for (const [id, vNode] of nodeMap.entries()) {
+      if (vNode instanceof FrameBufferNode && id !== 'master-frame-buffer') {
+        const containerChildren = childrenByParent.get(id)
+        if (containerChildren) {
+          vNode.setChildrenOrder(containerChildren)
+        }
       }
     }
 

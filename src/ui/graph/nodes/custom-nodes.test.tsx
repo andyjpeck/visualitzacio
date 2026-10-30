@@ -353,4 +353,47 @@ describe('Custom Node Card Components', () => {
     expect(addedChild?.type).toBe('staticImage')
     expect(addedChild?.extent).toBe('parent')
   })
+
+  it('renders dynamic execution order badge reflecting spatial and dependency layout', () => {
+    useAppStore.setState({
+      graphNodes: [
+        {
+          id: 'master-frame-buffer',
+          type: 'masterFrameBuffer',
+          position: { x: 0, y: 0 },
+          data: { label: 'Master' },
+        },
+        {
+          id: 'test-synth',
+          type: 'testVisual',
+          parentId: 'master-frame-buffer',
+          position: { x: 20, y: 50 },
+          data: { label: 'Synth' },
+        },
+      ],
+    })
+
+    render(
+      <ReactFlowProvider>
+        <TestVisualNodeComponent
+          id="test-synth"
+          type="testVisual"
+          data={{ label: 'Synth' }}
+          selected={false}
+          zIndex={1}
+          isConnectable={true}
+          positionAbsoluteX={20}
+          positionAbsoluteY={50}
+          dragging={false}
+          selectable={true}
+          deletable={true}
+          draggable={true}
+        />
+      </ReactFlowProvider>,
+    )
+
+    const badge = screen.getByTestId('execution-order-badge')
+    expect(badge).toBeInTheDocument()
+    expect(badge.textContent).toBe('#1')
+  })
 })
