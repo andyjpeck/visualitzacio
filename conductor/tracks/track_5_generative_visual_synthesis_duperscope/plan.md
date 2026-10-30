@@ -26,7 +26,7 @@ This plan implements **Duperscope** (`DuperscopeNode`) and its 4-phase multi-sta
 
 ---
 
-## Phase 2: WebGL Duperscope Node (`DuperscopeNode`) & Custom Shaders
+## Phase 2: WebGL Duperscope Node (`DuperscopeNode`) & Custom Shaders [checkpoint: da6c4f8]
 
 ### Goals
 - Implement `DuperscopeNode` conforming to the `VisualNode` contract with always-on 1:1 square aspect projection.
