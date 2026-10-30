@@ -17,7 +17,7 @@ This plan implements **Duperscope** (`DuperscopeNode`) and its 4-phase multi-sta
   - Enforce read-only variable rules: forbid assignment to `$VARIABLE`, constants (`PI`, `E`), `i`, and `v` in all phases, and forbid assignment to `n` inside the `point` phase.
   - Validate the right-hand expression of each statement using the sandboxed `expr-eval` parser and return detailed per-phase diagnostic errors.
   - *Verification:* Write unit tests in `src/engine/nodes/duperscope-compiler.test.ts` covering multi-statement blocks, comment stripping, read-only violations, syntax errors, and security sandboxing.
-- [ ] **Task 1.2: 4-Phase Execution Runner & Audio Sampling (`v` Shorthand)**
+- [x] **Task 1.2: 4-Phase Execution Runner & Audio Sampling (`v` Shorthand)** [0bb1833]
   - Implement zero-allocation execution of compiled phase blocks (`init`, `beat`, `frame`, `point`) against a pre-allocated numeric `scope` dictionary.
   - Enforce `beat`-before-`frame` execution order when `context.$BEAT === 1.0`.
   - Implement per-point reset semantics (`i`, `v`, `x = (i * 2.0) - 1.0`, `y = 0.0`, `skip = 0.0`) and persistence of `r, g, b, a, linesize` and user variables.
