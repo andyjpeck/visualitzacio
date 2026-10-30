@@ -138,22 +138,23 @@ export function ExpressionAutocomplete({
     const input = inputRef.current
     if (!input || !isOpen) return
 
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowDown') {
-        e.preventDefault()
+    const handleKeyDown = (e: Event) => {
+      const ke = e as KeyboardEvent
+      if (ke.key === 'ArrowDown') {
+        ke.preventDefault()
         setSelectedIndex((prev) => (prev + 1) % activeItems.length)
-      } else if (e.key === 'ArrowUp') {
-        e.preventDefault()
+      } else if (ke.key === 'ArrowUp') {
+        ke.preventDefault()
         setSelectedIndex(
           (prev) => (prev - 1 + activeItems.length) % activeItems.length,
         )
-      } else if (e.key === 'Enter' || e.key === 'Tab') {
+      } else if (ke.key === 'Enter' || ke.key === 'Tab') {
         if (activeItems[selectedIndex]) {
-          e.preventDefault()
+          ke.preventDefault()
           handleSelect(activeItems[selectedIndex])
         }
-      } else if (e.key === 'Escape') {
-        e.preventDefault()
+      } else if (ke.key === 'Escape') {
+        ke.preventDefault()
         setActiveItems([])
         setTriggerInfo(null)
         if (onClose) onClose()

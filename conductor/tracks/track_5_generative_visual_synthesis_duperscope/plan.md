@@ -89,7 +89,7 @@ This plan implements **Duperscope** (`DuperscopeNode`) and its 4-phase multi-sta
 - Synchronize all repository documentation and execute the mandatory stateless code review protocol.
 
 ### Tasks
-- [ ] **Task 5.1: End-to-End Verification & Quality Gates**
+- [x] **Task 5.1: End-to-End Verification & Quality Gates**
   - Run full test suite (`npm test`), linter (`npx oxlint`), and production build (`npm run build`).
 - [ ] **Task 5.2: Documentation & README Synchronization**
   - Update root `README.md`, `conductor/tracks.md`, `conductor/tasks.md`, `src/engine/nodes/README.md`, and `src/ui/inspector/README.md`.
