@@ -729,6 +729,54 @@ export function ParameterInspector({
         {isFrameBuffer && (
           <>
             <ParameterRow
+              label="Scale X"
+              value={data.scaleX !== undefined ? (data.scaleX as number | string) : (data.scale !== undefined ? (data.scale as number | string) : 1.0)}
+              savedFormula={typeof data.scaleX_formula === 'string' ? data.scaleX_formula : undefined}
+              tooltip="Independent horizontal scale multiplier (defaults to uniform Scale)"
+              min={0.1}
+              max={2.0}
+              step={0.01}
+              type="slider"
+              isFocused={focusedParamKey === 'scaleX'}
+              onChange={(val) => handleUpdate('scaleX', val, true)}
+              engine={engine}
+            />
+
+            <ParameterRow
+              label="Scale Y"
+              value={data.scaleY !== undefined ? (data.scaleY as number | string) : (data.scale !== undefined ? (data.scale as number | string) : 1.0)}
+              savedFormula={typeof data.scaleY_formula === 'string' ? data.scaleY_formula : undefined}
+              tooltip="Independent vertical scale multiplier (defaults to uniform Scale)"
+              min={0.1}
+              max={2.0}
+              step={0.01}
+              type="slider"
+              isFocused={focusedParamKey === 'scaleY'}
+              onChange={(val) => handleUpdate('scaleY', val, true)}
+              engine={engine}
+            />
+
+            <ParameterRow
+              label="Flip X"
+              value={Boolean(data.flipX)}
+              tooltip="Mirror horizontally across the vertical Y axis (scaleX: -1)"
+              type="toggle"
+              allowExpression={true}
+              isFocused={focusedParamKey === 'flipX'}
+              onChange={(val) => handleUpdate('flipX', val)}
+            />
+
+            <ParameterRow
+              label="Flip Y"
+              value={Boolean(data.flipY)}
+              tooltip="Mirror vertically across the horizontal X axis (scaleY: -1)"
+              type="toggle"
+              allowExpression={true}
+              isFocused={focusedParamKey === 'flipY'}
+              onChange={(val) => handleUpdate('flipY', val)}
+            />
+
+            <ParameterRow
               label="Feedback Loop"
               value={Boolean(data.feedback)}
               tooltip="Enables dual-FBO ping-pong feedback loop to create recursive motion trails"

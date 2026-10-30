@@ -134,8 +134,8 @@ export function transformUv(
   const sx = typeof scale === 'number' ? scale : scale[0]
   const sy = typeof scale === 'number' ? scale : scale[1]
 
-  const safeSx = Math.max(Math.abs(sx), 0.0001)
-  const safeSy = Math.max(Math.abs(sy), 0.0001)
+  const safeSx = Math.abs(sx) < 0.0001 ? (sx < 0 ? -0.0001 : 0.0001) : sx
+  const safeSy = Math.abs(sy) < 0.0001 ? (sy < 0 ? -0.0001 : 0.0001) : sy
 
   // Center offset
   const dx = uv[0] - 0.5
@@ -180,7 +180,11 @@ vec2 transformUv(vec2 uv, vec2 scale, float rotation, vec2 offset) {
   float c = cos(-rotation);
   float s = sin(-rotation);
   p = mat2(c, -s, s, c) * p;
-  p = p / max(scale, vec2(0.0001));
+  vec2 safeScale = vec2(
+    abs(scale.x) < 0.0001 ? (scale.x < 0.0 ? -0.0001 : 0.0001) : scale.x,
+    abs(scale.y) < 0.0001 ? (scale.y < 0.0 ? -0.0001 : 0.0001) : scale.y
+  );
+  p = p / safeScale;
   p = p - offset;
   return p + vec2(0.5);
 }
@@ -274,5 +278,6 @@ export function createCompositingMaterial(): THREE.ShaderMaterial {
     transparent: true,
     depthTest: false,
     depthWrite: false,
+    side: THREE.DoubleSide,
   })
 }

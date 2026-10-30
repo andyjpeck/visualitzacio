@@ -292,4 +292,81 @@ describe('FrameBufferNode', () => {
     // With inputBlendMode 'none', loadFrom quad is not rendered; only output quad is rendered to display
     expect(renderSpy).toHaveBeenCalledTimes(1)
   })
+
+  it('supports independent scaleX and scaleY with fallback to uniform scale', () => {
+    const node = new FrameBufferNode({
+      id: 'fb-scale-xy',
+      scale: 1.5,
+    })
+    expect(node.scale).toBe(1.5)
+    expect(node.scaleX).toBe(1.5)
+    expect(node.scaleY).toBe(1.5)
+
+    node.setScaleX(0.5)
+    expect(node.scaleX).toBe(0.5)
+    expect(node.scaleY).toBe(1.5)
+
+    node.setScaleY(2.0)
+    expect(node.scaleX).toBe(0.5)
+    expect(node.scaleY).toBe(2.0)
+
+    node.setScaleX(null)
+    expect(node.scaleX).toBe(1.5) // falls back to uniform scale
+  })
+
+  it('supports flipX and flipY reflections and inverts composite quad scale on update', () => {
+    const node = new FrameBufferNode({
+      id: 'fb-flip',
+      isMaster: true,
+      scaleX: 0.5,
+      scaleY: 0.5,
+      flipX: true,
+      flipY: false,
+    })
+    node.init(mockRenderer)
+    node.resize(800, 600, 1.0, 1.0)
+
+    expect(node.flipX).toBe(true)
+    expect(node.flipY).toBe(false)
+
+    const quad = node.getCompositeQuad()
+    expect(quad).toBeDefined()
+
+    const ctx = createDefaultFrameContext()
+    node.update(ctx)
+
+    // effectiveScaleX = 0.5 * -1 = -0.5, effectiveScaleY = 0.5 * 1 = 0.5
+    expect(quad?.scale.x).toBeCloseTo(-0.5)
+    expect(quad?.scale.y).toBeCloseTo(0.5)
+
+    // Flip both axes
+    node.setFlipY(true)
+    node.update(ctx)
+    expect(quad?.scale.x).toBeCloseTo(-0.5)
+    expect(quad?.scale.y).toBeCloseTo(-0.5)
+  })
+
+  it('binds dynamic expressions to scaleX, scaleY, flipX, and flipY', async () => {
+    const { ExpressionEngine } = await import('../expressions/expression-engine')
+    const engine = new ExpressionEngine()
+    const node = new FrameBufferNode({
+      id: 'fb-dynamic-transform',
+      isMaster: true,
+      expressionEngine: engine,
+    })
+    node.init(mockRenderer)
+    node.resize(800, 600, 1.0, 1.0)
+
+    node.bindExpression('scaleX', '$BASS > 0.5 ? 2.0 : 1.0', engine)
+    node.bindExpression('flipX', '$BEAT', engine)
+
+    const quad = node.getCompositeQuad()
+    const ctx = createDefaultFrameContext()
+    ctx.$BASS = 0.8
+    ctx.$BEAT = 1
+
+    node.update(ctx)
+    // scaleX = 2.0, flipX = true -> effectiveScaleX = -2.0
+    expect(quad?.scale.x).toBeCloseTo(-2.0)
+  })
 })

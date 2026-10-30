@@ -358,4 +358,40 @@ describe('ParameterInspector Component', () => {
       window.FileReader = originalFileReader
     }
   })
+
+  it('renders Scale X, Scale Y, Flip X, and Flip Y controls for FrameBuffer nodes and updates store', () => {
+    useAppStore.getState().addGraphNode({
+      id: 'fb-inspect-test',
+      type: 'frameBuffer',
+      parentId: 'master-frame-buffer',
+      position: { x: 20, y: 130 },
+      data: {
+        label: 'Transform Container',
+        scaleX: 1.0,
+        scaleY: 1.0,
+        flipX: false,
+        flipY: false,
+      },
+    })
+    useAppStore.setState({ selectedNodeId: 'fb-inspect-test' })
+
+    render(<ParameterInspector />)
+
+    expect(screen.getByText('Scale X')).toBeInTheDocument()
+    expect(screen.getByText('Scale Y')).toBeInTheDocument()
+    expect(screen.getByText('Flip X')).toBeInTheDocument()
+    expect(screen.getByText('Flip Y')).toBeInTheDocument()
+
+    const scaleXSlider = screen.getByLabelText('Scale X')
+    fireEvent.change(scaleXSlider, { target: { value: '0.5' } })
+
+    const flipXToggle = screen.getByLabelText('Flip X')
+    fireEvent.click(flipXToggle)
+
+    const updatedNode = useAppStore
+      .getState()
+      .graphNodes.find((n) => n.id === 'fb-inspect-test')
+    expect(updatedNode?.data.scaleX).toBe(0.5)
+    expect(updatedNode?.data.flipX).toBe(true)
+  })
 })
