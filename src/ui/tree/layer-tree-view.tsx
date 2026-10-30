@@ -24,12 +24,20 @@ import {
   reflowGraphStacks,
 } from '../graph/layout/container-bounds'
 
+export interface LayerTreeViewProps {
+  collapsedIds?: Set<string>
+  onToggleCollapse?: (id: string) => void
+}
+
 /**
  * Collapsible Hierarchical Layer Tree View (Outliner).
  * Provides compact layer inspection, execution sequence telemetry,
  * interactive semantic buffer tag highlighting, and one-click re-ordering.
  */
-export function LayerTreeView(): React.ReactElement {
+export function LayerTreeView({
+  collapsedIds: controlledCollapsedIds,
+  onToggleCollapse: controlledToggleCollapse,
+}: LayerTreeViewProps = {}): React.ReactElement {
   const graphNodes = useAppStore((state) => state.graphNodes)
   const setGraphNodes = useAppStore((state) => state.setGraphNodes)
   const selectedNodeId = useAppStore((state) => state.selectedNodeId)
@@ -40,8 +48,9 @@ export function LayerTreeView(): React.ReactElement {
   const hoveredBufferTag = useAppStore((state) => state.hoveredBufferTag)
   const setHoveredBufferTag = useAppStore((state) => state.setHoveredBufferTag)
 
-  // Track collapsed container IDs
-  const [collapsedIds, setCollapsedIds] = useState<Set<string>>(new Set())
+  // Internal collapsed state if uncontrolled
+  const [internalCollapsedIds, setInternalCollapsedIds] = useState<Set<string>>(new Set())
+  const collapsedIds = controlledCollapsedIds ?? internalCollapsedIds
 
   // Add child menu dropdown state: nodeId -> boolean
   const [openAddMenuId, setOpenAddMenuId] = useState<string | null>(null)
@@ -54,15 +63,19 @@ export function LayerTreeView(): React.ReactElement {
 
   const toggleCollapse = (id: string, e: React.MouseEvent) => {
     e.stopPropagation()
-    setCollapsedIds((prev) => {
-      const next = new Set(prev)
-      if (next.has(id)) {
-        next.delete(id)
-      } else {
-        next.add(id)
-      }
-      return next
-    })
+    if (controlledToggleCollapse) {
+      controlledToggleCollapse(id)
+    } else {
+      setInternalCollapsedIds((prev) => {
+        const next = new Set(prev)
+        if (next.has(id)) {
+          next.delete(id)
+        } else {
+          next.add(id)
+        }
+        return next
+      })
+    }
   }
 
   // Handle re-ordering siblings up or down in the vertical stack

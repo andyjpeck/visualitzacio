@@ -144,25 +144,51 @@ describe('LayerTreeView Component', () => {
 })
 
 describe('WorkspacePane Component', () => {
-  it('toggles between Layer Tree and Node Graph via tabs', () => {
-    useAppStore.setState({ bottomViewMode: 'tree' })
+  it('renders dedicated Layer Tree with active count badge and expand/collapse actions', () => {
+    useAppStore.setState({
+      graphNodes: [
+        {
+          id: 'master-frame-buffer',
+          type: 'masterFrameBuffer',
+          position: { x: 0, y: 0 },
+          data: { label: 'Master Output' },
+        },
+        {
+          id: 'source-buffer',
+          type: 'frameBuffer',
+          parentId: 'master-frame-buffer',
+          position: { x: 20, y: 65 },
+          data: { label: 'Source Buffer' },
+        },
+        {
+          id: 'synth-child',
+          type: 'testVisual',
+          parentId: 'source-buffer',
+          position: { x: 20, y: 65 },
+          data: { label: 'Crystal Synth' },
+        },
+      ],
+      selectedNodeId: 'master-frame-buffer',
+    })
+
     render(<WorkspacePane />)
 
+    expect(screen.getByTestId('workspace-pane')).toBeInTheDocument()
+    expect(screen.getByTestId('layers-count-badge')).toBeInTheDocument()
     expect(screen.getByTestId('layer-tree-view')).toBeInTheDocument()
-    expect(screen.queryByTestId('visual-node-graph')).not.toBeInTheDocument()
 
-    // Switch to Node Graph
-    const graphBtn = screen.getByTestId('toggle-view-graph-btn')
-    fireEvent.click(graphBtn)
+    // Test Collapse All
+    const collapseAllBtn = screen.getByTestId('collapse-all-layers-btn')
+    fireEvent.click(collapseAllBtn)
 
-    expect(useAppStore.getState().bottomViewMode).toBe('graph')
-    expect(screen.getByTestId('visual-node-graph')).toBeInTheDocument()
+    // Synth child should be hidden
+    expect(screen.queryByTestId('layer-tree-item-synth-child')).not.toBeInTheDocument()
 
-    // Switch back to Tree
-    const treeBtn = screen.getByTestId('toggle-view-tree-btn')
-    fireEvent.click(treeBtn)
+    // Test Expand All
+    const expandAllBtn = screen.getByTestId('expand-all-layers-btn')
+    fireEvent.click(expandAllBtn)
 
-    expect(useAppStore.getState().bottomViewMode).toBe('tree')
-    expect(screen.getByTestId('layer-tree-view')).toBeInTheDocument()
+    // Synth child should be visible again
+    expect(screen.getByTestId('layer-tree-item-synth-child')).toBeInTheDocument()
   })
 })
