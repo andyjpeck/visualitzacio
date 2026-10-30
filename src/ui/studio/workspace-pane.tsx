@@ -82,7 +82,7 @@ export function WorkspacePane(): React.ReactElement {
           </span>
         </div>
 
-        {/* Right: Expand / Collapse Actions & Pipeline Status */}
+        {/* Right: Expand / Collapse Actions */}
         <div className="flex items-center gap-2 text-[10px] font-mono text-slate-400">
           {/* Toggle Expand / Collapse All Button */}
           <button
@@ -126,12 +126,6 @@ export function WorkspacePane(): React.ReactElement {
           >
             Collapse All
           </button>
-
-          <span className="text-white/20">|</span>
-          <span className="flex items-center gap-1.5 text-emerald-400 font-bold">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            <span>PIPELINE ACTIVE</span>
-          </span>
         </div>
       </div>
 
