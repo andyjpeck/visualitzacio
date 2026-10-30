@@ -149,6 +149,66 @@ describe('LayerTreeView Component', () => {
     expect(screen.getByTestId('tree-drag-handle-synth-child')).toBeInTheDocument()
   })
 
+  it('enables inline renaming on label double-click and commits on Enter', () => {
+    render(<LayerTreeView />)
+
+    const labelSpan = screen.getByTestId('tree-label-synth-child')
+    expect(labelSpan).toHaveTextContent('Crystal Synth')
+
+    // Double-click to start inline rename
+    fireEvent.doubleClick(labelSpan)
+
+    const input = screen.getByTestId('tree-rename-input-synth-child') as HTMLInputElement
+    expect(input).toBeInTheDocument()
+    expect(input.value).toBe('Crystal Synth')
+
+    // Change input value and press Enter
+    fireEvent.change(input, { target: { value: 'Quantum Synth' } })
+    fireEvent.keyDown(input, { key: 'Enter' })
+
+    // Input should be unmounted and updated label displayed
+    expect(screen.queryByTestId('tree-rename-input-synth-child')).not.toBeInTheDocument()
+    expect(screen.getByTestId('tree-label-synth-child')).toHaveTextContent('Quantum Synth')
+
+    // Store should be updated
+    const node = useAppStore.getState().graphNodes.find((n) => n.id === 'synth-child')!
+    expect(node.data?.label).toBe('Quantum Synth')
+  })
+
+  it('cancels inline renaming without changes on Escape', () => {
+    render(<LayerTreeView />)
+
+    const labelSpan = screen.getByTestId('tree-label-synth-child')
+    fireEvent.doubleClick(labelSpan)
+
+    const input = screen.getByTestId('tree-rename-input-synth-child') as HTMLInputElement
+    fireEvent.change(input, { target: { value: 'Discarded Name' } })
+    fireEvent.keyDown(input, { key: 'Escape' })
+
+    expect(screen.queryByTestId('tree-rename-input-synth-child')).not.toBeInTheDocument()
+    expect(screen.getByTestId('tree-label-synth-child')).toHaveTextContent('Crystal Synth')
+
+    const node = useAppStore.getState().graphNodes.find((n) => n.id === 'synth-child')!
+    expect(node.data?.label).toBe('Crystal Synth')
+  })
+
+  it('commits inline renaming on blur', () => {
+    render(<LayerTreeView />)
+
+    const labelSpan = screen.getByTestId('tree-label-synth-child')
+    fireEvent.doubleClick(labelSpan)
+
+    const input = screen.getByTestId('tree-rename-input-synth-child') as HTMLInputElement
+    fireEvent.change(input, { target: { value: 'Blurred Name' } })
+    fireEvent.blur(input)
+
+    expect(screen.queryByTestId('tree-rename-input-synth-child')).not.toBeInTheDocument()
+    expect(screen.getByTestId('tree-label-synth-child')).toHaveTextContent('Blurred Name')
+
+    const node = useAppStore.getState().graphNodes.find((n) => n.id === 'synth-child')!
+    expect(node.data?.label).toBe('Blurred Name')
+  })
+
   it('reorders siblings when dragging and dropping below another node', () => {
     useAppStore.setState({
       graphNodes: [

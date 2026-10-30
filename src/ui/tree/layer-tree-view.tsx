@@ -66,6 +66,18 @@ export function LayerTreeView({
   const [draggedNodeId, setDraggedNodeId] = useState<string | null>(null)
   const [dropIndicator, setDropIndicator] = useState<DropIndicator | null>(null)
 
+  // Inline rename state: nodeId -> editing string
+  const [editingNodeId, setEditingNodeId] = useState<string | null>(null)
+  const [editingName, setEditingName] = useState<string>('')
+
+  const commitRename = (nodeId: string) => {
+    const trimmed = editingName.trim()
+    if (trimmed) {
+      updateGraphNodeData(nodeId, { label: trimmed })
+    }
+    setEditingNodeId(null)
+  }
+
   // Helper to determine if a target is a descendant of a candidate ancestor
   const isDescendantOf = (
     nodeId: string,
@@ -423,7 +435,7 @@ export function LayerTreeView({
         <div
           data-testid={`layer-tree-item-${node.id}`}
           data-drop-position={dropPos ?? undefined}
-          draggable={!isMaster}
+          draggable={!isMaster && editingNodeId !== node.id}
           onDragStart={(e) => handleDragStart(node.id, e)}
           onDragOver={(e) => handleDragOver(node, e)}
           onDragLeave={(e) => handleDragLeave(node.id, e)}
@@ -494,10 +506,42 @@ export function LayerTreeView({
               {node.type === 'staticImage' && <ImageIcon className="w-3.5 h-3.5 text-emerald-400" />}
             </div>
 
-            {/* Label and Container Counter */}
-            <span className="truncate font-semibold text-slate-200">
-              {String(node.data?.label || node.id)}
-            </span>
+            {/* Label (Double-click to Rename Inline) */}
+            {editingNodeId === node.id ? (
+              <input
+                data-testid={`tree-rename-input-${node.id}`}
+                type="text"
+                value={editingName}
+                autoFocus
+                onClick={(e) => e.stopPropagation()}
+                onDoubleClick={(e) => e.stopPropagation()}
+                onMouseDown={(e) => e.stopPropagation()}
+                onChange={(e) => setEditingName(e.target.value)}
+                onKeyDown={(e) => {
+                  e.stopPropagation()
+                  if (e.key === 'Enter') {
+                    commitRename(node.id)
+                  } else if (e.key === 'Escape') {
+                    setEditingNodeId(null)
+                  }
+                }}
+                onBlur={() => commitRename(node.id)}
+                className="bg-black/80 border border-cyber-cyan text-white text-xs font-semibold font-mono px-1.5 py-0.5 rounded outline-none shadow-[0_0_8px_rgba(0,240,255,0.4)] w-36 max-w-full"
+              />
+            ) : (
+              <span
+                data-testid={`tree-label-${node.id}`}
+                onDoubleClick={(e) => {
+                  e.stopPropagation()
+                  setEditingNodeId(node.id)
+                  setEditingName(String(node.data?.label || node.id))
+                }}
+                title="Double-click to rename layer"
+                className="truncate font-semibold text-slate-200 hover:text-cyber-cyan cursor-text transition-colors select-none"
+              >
+                {String(node.data?.label || node.id)}
+              </span>
+            )}
 
             {hasChildren && (
               <span className="text-[9px] px-1 py-0.2 rounded bg-purple-500/10 text-purple-300/80 border border-purple-500/20">
