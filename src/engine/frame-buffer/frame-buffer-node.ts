@@ -11,6 +11,8 @@ import {
 } from './compositing-shader'
 import type { BufferPool } from './buffer-pool'
 
+const TRANSPARENT_BLACK = new THREE.Color(0, 0, 0)
+
 export interface FrameBufferNodeOptions {
   id: string
   name?: string
@@ -639,6 +641,9 @@ export class FrameBufferNode implements VisualNode {
       // Step A: Render children isolated into childTarget
       if (this.renderer.setRenderTarget) {
         this.renderer.setRenderTarget(this.childTarget)
+      }
+      if (this.renderer.setClearColor) {
+        this.renderer.setClearColor(TRANSPARENT_BLACK, 0)
       }
       if (this.renderer.clear) {
         this.renderer.clear()

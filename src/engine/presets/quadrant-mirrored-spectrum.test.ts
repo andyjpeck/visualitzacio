@@ -31,6 +31,17 @@ describe('Preset Verification: Quadrant Mirrored Spectrum', () => {
     const nodeIds = new Set(result.nodes.map((n) => n.id))
     expect(nodeIds.has('master-frame-buffer')).toBe(true)
     expect(nodeIds.has('myframe')).toBe(true)
+
+    // Check beat bounce and twist on master root
+    const masterNode = result.nodes.find((n) => n.id === 'master-frame-buffer')
+    expect(masterNode?.data.scale).toBe('1.0 + #BEAT(0.35) * 0.12')
+    expect(masterNode?.data.rotation).toBe('#BEAT(0.35) * 4.0')
+
+    // Check feedback and sand-smearing on myframe
+    const myframeNode = result.nodes.find((n) => n.id === 'myframe')
+    expect(myframeNode?.data.feedback).toBe(true)
+    expect(myframeNode?.data.opacity).toBe(0.93)
+    expect(myframeNode?.data.positionX).toBe(0.006)
     expect(nodeIds.has('myline-bottom')).toBe(true)
     expect(nodeIds.has('myline-right')).toBe(true)
     expect(nodeIds.has('quadrant-upper-left')).toBe(true)
