@@ -5,3 +5,4 @@ This directory documents project-wide code conventions, patterns, and style spec
 ## Contents
 
 - [**`typescript.md`**](file:///C:/Users/andyj/Documents/visualitzacio/conductor/code_styleguides/typescript.md): TypeScript coding standards, strict type safety, import hygiene, and comment rules.
+- [**`component_architecture.md`**](file:///C:/Users/andyj/Documents/visualitzacio/conductor/code_styleguides/component_architecture.md): Visual node architecture tenets (focused identity, orthogonal taxonomy, composability, and ambiguity pause gate).
