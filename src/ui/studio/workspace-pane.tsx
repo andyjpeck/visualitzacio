@@ -1,16 +1,58 @@
-import React, { useMemo, useState } from 'react'
-import { ChevronsDownUp, ChevronsUpDown, Layers } from 'lucide-react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import { Check, ChevronsDownUp, ChevronsUpDown, Copy, Layers } from 'lucide-react'
 import { useAppStore } from '../store/app-store'
 import { LayerTreeView } from '../tree/layer-tree-view'
 
 /**
  * Dedicated Workspace Pane displaying the Hierarchical Layer Tree (Outliner).
  * Features quick expand/collapse actions, real-time layer telemetry,
- * and interactive semantic buffer routing.
+ * fast JSON export for debugging, and interactive semantic buffer routing.
  */
 export function WorkspacePane(): React.ReactElement {
   const graphNodes = useAppStore((state) => state.graphNodes)
+  const graphEdges = useAppStore((state) => state.graphEdges)
   const [collapsedIds, setCollapsedIds] = useState<Set<string>>(new Set())
+  const [copiedJson, setCopiedJson] = useState(false)
+
+  // Fast preset/layout JSON copy for user debugging until full preset export/import support
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      ;(window as unknown as { __getGraphLayout?: () => unknown }).__getGraphLayout =
+        () => ({
+          timestamp: new Date().toISOString(),
+          nodes: graphNodes,
+          edges: graphEdges,
+        })
+    }
+  }, [graphNodes, graphEdges])
+
+  const handleCopyLayoutJson = useCallback(() => {
+    const layout = {
+      timestamp: new Date().toISOString(),
+      nodes: graphNodes,
+      edges: graphEdges,
+    }
+    const jsonStr = JSON.stringify(layout, null, 2)
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      navigator.clipboard.writeText(jsonStr).catch(() => {
+        try {
+          const textarea = document.createElement('textarea')
+          textarea.value = jsonStr
+          textarea.style.position = 'fixed'
+          textarea.style.opacity = '0'
+          document.body.appendChild(textarea)
+          textarea.select()
+          document.execCommand('copy')
+          document.body.removeChild(textarea)
+        } catch {
+          // ignore
+        }
+      })
+    }
+    console.log('[Visualització] Current Graph Layout JSON:\n', jsonStr)
+    setCopiedJson(true)
+    setTimeout(() => setCopiedJson(false), 2000)
+  }, [graphNodes, graphEdges])
 
   // Find all non-top-level container IDs (nested frame buffers) to collapse on 'Collapse All'.
   // Keeps Master Output (and any root buffer) expanded so top-level layers remain visible.
@@ -82,8 +124,30 @@ export function WorkspacePane(): React.ReactElement {
           </span>
         </div>
 
-        {/* Right: Expand / Collapse Actions & Pipeline Status */}
+        {/* Right: Actions, Expand / Collapse Actions & Pipeline Status */}
         <div className="flex items-center gap-2 text-[10px] font-mono text-slate-400">
+          {/* Fast Copy Layout JSON Button */}
+          <button
+            type="button"
+            data-testid="graph-copy-json-button"
+            onClick={handleCopyLayoutJson}
+            title="Copy Graph Layout JSON to Clipboard"
+            aria-label="Copy Graph Layout JSON"
+            className="flex items-center gap-1.5 px-2 py-0.5 rounded hover:bg-white/10 text-slate-300 hover:text-cyan-300 transition-colors cursor-pointer border border-white/10"
+          >
+            {copiedJson ? (
+              <>
+                <Check className="w-3 h-3 text-green-400" />
+                <span className="text-green-300">Copied!</span>
+              </>
+            ) : (
+              <>
+                <Copy className="w-3 h-3 text-cyan-400" />
+                <span>Copy JSON</span>
+              </>
+            )}
+          </button>
+
           {/* Toggle Expand / Collapse All Button */}
           <button
             type="button"
