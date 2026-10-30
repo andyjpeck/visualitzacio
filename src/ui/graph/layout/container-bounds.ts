@@ -134,3 +134,50 @@ export function recalculateContainerBounds<T extends Record<string, unknown>>(
 
   return currentNodes
 }
+
+/**
+ * Snaps all direct children of a container into a single, clean vertical column stack.
+ * Prevents arbitrary 2D placement, locks horizontal alignment, and enforces clean vertical ordering.
+ */
+export function snapContainerStack<T extends Record<string, unknown>>(
+  parentId: string,
+  nodes: Node<T>[],
+): Node<T>[] {
+  const directChildren = nodes.filter((n) => n.parentId === parentId)
+  if (directChildren.length === 0) return nodes
+
+  // Sort siblings:
+  // 1. Publishers (saveTo) before consumers (loadFrom)
+  // 2. Spatial Y coordinate (top-to-bottom)
+  const sorted = [...directChildren].sort((a, b) => {
+    const aPub = Boolean(a.data?.saveTo)
+    const bPub = Boolean(b.data?.saveTo)
+    if (aPub && !bPub) return -1
+    if (!aPub && bPub) return 1
+    return (a.position?.y ?? 0) - (b.position?.y ?? 0)
+  })
+
+  // Assign clean vertical slot coordinates
+  let currentY = CONTAINER_HEADER_HEIGHT
+  const posMap = new Map<string, { x: number; y: number }>()
+
+  for (const child of sorted) {
+    posMap.set(child.id, {
+      x: CONTAINER_PADDING,
+      y: currentY,
+    })
+    const dims = calculateNodeDimensions(child, nodes)
+    currentY += dims.height + CHILD_GAP
+  }
+
+  return nodes.map((node) => {
+    const newPos = posMap.get(node.id)
+    if (newPos) {
+      return {
+        ...node,
+        position: newPos,
+      }
+    }
+    return node
+  })
+}

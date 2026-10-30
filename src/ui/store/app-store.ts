@@ -138,7 +138,7 @@ export const DEFAULT_GRAPH_NODES: Node[] = [
     id: 'master-frame-buffer',
     type: 'masterFrameBuffer',
     position: { x: 40, y: 30 },
-    style: { width: 900, height: 310 },
+    style: { width: 320, height: 690 },
     data: {
       label: 'Master Output',
       blendMode: 'replace',
@@ -195,8 +195,8 @@ export const DEFAULT_GRAPH_NODES: Node[] = [
     type: 'frameBuffer',
     parentId: 'master-frame-buffer',
     extent: 'parent',
-    position: { x: 330, y: 65 },
-    style: { width: 260, height: 95 },
+    position: { x: 20, y: 240 },
+    style: { width: 280, height: 95 },
     data: {
       label: 'Top-Left Corner',
       loadFrom: '@IMAGE',
@@ -216,8 +216,8 @@ export const DEFAULT_GRAPH_NODES: Node[] = [
     type: 'frameBuffer',
     parentId: 'master-frame-buffer',
     extent: 'parent',
-    position: { x: 620, y: 65 },
-    style: { width: 260, height: 95 },
+    position: { x: 20, y: 350 },
+    style: { width: 280, height: 95 },
     data: {
       label: 'Top-Right Corner',
       loadFrom: '@IMAGE',
@@ -237,8 +237,8 @@ export const DEFAULT_GRAPH_NODES: Node[] = [
     type: 'frameBuffer',
     parentId: 'master-frame-buffer',
     extent: 'parent',
-    position: { x: 330, y: 185 },
-    style: { width: 260, height: 95 },
+    position: { x: 20, y: 460 },
+    style: { width: 280, height: 95 },
     data: {
       label: 'Bottom-Left Corner',
       loadFrom: '@IMAGE',
@@ -258,8 +258,8 @@ export const DEFAULT_GRAPH_NODES: Node[] = [
     type: 'frameBuffer',
     parentId: 'master-frame-buffer',
     extent: 'parent',
-    position: { x: 620, y: 185 },
-    style: { width: 260, height: 95 },
+    position: { x: 20, y: 570 },
+    style: { width: 280, height: 95 },
     data: {
       label: 'Bottom-Right Corner',
       loadFrom: '@IMAGE',

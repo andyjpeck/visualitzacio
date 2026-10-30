@@ -11,6 +11,7 @@ import {
   MiniMap,
   type Node,
   type NodeChange,
+  type OnNodeDrag,
   ReactFlow,
   ReactFlowProvider,
 } from '@xyflow/react'
@@ -19,9 +20,10 @@ import { nodeTypes } from './nodes/node-types'
 import { validateConnection } from './validation/connection-validator'
 import { autoLayoutGraph } from './layout/auto-layout'
 import {
-  MIN_CHILD_X,
+  CONTAINER_PADDING,
   MIN_CHILD_Y,
   recalculateContainerBounds,
+  snapContainerStack,
 } from './layout/container-bounds'
 import { useAppStore } from '../store/app-store'
 
@@ -75,7 +77,7 @@ function InnerVisualNodeGraph({
   }, [graphNodes, graphEdges])
 
   // Sync node changes (drag, selection, dimension changes)
-  // Enforces that child nodes inside containers cannot be dragged over the container header
+  // Enforces that child nodes inside containers are locked to a single vertical column
   const onNodesChange = useCallback(
     (changes: NodeChange[]) => {
       setGraphNodes((prevNodes) => {
@@ -86,7 +88,7 @@ function InnerVisualNodeGraph({
               return {
                 ...change,
                 position: {
-                  x: Math.max(MIN_CHILD_X, change.position.x),
+                  x: CONTAINER_PADDING,
                   y: Math.max(MIN_CHILD_Y, change.position.y),
                 },
               }
@@ -98,6 +100,18 @@ function InnerVisualNodeGraph({
         const updated = applyNodeChanges(sanitizedChanges, prevNodes)
         const hasPositionChange = changes.some((c) => c.type === 'position')
         return hasPositionChange ? recalculateContainerBounds(updated) : updated
+      })
+    },
+    [setGraphNodes],
+  )
+
+  // On drag stop, snap all siblings within the container into clean vertical slots
+  const onNodeDragStop: OnNodeDrag = useCallback(
+    (_event, node) => {
+      if (!node.parentId) return
+      setGraphNodes((prev) => {
+        const snapped = snapContainerStack(node.parentId!, prev)
+        return recalculateContainerBounds(snapped)
       })
     },
     [setGraphNodes],
@@ -274,6 +288,7 @@ function InnerVisualNodeGraph({
         onConnect={onConnect}
         onNodeClick={handleNodeClick}
         onPaneClick={handlePaneClick}
+        onNodeDragStop={onNodeDragStop}
         fitView
         fitViewOptions={{ padding: 0.2 }}
         minZoom={0.2}

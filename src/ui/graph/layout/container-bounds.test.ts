@@ -6,6 +6,7 @@ import {
   LEAF_NODE_HEIGHT,
   LEAF_NODE_WIDTH,
   recalculateContainerBounds,
+  snapContainerStack,
 } from './container-bounds'
 
 describe('container-bounds Layout Utilities', () => {
@@ -105,5 +106,44 @@ describe('container-bounds Layout Utilities', () => {
     // Next pos must be below child1 (65 + 56 + 15 = 136)
     expect(nextPos.x).toBe(20)
     expect(nextPos.y).toBe(136)
+  })
+
+  it('snapContainerStack locks x=20 and snaps children into vertical slots based on drag order', () => {
+    const master: Node = {
+      id: 'master',
+      type: 'masterFrameBuffer',
+      position: { x: 0, y: 0 },
+      data: {},
+    }
+    const child1: Node = {
+      id: 'child-1',
+      parentId: 'master',
+      type: 'testVisual',
+      position: { x: 50, y: 300 }, // dragged below child2
+      style: { width: 240, height: 56 },
+      data: { label: 'Child 1' },
+    }
+    const child2: Node = {
+      id: 'child-2',
+      parentId: 'master',
+      type: 'testVisual',
+      position: { x: 100, y: 100 },
+      style: { width: 240, height: 56 },
+      data: { label: 'Child 2' },
+    }
+
+    const allNodes = [master, child1, child2]
+    const snapped = snapContainerStack('master', allNodes)
+
+    const snappedChild2 = snapped.find((n) => n.id === 'child-2')!
+    const snappedChild1 = snapped.find((n) => n.id === 'child-1')!
+
+    // Child 2 had lower y (100 vs 300), so it takes Slot 0
+    expect(snappedChild2.position.x).toBe(20)
+    expect(snappedChild2.position.y).toBe(65)
+
+    // Child 1 takes Slot 1 (65 + 56 + 15 = 136)
+    expect(snappedChild1.position.x).toBe(20)
+    expect(snappedChild1.position.y).toBe(136)
   })
 })
