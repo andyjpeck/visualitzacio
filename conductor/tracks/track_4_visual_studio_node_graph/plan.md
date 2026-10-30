@@ -122,7 +122,7 @@ This plan implements the complete Studio workspace for Visualització in 5 test-
   - Implement input coalescing on pointer release (`onPointerUp`) and 500ms typing debounces.
   - Bind global keyboard shortcuts (`Ctrl+Z`, `Ctrl+Y` / `Ctrl+Shift+Z`) and toolbar buttons.
   - *Verification:* Write unit tests in `src/ui/history/undo-redo-manager.test.ts` verifying coalescing and 100-step boundaries.
-- [ ] **Task 4.2: Preset JSON Schema & Serializer**
+- [x] **Task 4.2: Preset JSON Schema & Serializer**
   - Define `PresetSchema` in `src/contracts/preset-schema.ts`.
   - Implement `serializePreset()` extracting preset metadata, node graph topology, and parameter states.
   - *Verification:* Write unit tests in `src/engine/presets/preset-serializer.test.ts` verifying JSON output schema.

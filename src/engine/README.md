@@ -35,3 +35,7 @@ The `engine` directory contains the high-frequency WebGL rendering orchestrator 
 - [**`nodes/`**](file:///C:/Users/andyj/Documents/visualitzacio/src/engine/nodes/README.md):
   - Reusable 2D/3D visual scene components implementing `VisualNode`.
   - `StaticImageNode`: Static image display with aspect-ratio preservation (`cover`, `contain`, `stretch`) and BufferPool export.
+
+- [**`presets/`**](file:///C:/Users/andyj/Documents/visualitzacio/src/engine/presets/README.md):
+  - Schema-validated preset serialization and deserialization engine.
+  - Converts active scene configurations into portable JSON documents with metadata, topological hierarchies, execution indices, and dynamic parameters.
