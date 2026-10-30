@@ -96,6 +96,20 @@ export function StaticImageNodeComponent({
           )}
         </button>
       </div>
+
+      {/* Thumbnail Preview if Image Available */}
+      {data.imageUrl && (
+        <div
+          data-testid="static-image-card-thumbnail"
+          className="mt-2.5 relative rounded overflow-hidden max-h-24 bg-black/60 border border-white/10 flex items-center justify-center p-1"
+        >
+          <img
+            src={data.imageUrl}
+            alt={data.imageFileName || data.label || 'Static Image'}
+            className="max-h-20 max-w-full object-contain rounded"
+          />
+        </div>
+      )}
     </div>
   )
 }

@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { ParameterInspector } from './parameter-inspector'
 import {
@@ -211,5 +211,151 @@ describe('ParameterInspector Component', () => {
       .getState()
       .graphNodes.find((n) => n.id === 'fb-blend-test')
     expect(updatedNode?.data.inputBlendMode).toBe('replace')
+  })
+
+  it('allows uploading an image file and encodes it into node data and serialized JSON', async () => {
+    // Add a Static Image node and select it
+    useAppStore.getState().addGraphNode({
+      id: 'img-upload-test',
+      type: 'staticImage',
+      parentId: 'master-frame-buffer',
+      position: { x: 0, y: 0 },
+      data: {
+        label: 'Custom Texture',
+        imageUrl: '',
+        fitMode: 'cover',
+      },
+    })
+    useAppStore.setState({ selectedNodeId: 'img-upload-test' })
+
+    render(<ParameterInspector />)
+
+    expect(screen.getByText('Custom Texture')).toBeInTheDocument()
+    expect(screen.getByText('Image Texture File')).toBeInTheDocument()
+    expect(screen.getByTestId('static-image-upload-dropzone')).toBeInTheDocument()
+    expect(screen.getByText(/Upload Image \(Drop or Browse\)\.\.\./i)).toBeInTheDocument()
+
+    const fileInput = screen.getByTestId('static-image-file-input') as HTMLInputElement
+    expect(fileInput).toBeInTheDocument()
+
+    // Mock FileReader.prototype.readAsDataURL
+    const fakeBase64 = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=='
+    const mockFile = new File(['fake-image-bytes'], 'artwork.png', { type: 'image/png' })
+
+    const originalFileReader = window.FileReader
+    class MockFileReader {
+      onload: ((e: { target: { result: string } }) => void) | null = null
+      readAsDataURL() {
+        setTimeout(() => {
+          if (this.onload) {
+            this.onload({ target: { result: fakeBase64 } })
+          }
+        }, 10)
+      }
+    }
+    window.FileReader = MockFileReader as unknown as typeof FileReader
+
+    try {
+      act(() => {
+        fireEvent.change(fileInput, { target: { files: [mockFile] } })
+      })
+
+      // Wait for async reader to complete and store to update
+      await waitFor(() => {
+        const updatedNode = useAppStore
+          .getState()
+          .graphNodes.find((n) => n.id === 'img-upload-test')
+        expect(updatedNode?.data.imageUrl).toBe(fakeBase64)
+      })
+
+      // Check Zustand store state
+      const updatedNode = useAppStore
+        .getState()
+        .graphNodes.find((n) => n.id === 'img-upload-test')
+      expect(updatedNode?.data.imageUrl).toBe(fakeBase64)
+      expect(updatedNode?.data.imageFileName).toBe('artwork.png')
+
+      // Check that JSON serialization contains the encoded base64 image
+      const serializedJson = JSON.stringify(useAppStore.getState().graphNodes)
+      expect(serializedJson).toContain(fakeBase64)
+      expect(serializedJson).toContain('artwork.png')
+
+      // Clear the image
+      const clearBtn = screen.getByTestId('static-image-clear-button')
+      expect(clearBtn).toBeInTheDocument()
+      act(() => {
+        fireEvent.click(clearBtn)
+      })
+
+      const clearedNode = useAppStore
+        .getState()
+        .graphNodes.find((n) => n.id === 'img-upload-test')
+      expect(clearedNode?.data.imageUrl).toBe('')
+      expect(clearedNode?.data.imageFileName).toBe('')
+    } finally {
+      window.FileReader = originalFileReader
+    }
+  })
+
+  it('supports drag and drop image file upload into dropzone', async () => {
+    useAppStore.getState().addGraphNode({
+      id: 'img-dnd-test',
+      type: 'staticImage',
+      parentId: 'master-frame-buffer',
+      position: { x: 0, y: 0 },
+      data: {
+        label: 'Dropzone Texture',
+        imageUrl: '',
+      },
+    })
+    useAppStore.setState({ selectedNodeId: 'img-dnd-test' })
+
+    render(<ParameterInspector />)
+
+    const dropzone = screen.getByTestId('static-image-upload-dropzone')
+    const fakeDataUrl = 'data:image/svg+xml;base64,PHN2Zz48L3N2Zz4='
+    const mockFile = new File(['<svg></svg>'], 'vector.svg', { type: 'image/svg+xml' })
+
+    const originalFileReader = window.FileReader
+    class MockFileReader {
+      onload: ((e: { target: { result: string } }) => void) | null = null
+      readAsDataURL() {
+        setTimeout(() => {
+          if (this.onload) {
+            this.onload({ target: { result: fakeDataUrl } })
+          }
+        }, 10)
+      }
+    }
+    window.FileReader = MockFileReader as unknown as typeof FileReader
+
+    try {
+      act(() => {
+        fireEvent.dragOver(dropzone)
+      })
+
+      act(() => {
+        fireEvent.drop(dropzone, {
+          dataTransfer: {
+            files: [mockFile],
+          },
+        })
+      })
+
+      await waitFor(() => {
+        const updatedNode = useAppStore
+          .getState()
+          .graphNodes.find((n) => n.id === 'img-dnd-test')
+        expect(updatedNode?.data.imageUrl).toBe(fakeDataUrl)
+      })
+
+      const updatedNode = useAppStore
+        .getState()
+        .graphNodes.find((n) => n.id === 'img-dnd-test')
+      expect(updatedNode?.data.imageUrl).toBe(fakeDataUrl)
+      expect(updatedNode?.data.imageFileName).toBe('vector.svg')
+    } finally {
+      window.FileReader = originalFileReader
+    }
   })
 })

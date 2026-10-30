@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react'
+import React, { useCallback, useRef, useState } from 'react'
 import {
   Crown,
   Eye,
@@ -7,6 +7,8 @@ import {
   Layers,
   Settings,
   Sparkles,
+  Upload,
+  X,
 } from 'lucide-react'
 import { ParameterRow } from './parameter-row'
 import { useAppStore } from '../store/app-store'
@@ -174,6 +176,55 @@ export function ParameterInspector({
         positionX: template.config.positionX,
         positionY: template.config.positionY,
       })
+    },
+    [selectedNodeId, updateGraphNodeData],
+  )
+
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
+  const [isDragOverImage, setIsDragOverImage] = useState(false)
+
+  const handleImageFileUpload = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0]
+      if (!file || !selectedNodeId) return
+
+      const reader = new FileReader()
+      reader.onload = (loadEvent) => {
+        const result = loadEvent.target?.result
+        if (typeof result === 'string') {
+          updateGraphNodeData(selectedNodeId, {
+            imageUrl: result,
+            imageFileName: file.name,
+          })
+        }
+      }
+      reader.readAsDataURL(file)
+
+      // Reset file input value so re-uploading the same file works
+      e.target.value = ''
+    },
+    [selectedNodeId, updateGraphNodeData],
+  )
+
+  const handleImageDrop = useCallback(
+    (e: React.DragEvent<HTMLDivElement>) => {
+      e.preventDefault()
+      setIsDragOverImage(false)
+      const file = e.dataTransfer.files?.[0]
+      if (!file || !selectedNodeId) return
+      if (!file.type.startsWith('image/')) return
+
+      const reader = new FileReader()
+      reader.onload = (loadEvent) => {
+        const result = loadEvent.target?.result
+        if (typeof result === 'string') {
+          updateGraphNodeData(selectedNodeId, {
+            imageUrl: result,
+            imageFileName: file.name,
+          })
+        }
+      }
+      reader.readAsDataURL(file)
     },
     [selectedNodeId, updateGraphNodeData],
   )
@@ -523,14 +574,107 @@ export function ParameterInspector({
               isFocused={focusedParamKey === 'saveTo'}
               onChange={(val) => handleUpdate('saveTo', val)}
             />
+
+            {/* Image Texture File Upload & Preview Section */}
+            <div className="flex flex-col gap-2 p-2.5 rounded-lg bg-white/[0.02] border border-white/10 my-1">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-mono text-slate-300 font-semibold flex items-center gap-1.5">
+                  <ImageIcon className="w-3.5 h-3.5 text-emerald-400" />
+                  Image Texture File
+                </span>
+                {Boolean(data.imageUrl) && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      handleUpdate('imageUrl', '')
+                      handleUpdate('imageFileName', '')
+                    }}
+                    className="text-[10px] font-mono text-rose-400 hover:text-rose-300 hover:underline flex items-center gap-1 cursor-pointer transition-colors"
+                    title="Remove current image texture"
+                    data-testid="static-image-clear-button"
+                  >
+                    <X className="w-3 h-3" /> Clear Image
+                  </button>
+                )}
+              </div>
+
+              {/* Hidden File Input */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                data-testid="static-image-file-input"
+                className="hidden"
+                onChange={handleImageFileUpload}
+              />
+
+              {/* Upload Dropzone / Button */}
+              <div
+                onDragOver={(e) => {
+                  e.preventDefault()
+                  setIsDragOverImage(true)
+                }}
+                onDragLeave={() => setIsDragOverImage(false)}
+                onDrop={handleImageDrop}
+                onClick={() => fileInputRef.current?.click()}
+                data-testid="static-image-upload-dropzone"
+                className={`relative flex flex-col items-center justify-center p-3 rounded-lg border-2 border-dashed transition-all cursor-pointer select-none ${
+                  isDragOverImage
+                    ? 'border-emerald-400 bg-emerald-500/20 scale-[1.01]'
+                    : 'border-white/20 hover:border-emerald-400/60 bg-black/30 hover:bg-black/50'
+                }`}
+              >
+                <div className="flex items-center gap-2 text-emerald-400 text-xs font-mono font-medium">
+                  <Upload className="w-4 h-4" />
+                  <span>{data.imageUrl ? 'Replace Image (Drop or Browse)...' : 'Upload Image (Drop or Browse)...'}</span>
+                </div>
+                <span className="text-[10px] text-slate-400 font-mono mt-1 text-center">
+                  PNG, JPG, SVG, WebP, GIF • Encoded into JSON
+                </span>
+              </div>
+
+              {/* Image Preview & Details (if image is present) */}
+              {Boolean(data.imageUrl) && (
+                <div
+                  data-testid="static-image-preview-container"
+                  className="flex flex-col items-center justify-center p-2 rounded bg-black/50 border border-white/10 gap-2"
+                >
+                  <div className="relative max-h-32 w-full flex items-center justify-center overflow-hidden rounded bg-[#080811]">
+                    <img
+                      src={String(data.imageUrl)}
+                      alt={String(data.imageFileName || 'Image preview')}
+                      data-testid="static-image-preview"
+                      className="max-h-32 max-w-full object-contain rounded"
+                    />
+                  </div>
+                  <div className="flex items-center justify-between w-full px-1 text-[10px] font-mono text-slate-400">
+                    <span
+                      className="truncate max-w-[160px]"
+                      title={String(data.imageFileName || (String(data.imageUrl).startsWith('data:') ? 'Base64 Encoded Image' : data.imageUrl))}
+                    >
+                      {String(data.imageFileName || (String(data.imageUrl).startsWith('data:') ? 'Embedded Base64' : 'External Asset'))}
+                    </span>
+                    <span className="text-emerald-400/90 text-[9px] uppercase font-bold px-1.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20">
+                      {String(data.imageUrl).startsWith('data:') ? 'JSON Encoded' : 'URL Link'}
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
+
             <ParameterRow
-              label="Image URL"
+              label="Image URL / Base64"
               value={String(data.imageUrl || '')}
-              tooltip="Web URL or asset path of the image texture"
+              tooltip="Web URL or asset path of the image texture (or Base64 data URL encoded into preset JSON)"
               type="text"
               allowExpression={false}
               isFocused={focusedParamKey === 'imageUrl'}
-              onChange={(val) => handleUpdate('imageUrl', val)}
+              onChange={(val) => {
+                handleUpdate('imageUrl', val)
+                if (!val) {
+                  handleUpdate('imageFileName', '')
+                }
+              }}
             />
 
             <ParameterRow

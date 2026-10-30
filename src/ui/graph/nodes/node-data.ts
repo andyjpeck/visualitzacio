@@ -33,6 +33,7 @@ export interface FrameBufferNodeData extends BaseNodeData {
 export interface StaticImageNodeData extends BaseNodeData {
   saveTo?: string
   imageUrl?: string
+  imageFileName?: string
   fitMode?: 'cover' | 'contain' | 'stretch'
   opacity?: number | string
 }
