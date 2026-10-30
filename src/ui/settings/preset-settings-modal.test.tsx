@@ -19,6 +19,9 @@ describe('PresetSettingsModal', () => {
     expect(screen.getByText('60 FPS')).toBeInTheDocument()
     expect(screen.getByText('120 FPS')).toBeInTheDocument()
     expect(screen.getByText('0.50x (Performance)')).toBeInTheDocument()
+
+    // Verify redundant legacy global frame buffer & feedback section is removed
+    expect(screen.queryByText(/Frame Buffer & Feedback/i)).not.toBeInTheDocument()
   })
 
   it('updates targetFps when a frame rate button is clicked', () => {
