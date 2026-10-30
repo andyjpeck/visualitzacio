@@ -16,7 +16,8 @@
   - Pre-compiled, sandboxed `expr-eval` uniform modulation.
 - [x] **Code Style Guides:** [`conductor/code_styleguides/typescript.md`](./code_styleguides/typescript.md)
 - [x] **Workflow Configuration:** [`conductor/workflow.md`](./workflow.md)
-- [x] **Index Handshake:** [`conductor/index.md`](./index.md)
+- [x] **Index Handshake:** [`conductor/index.md`](./index.md)
+- [x] **Live GitHub Pages Deployment:** Built & verified at https://andyjpeck.github.io/visualitzacio/ via GitHub Actions.
 - [x] **Stateless Subagent Architectural Review:** Completed and findings integrated into `tech-stack.md`.
 
 ---

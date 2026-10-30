@@ -4,6 +4,8 @@ A real-time, 60 FPS modular music visualizer engine built with WebGL (Three.js),
 
 Visualització is designed for high-performance audio reactivity, combining mathematically sound digital signal processing with a cyberpunk aesthetic and decoupled rendering pipeline.
 
+🌐 **Live Demo:** [https://andyjpeck.github.io/visualitzacio/](https://andyjpeck.github.io/visualitzacio/)
+
 ---
 
 ## ✨ Features
