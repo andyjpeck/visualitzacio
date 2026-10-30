@@ -44,12 +44,14 @@ function saveBoolToStorage(key: string, value: boolean): void {
 }
 
 export type StudioMode = 'editor' | 'live'
+export type BottomViewMode = 'tree' | 'graph'
 export const DEFAULT_STUDIO_SPLIT_RATIO = 0.5
 export const DEFAULT_INSPECTOR_VERTICAL_RATIO = 0.45
 export const STORAGE_KEY_STUDIO_MODE = 'visualitzacio_studio_mode'
 export const STORAGE_KEY_STUDIO_SPLIT_RATIO = 'visualitzacio_studio_split_ratio'
 export const STORAGE_KEY_INSPECTOR_VERTICAL_RATIO =
   'visualitzacio_inspector_vertical_ratio'
+export const STORAGE_KEY_BOTTOM_VIEW_MODE = 'visualitzacio_bottom_view_mode'
 
 function loadStudioModeFromStorage(): StudioMode {
   try {
@@ -69,6 +71,30 @@ function saveStudioModeToStorage(mode: StudioMode): void {
   try {
     if (typeof window !== 'undefined' && window.localStorage) {
       window.localStorage.setItem(STORAGE_KEY_STUDIO_MODE, mode)
+    }
+  } catch {
+    // ignore
+  }
+}
+
+function loadBottomViewModeFromStorage(): BottomViewMode {
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const stored = window.localStorage.getItem(STORAGE_KEY_BOTTOM_VIEW_MODE)
+      if (stored === 'tree' || stored === 'graph') {
+        return stored
+      }
+    }
+  } catch {
+    // ignore
+  }
+  return 'tree'
+}
+
+function saveBottomViewModeToStorage(mode: BottomViewMode): void {
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      window.localStorage.setItem(STORAGE_KEY_BOTTOM_VIEW_MODE, mode)
     }
   } catch {
     // ignore
@@ -339,6 +365,8 @@ export interface AppState {
   studioMode: StudioMode
   studioSplitRatio: number
   inspectorVerticalRatio: number
+  bottomViewMode: BottomViewMode
+  hoveredBufferTag: string | null
 
   // Visual Node Graph pipeline state (Track 4)
   selectedNodeId: string | null
@@ -390,6 +418,9 @@ export interface AppState {
   resetStudioSplitRatio: () => void
   setInspectorVerticalRatio: (ratio: number) => void
   resetInspectorVerticalRatio: () => void
+  setBottomViewMode: (mode: BottomViewMode) => void
+  toggleBottomViewMode: () => void
+  setHoveredBufferTag: (tag: string | null) => void
 
   // Visual Node Graph Pipeline Actions (Track 4)
   setSelectedNodeId: (id: string | null) => void
@@ -489,6 +520,8 @@ export const useAppStore = create<AppState>((set) => ({
   studioMode: loadStudioModeFromStorage(),
   studioSplitRatio: loadSplitRatioFromStorage(),
   inspectorVerticalRatio: loadInspectorVerticalRatioFromStorage(),
+  bottomViewMode: loadBottomViewModeFromStorage(),
+  hoveredBufferTag: null,
 
   selectedNodeId: 'master-frame-buffer',
   focusedParamKey: null,
@@ -560,6 +593,17 @@ export const useAppStore = create<AppState>((set) => ({
     saveInspectorVerticalRatioToStorage(DEFAULT_INSPECTOR_VERTICAL_RATIO)
     set({ inspectorVerticalRatio: DEFAULT_INSPECTOR_VERTICAL_RATIO })
   },
+  setBottomViewMode: (bottomViewMode) => {
+    saveBottomViewModeToStorage(bottomViewMode)
+    set({ bottomViewMode })
+  },
+  toggleBottomViewMode: () =>
+    set((state) => {
+      const nextMode: BottomViewMode = state.bottomViewMode === 'tree' ? 'graph' : 'tree'
+      saveBottomViewModeToStorage(nextMode)
+      return { bottomViewMode: nextMode }
+    }),
+  setHoveredBufferTag: (hoveredBufferTag) => set({ hoveredBufferTag }),
 
   setSelectedNodeId: (selectedNodeId) =>
     set({

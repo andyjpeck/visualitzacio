@@ -53,6 +53,12 @@ This plan implements the complete Studio workspace for Visualització in 5 test-
 - [x] **Task 2.4: Graph State Synchronization with `RenderEngine`**
   - Synchronize React Flow nodes/edges with the `RenderEngine` node tree and `BufferPool` in real time.
   - *Verification:* Write integration tests in `src/ui/graph/graph-engine-sync.test.tsx` verifying engine node additions and removals.
+- [ ] **Task 2.5: Layer Tree View with Interactive Semantic Tag Highlighting**
+  - Implement collapsible Outliner Tree view component as an alternative/companion to the 2D node graph canvas.
+  - Render execution sequence badges, container hierarchies, and layer controls (bypass, re-order, delete).
+  - Implement interactive semantic tag highlighting: hovering on any `@NAME` buffer tag illuminates all producers and consumers in matching neon glow.
+  - Provide a toggle in the bottom workspace pane to switch between Layer Tree and 2D Node Graph.
+  - *Verification:* Write unit tests in `src/ui/tree/layer-tree-view.test.tsx`.
 
 ---
 

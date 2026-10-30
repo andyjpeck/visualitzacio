@@ -5,7 +5,7 @@ import { PresetSettingsModal } from './ui/settings/preset-settings-modal'
 import { Toolbar } from './ui/toolbar/toolbar'
 import { AudioTelemetryOverlay } from './ui/hud/audio-telemetry-overlay'
 import { StudioSplitView } from './ui/studio/studio-split-view'
-import { VisualNodeGraph } from './ui/graph/visual-node-graph'
+import { WorkspacePane } from './ui/studio/workspace-pane'
 import { ParameterInspector } from './ui/inspector/parameter-inspector'
 import { useStudioControls } from './ui/studio/use-studio-controls'
 import { AudioManager } from './audio/audio-manager'
@@ -93,7 +93,7 @@ export function App(): React.ReactElement {
         }
         graph={
           <div data-testid="studio-graph-container" className="w-full h-full relative">
-            <VisualNodeGraph />
+            <WorkspacePane />
           </div>
         }
         inspector={
