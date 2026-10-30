@@ -12,7 +12,7 @@ This plan implements **Duperscope** (`DuperscopeNode`) and its 4-phase multi-sta
 - Implement the 4-phase execution runner (`init` $\to$ `beat` $\to$ `frame` $\to$ `point`) with persistent user state, logarithmic spectrum sampling for `v`, and zero-allocation point-loop evaluation.
 
 ### Tasks
-- [ ] **Task 1.1: Comment Stripping, Statement Splitting & Read-Only Variable Guards (`DuperscopeCompiler`)**
+- [x] **Task 1.1: Comment Stripping, Statement Splitting & Read-Only Variable Guards (`DuperscopeCompiler`)** [28fe397]
   - Create `src/engine/nodes/duperscope-compiler.ts` implementing comment stripping (`//` and `/* ... */`) and statement splitting by `;` and newlines.
   - Enforce read-only variable rules: forbid assignment to `$VARIABLE`, constants (`PI`, `E`), `i`, and `v` in all phases, and forbid assignment to `n` inside the `point` phase.
   - Validate the right-hand expression of each statement using the sandboxed `expr-eval` parser and return detailed per-phase diagnostic errors.
