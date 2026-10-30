@@ -135,7 +135,7 @@ describe('ParameterInspector Component', () => {
       .getState()
       .graphNodes.find((n) => n.id === 'fb-test')
     expect(updatedNode?.data.feedback).toBe(true)
-    expect(updatedNode?.data.blendMode).toBe('additive')
+    expect(updatedNode?.data.blendMode).toBe('add')
   })
 
   it('updates saveTo and loadFrom named buffer tags with @ prefix formatting', () => {

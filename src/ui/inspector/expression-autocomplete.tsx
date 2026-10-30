@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import {
   QUICK_REF_FUNCS,
   QUICK_REF_VARS,
@@ -11,6 +11,13 @@ export interface ExpressionAutocompleteProps {
   inputRef: React.RefObject<HTMLInputElement | null>
   isOpen?: boolean
   onClose?: () => void
+}
+
+interface TriggerInfo {
+  trigger: '$' | '#'
+  query: string
+  startIndex: number
+  endIndex: number
 }
 
 /**
@@ -26,12 +33,16 @@ export function ExpressionAutocomplete({
 }: ExpressionAutocompleteProps): React.ReactElement | null {
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [activeItems, setActiveItems] = useState<QuickRefItem[]>([])
-  const [triggerInfo, setTriggerInfo] = useState<{
-    trigger: '$' | '#'
-    query: string
-    startIndex: number
-    endIndex: number
-  } | null>(null)
+  const [triggerInfo, setTriggerInfo] = useState<TriggerInfo | null>(null)
+  const focusTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (focusTimeoutRef.current) {
+        clearTimeout(focusTimeoutRef.current)
+      }
+    }
+  }, [])
 
   // Detect $ or # under cursor
   useEffect(() => {
@@ -89,7 +100,10 @@ export function ExpressionAutocomplete({
       // Restore cursor position after inserted token
       if (input) {
         const nextPos = before.length + insertion.length
-        setTimeout(() => {
+        if (focusTimeoutRef.current) {
+          clearTimeout(focusTimeoutRef.current)
+        }
+        focusTimeoutRef.current = setTimeout(() => {
           input.focus()
           input.setSelectionRange(nextPos, nextPos)
         }, 0)

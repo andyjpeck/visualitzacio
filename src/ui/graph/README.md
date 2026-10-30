@@ -1,29 +1,21 @@
-# Node Graph Subsystem (`src/ui/graph`)
+# Graph Pipeline & Layout Subsystem (`src/ui/graph`)
 
 ## Overview
-The Node Graph Subsystem powers the interactive visual synthesizer pipeline of Visualització using `@xyflow/react`. It visually represents execution order, nested container relationships, and texture buffer routing (`saveTo` $\to$ `loadFrom`).
+The Graph Pipeline Subsystem maintains data contracts, execution order resolution, container bounds calculations, and texture buffer dependency edges (`saveTo` $\to$ `loadFrom`) for Visualització's visual pipeline.
 
-## Subdirectories & Modules
+Following the Track 4 architecture consolidation, user-facing layer hierarchy and workspace interaction are managed through the Outliner Layer Tree (`src/ui/tree/`), while this module provides shared data structures and layout algorithms.
+
+## Modules & Files
 
 | Path | Purpose |
 | :--- | :--- |
-| `nodes/node-data.ts` | Data contracts and typing for all custom node types in the pipeline. |
-| `nodes/master-frame-buffer-node.tsx` | Permanent root anchor node with golden crown badge, locked status, and final screen output handles. |
-| `nodes/frame-buffer-node.tsx` | Offscreen ping-pong feedback pass with feedback decay, transform chips, and blend mode indicators. |
-| `nodes/static-image-node.tsx` | Image layer node displaying thumbnail preview, aspect fit mode badge, and `@NAME` publish tag. |
-| `nodes/test-visual-node.tsx` | Procedural audio-reactive wireframe mesh node with real-time spectrum modulation status. |
-| `nodes/node-types.ts` | Node types registry mapping `@xyflow/react` type keys to custom components. |
-
-## Port & Connection Wiring Standard
-
-Each custom node exposes two orthogonal dimensions of dataflow:
-
-1. **Hierarchy Execution Flow (Top / Bottom):**
-   - **`exec-in` (Top Handle):** Input execution trigger from parent container or previous execution pass.
-   - **`exec-out` (Bottom Handle):** Output execution trigger to nested child passes or next sequential pass.
-2. **Buffer Data Routing (Left / Right):**
-   - **`buffer-in` (Left Handle):** Input texture sampler (`loadFrom`). Samples from an allocated texture in `BufferPool`.
-   - **`buffer-out` (Right Handle):** Output texture publisher (`saveTo`). Publishes the rendered FBO texture into `BufferPool` with an `@NAME` tag.
+| `node-data.ts` | Data contracts and typing for all pipeline node types (`BaseNodeData`, `FrameBufferNodeData`, `StaticImageNodeData`, `TestVisualNodeData`, `MasterFrameBufferNodeData`). |
+| `buffer-edges.ts` | Synchronizes directed texture buffer flow edges (`saveTo` $\to$ `loadFrom`) between producer buffers and consumers. |
+| `execution-order.ts` | Calculates deterministic sequential and topological render execution order across hierarchical nodes. |
+| `layout/` | Container bounds math, sibling Y-stack reflowing, and Dagre hierarchical auto-layout algorithms. |
 
 ## Testing
-- `nodes/custom-nodes.test.tsx`: Validates rendering, handles, badges, labels, and selection states across all custom node types.
+- `graph-edges.test.tsx`: Validates automatic buffer flow edge synchronization between publishers and consumers.
+- `execution-order.test.ts`: Verifies topological execution sorting and cycle detection.
+- `layout/container-bounds.test.ts`: Tests container dimension expansion, padding, and child position offsets.
+- `layout/auto-layout.test.ts`: Validates hierarchical Dagre layout coordinates.

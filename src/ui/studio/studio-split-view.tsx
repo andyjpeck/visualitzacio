@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import {
   DEFAULT_INSPECTOR_VERTICAL_RATIO,
   DEFAULT_STUDIO_SPLIT_RATIO,
@@ -67,6 +67,15 @@ export function StudioSplitView({
   const inspectorRatioRef = useRef<number>(storeInspectorRatio)
 
   const [activeDrag, setActiveDrag] = useState<'vertical' | 'horizontal' | null>(null)
+  const dragCleanupRef = useRef<(() => void) | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (dragCleanupRef.current) {
+        dragCleanupRef.current()
+      }
+    }
+  }, [])
 
   // Drag handler for vertical divider (Preview <-> Right Column)
   const handleVerticalPointerDown = useCallback(
@@ -96,13 +105,19 @@ export function StudioSplitView({
         setDragSplitRatio(newRatio)
       }
 
+      const cleanup = () => {
+        window.removeEventListener('pointermove', handlePointerMove)
+        window.removeEventListener('pointerup', handlePointerUp)
+        window.removeEventListener('pointercancel', handlePointerUp)
+        dragCleanupRef.current = null
+      }
+      dragCleanupRef.current = cleanup
+
       const handlePointerUp = () => {
         setActiveDrag(null)
         setDragSplitRatio(null)
         setStudioSplitRatio(splitRatioRef.current)
-        window.removeEventListener('pointermove', handlePointerMove)
-        window.removeEventListener('pointerup', handlePointerUp)
-        window.removeEventListener('pointercancel', handlePointerUp)
+        cleanup()
       }
 
       window.addEventListener('pointermove', handlePointerMove)
@@ -140,13 +155,19 @@ export function StudioSplitView({
         setDragInspectorRatio(newRatio)
       }
 
+      const cleanup = () => {
+        window.removeEventListener('pointermove', handlePointerMove)
+        window.removeEventListener('pointerup', handlePointerUp)
+        window.removeEventListener('pointercancel', handlePointerUp)
+        dragCleanupRef.current = null
+      }
+      dragCleanupRef.current = cleanup
+
       const handlePointerUp = () => {
         setActiveDrag(null)
         setDragInspectorRatio(null)
         setInspectorVerticalRatio(inspectorRatioRef.current)
-        window.removeEventListener('pointermove', handlePointerMove)
-        window.removeEventListener('pointerup', handlePointerUp)
-        window.removeEventListener('pointercancel', handlePointerUp)
+        cleanup()
       }
 
       window.addEventListener('pointermove', handlePointerMove)

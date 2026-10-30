@@ -96,6 +96,7 @@ export class FrameBufferNode implements VisualNode {
   private fboA: THREE.WebGLRenderTarget | null = null
   private fboB: THREE.WebGLRenderTarget | null = null
   private pingPongIndex: 0 | 1 = 0
+  private readonly clearColorInstance: THREE.Color
 
   private width = 1920
   private height = 1080
@@ -124,6 +125,7 @@ export class FrameBufferNode implements VisualNode {
     this.outputBlendMode = options.outputBlendMode ?? options.blendMode ?? 'replace'
     this.inputBlendMode = options.inputBlendMode ?? (options.loadFrom ? 'replace' : 'none')
     this.clearColor = options.clearColor ?? '#000000'
+    this.clearColorInstance = new THREE.Color(this.clearColor)
     this.feedback = options.feedback ?? false
     this.saveTo = options.saveTo ?? null
     this.loadFrom = options.loadFrom ?? null
@@ -247,12 +249,8 @@ export class FrameBufferNode implements VisualNode {
     this.renderer = renderer
     if (bufferPool) {
       this.bufferPool = bufferPool
-      if (this.saveTo) {
-        this.bufferPool.recordNodeMapping(this.id, this.saveTo)
-      }
-      if (this.loadFrom) {
-        this.bufferPool.recordDependency(this.id, this.loadFrom)
-      }
+      this.bufferPool.recordNodeMapping(this.id, this.saveTo)
+      this.bufferPool.recordDependency(this.id, this.loadFrom)
     }
     for (const child of this.children) {
       if (child.init) {
@@ -276,7 +274,7 @@ export class FrameBufferNode implements VisualNode {
           : `@${name.trim()}`
         : null
     this.saveTo = formatted
-    if (this.bufferPool && formatted) {
+    if (this.bufferPool) {
       this.bufferPool.recordNodeMapping(this.id, formatted)
     }
   }
@@ -292,7 +290,7 @@ export class FrameBufferNode implements VisualNode {
           : `@${name.trim()}`
         : null
     this.loadFrom = formatted
-    if (this.bufferPool && formatted) {
+    if (this.bufferPool) {
       this.bufferPool.recordDependency(this.id, formatted)
     }
   }
@@ -602,7 +600,7 @@ export class FrameBufferNode implements VisualNode {
       const blendKey = this.outputBlendMode !== 'none' ? this.outputBlendMode : 'replace'
       this.feedbackMaterial.uniforms.uBlendMode.value = BLEND_MODES[blendKey as BlendModeName] ?? 0
       this.feedbackMaterial.uniforms.uScale.value.set(this.scaleVal, this.scaleVal)
-      this.feedbackMaterial.uniforms.uRotation.value = this.rotationVal
+      this.feedbackMaterial.uniforms.uRotation.value = (this.rotationVal * Math.PI) / 180
       this.feedbackMaterial.uniforms.uOffset.value.set(this.positionXVal, this.positionYVal)
 
       // Render composited feedback quad
@@ -613,7 +611,7 @@ export class FrameBufferNode implements VisualNode {
       }
 
       if (this.clearColor && this.renderer.setClearColor) {
-        this.renderer.setClearColor(this.clearColor)
+        this.renderer.setClearColor(this.clearColorInstance)
       }
 
       if (this.renderer.clear) {
@@ -729,5 +727,9 @@ export class FrameBufferNode implements VisualNode {
       }
     }
     this.children.length = 0
+
+    if (this.bufferPool) {
+      this.bufferPool.unregisterNode(this.id)
+    }
   }
 }

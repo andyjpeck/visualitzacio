@@ -91,6 +91,9 @@ export function ParameterRow({
     ) {
       setIsExpressionMode(true)
       setLocalFormula(value)
+    } else if (typeof value === 'number') {
+      setIsExpressionMode(explicitMode === 'expression')
+      setLocalFormula(propSavedFormula || '')
     }
   }
 
@@ -249,6 +252,7 @@ export function ParameterRow({
                 isValid={validation.isValid}
                 error={validation.error}
                 placeholder="e.g. 1.0 + $BASS * 0.8"
+                inputRef={inputRef}
               />
               <ExpressionAutocomplete
                 value={activeFormula}

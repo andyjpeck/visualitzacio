@@ -157,7 +157,7 @@ describe('Component Preset Selector & Dirty-State Overwrite Guard (Task 3.4)', (
       // Node should be updated
       const updatedNode = useAppStore.getState().graphNodes.find((n) => n.id === 'fb-unmodified')
       expect(updatedNode?.data.feedback).toBe(true)
-      expect(updatedNode?.data.blendMode).toBe('additive')
+      expect(updatedNode?.data.blendMode).toBe('add')
       expect(updatedNode?.data.appliedTemplateId).toBe('phosphor-trails')
     })
 
@@ -264,7 +264,7 @@ describe('Component Preset Selector & Dirty-State Overwrite Guard (Task 3.4)', (
       const node = useAppStore.getState().graphNodes.find((n) => n.id === 'fb-confirm-test')
       expect(node?.data.appliedTemplateId).toBe('phosphor-trails')
       expect(node?.data.feedback).toBe(true)
-      expect(node?.data.blendMode).toBe('additive')
+      expect(node?.data.blendMode).toBe('add')
       expect(node?.data.opacity).toBe(0.94)
       expect(node?.data.scale).toBe(1.0)
     })

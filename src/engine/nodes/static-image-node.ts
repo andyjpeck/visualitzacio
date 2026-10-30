@@ -89,6 +89,18 @@ export class StaticImageNode implements VisualNode {
   }
 
   private loadTexture(url: string): void {
+    if (!url || url.trim() === '') {
+      this.texture.dispose()
+      this.texture = this.createDefaultTexture()
+      this.material.map = this.texture
+      this.material.needsUpdate = true
+      this.setImageDimensions(1920, 1080)
+      if (this.bufferPool && this.saveTo) {
+        this.bufferPool.register(this.saveTo, this.texture)
+      }
+      return
+    }
+
     if (typeof Image === 'undefined') return
 
     const img = new Image()
@@ -204,9 +216,9 @@ export class StaticImageNode implements VisualNode {
           : `@${name.trim()}`
         : null
     this.saveTo = formatted
-    if (this.bufferPool && formatted) {
+    if (this.bufferPool) {
       this.bufferPool.recordNodeMapping(this.id, formatted)
-      if (this.texture) {
+      if (formatted && this.texture) {
         this.bufferPool.register(formatted, this.texture)
       }
     }
@@ -246,5 +258,8 @@ export class StaticImageNode implements VisualNode {
     this.geometry.dispose()
     this.material.dispose()
     this.texture.dispose()
+    if (this.bufferPool) {
+      this.bufferPool.unregisterNode(this.id)
+    }
   }
 }

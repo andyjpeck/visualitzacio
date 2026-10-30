@@ -76,14 +76,10 @@ export function ViewportCanvas({
       expressionEngine: exprEngineRef.current,
     })
 
-    const visualNode = new TestVisualNode('test-visual-1')
-    masterBuffer.addChild(visualNode)
     engine.addNode(masterBuffer)
 
     masterBufferRef.current = masterBuffer
     nodeMapRef.current.set('master-frame-buffer', masterBuffer)
-    nodeMapRef.current.set('test-visual-1', visualNode)
-    parentMapRef.current.set('test-visual-1', masterBuffer)
 
     engineRef.current = engine
     if (onEngineReadyRef.current) {
@@ -247,7 +243,7 @@ export function ViewportCanvas({
           vNode.setLoadFrom((gNode.data.loadFrom as string) || null)
         }
       } else if (vNode instanceof StaticImageNode) {
-        if (gNode.data.imageUrl) {
+        if (gNode.data.imageUrl !== undefined) {
           vNode.setUrl(String(gNode.data.imageUrl))
         }
         if (gNode.data.fitMode) {
@@ -262,29 +258,27 @@ export function ViewportCanvas({
       }
     }
 
-    // Pass 3: Reconcile parent-child attachments and execution order based on gNode.parentId
-    // Sort so container frame buffers attach to their parents before leaf visual nodes,
-    // publisher buffers (saveTo) execute before consumer buffers (loadFrom),
-    // and siblings execute in spatial order: Y ascending (top-to-bottom), then X ascending (left-to-right)
-    const sortedNodes = [...graphNodes].sort((a, b) => {
+    // Pass 2.5: Clean up removed nodes BEFORE hierarchy reconciliation
+    // (excluding permanent master root)
+    const activeIds = new Set(graphNodes.map((n) => n.id))
+    for (const [id, node] of nodeMap.entries()) {
+      if (id !== 'master-frame-buffer' && !activeIds.has(id)) {
+        const parent = parentMap.get(id) || masterBuffer
+        parent.removeChild(node, true)
+        nodeMap.delete(id)
+        parentMap.delete(id)
+      }
+    }
+
+    // Pass 3: Reconcile parent-child attachments based on gNode.parentId
+    // Containers attach first so nested children can attach to them
+    const sortedForAttachment = [...graphNodes].sort((a, b) => {
       if (a.type === 'frameBuffer' && b.type !== 'frameBuffer') return -1
       if (a.type !== 'frameBuffer' && b.type === 'frameBuffer') return 1
-
-      const aPublishes = Boolean(a.data?.saveTo)
-      const bPublishes = Boolean(b.data?.saveTo)
-      if (aPublishes && !bPublishes) return -1
-      if (!aPublishes && bPublishes) return 1
-
-      const aY = a.position?.y ?? 0
-      const bY = b.position?.y ?? 0
-      if (aY !== bY) return aY - bY
-
-      const aX = a.position?.x ?? 0
-      const bX = b.position?.x ?? 0
-      return aX - bX
+      return 0
     })
 
-    for (const gNode of sortedNodes) {
+    for (const gNode of sortedForAttachment) {
       if (gNode.id === 'master-frame-buffer') continue
       const vNode = nodeMap.get(gNode.id)
       if (!vNode) continue
@@ -307,9 +301,19 @@ export function ViewportCanvas({
       }
     }
 
-    // Pass 4: Synchronize exact execution order of children inside each container
+    // Pass 4: Synchronize exact sibling execution order strictly following visual top-to-bottom tree order
+    const visuallyOrderedNodes = [...graphNodes].sort((a, b) => {
+      const aY = a.position?.y ?? 0
+      const bY = b.position?.y ?? 0
+      if (aY !== bY) return aY - bY
+
+      const aX = a.position?.x ?? 0
+      const bX = b.position?.x ?? 0
+      return aX - bX
+    })
+
     const childrenByParent = new Map<string, VisualNode[]>()
-    for (const gNode of sortedNodes) {
+    for (const gNode of visuallyOrderedNodes) {
       if (gNode.id === 'master-frame-buffer') continue
       const vNode = nodeMap.get(gNode.id)
       if (!vNode) continue
@@ -330,17 +334,6 @@ export function ViewportCanvas({
         if (containerChildren) {
           vNode.setChildrenOrder(containerChildren)
         }
-      }
-    }
-
-    // Clean up removed nodes (excluding permanent master root)
-    const activeIds = new Set(graphNodes.map((n) => n.id))
-    for (const [id, node] of nodeMap.entries()) {
-      if (id !== 'master-frame-buffer' && !activeIds.has(id)) {
-        const parent = parentMap.get(id) || masterBuffer
-        parent.removeChild(node, true)
-        nodeMap.delete(id)
-        parentMap.delete(id)
       }
     }
   }, [graphNodes])

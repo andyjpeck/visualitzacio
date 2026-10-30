@@ -218,4 +218,46 @@ describe('useAppStore (Zustand State Plane)', () => {
     expect(useAppStore.getState().selectedNodeId).toBe('test-visual-1')
     expect(useAppStore.getState().focusedParamKey).toBeNull()
   })
+
+  it('recursively deletes a container node and all its nested descendants via removeGraphNode', () => {
+    const store = useAppStore.getState()
+    store.addGraphNode({
+      id: 'parent-buffer',
+      type: 'frameBuffer',
+      parentId: 'master-frame-buffer',
+      position: { x: 20, y: 65 },
+      data: { label: 'Parent Buffer' },
+    })
+    store.addGraphNode({
+      id: 'child-buffer',
+      type: 'frameBuffer',
+      parentId: 'parent-buffer',
+      position: { x: 20, y: 65 },
+      data: { label: 'Child Buffer' },
+    })
+    store.addGraphNode({
+      id: 'grandchild-synth',
+      type: 'testVisual',
+      parentId: 'child-buffer',
+      position: { x: 20, y: 65 },
+      data: { label: 'Grandchild Synth' },
+    })
+
+    // Verify all 3 added
+    expect(useAppStore.getState().graphNodes.some((n) => n.id === 'parent-buffer')).toBe(true)
+    expect(useAppStore.getState().graphNodes.some((n) => n.id === 'child-buffer')).toBe(true)
+    expect(useAppStore.getState().graphNodes.some((n) => n.id === 'grandchild-synth')).toBe(true)
+
+    // Remove parent container
+    const success = store.removeGraphNode('parent-buffer')
+    expect(success).toBe(true)
+
+    // All 3 should be removed
+    expect(useAppStore.getState().graphNodes.some((n) => n.id === 'parent-buffer')).toBe(false)
+    expect(useAppStore.getState().graphNodes.some((n) => n.id === 'child-buffer')).toBe(false)
+    expect(useAppStore.getState().graphNodes.some((n) => n.id === 'grandchild-synth')).toBe(false)
+
+    // Master Output cannot be removed
+    expect(store.removeGraphNode('master-frame-buffer')).toBe(false)
+  })
 })

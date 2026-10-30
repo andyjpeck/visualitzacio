@@ -185,7 +185,7 @@ describe('FrameBufferNode', () => {
 
     expect(mat?.uniforms.uOpacity.value).toBeCloseTo(0.85)
     expect(mat?.uniforms.uScale.value.x).toBeCloseTo(1.2)
-    expect(mat?.uniforms.uRotation.value).toBeCloseTo(1.0)
+    expect(mat?.uniforms.uRotation.value).toBeCloseTo((1.0 * Math.PI) / 180)
     expect(mat?.uniforms.uOffset.value.x).toBeCloseTo(0.04)
     expect(mat?.uniforms.uOffset.value.y).toBeCloseTo(-0.02)
     expect(mat?.uniforms.uBlendMode.value).toBe(1) // BLEND_MODES.additive

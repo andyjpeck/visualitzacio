@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Check, ChevronsDownUp, ChevronsUpDown, Copy, Layers } from 'lucide-react'
 import { useAppStore } from '../store/app-store'
 import { LayerTreeView } from '../tree/layer-tree-view'
@@ -13,6 +13,15 @@ export function WorkspacePane(): React.ReactElement {
   const graphEdges = useAppStore((state) => state.graphEdges)
   const [collapsedIds, setCollapsedIds] = useState<Set<string>>(new Set())
   const [copiedJson, setCopiedJson] = useState(false)
+  const copyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (copyTimeoutRef.current) {
+        clearTimeout(copyTimeoutRef.current)
+      }
+    }
+  }, [])
 
   // Fast preset/layout JSON copy for user debugging until full preset export/import support
   useEffect(() => {
@@ -51,7 +60,10 @@ export function WorkspacePane(): React.ReactElement {
     }
     console.log('[Visualització] Current Graph Layout JSON:\n', jsonStr)
     setCopiedJson(true)
-    setTimeout(() => setCopiedJson(false), 2000)
+    if (copyTimeoutRef.current) {
+      clearTimeout(copyTimeoutRef.current)
+    }
+    copyTimeoutRef.current = setTimeout(() => setCopiedJson(false), 2000)
   }, [graphNodes, graphEdges])
 
   // Find all non-top-level container IDs (nested frame buffers) to collapse on 'Collapse All'.

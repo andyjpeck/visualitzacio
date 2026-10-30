@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import {
+  AlertTriangle,
   ChevronDown,
   ChevronRight,
   ChevronUp,
@@ -15,6 +16,7 @@ import {
 } from 'lucide-react'
 import type { Node } from '@xyflow/react'
 import { useAppStore } from '../store/app-store'
+import { BaseModalDialog } from '../dialogs/base-modal-dialog'
 import {
   calculateNodeDimensions,
   CONTAINER_HEADER_HEIGHT,
@@ -61,6 +63,9 @@ export function LayerTreeView({
   // Add child menu dropdown state: nodeId -> boolean
   const [openAddMenuId, setOpenAddMenuId] = useState<string | null>(null)
   const addMenuRef = useRef<HTMLDivElement>(null)
+
+  // Confirmation modal state when deleting a container with child layers
+  const [containerToDelete, setContainerToDelete] = useState<Node | null>(null)
 
   // Dismiss add child menu dialog on outside click or 'Escape' key
   useEffect(() => {
@@ -238,7 +243,13 @@ export function LayerTreeView({
     let newParentId: string | undefined
     const position = currentIndicator?.targetId === targetNode.id ? currentIndicator.position : 'inside'
 
-    if (position === 'inside') {
+    const isTargetContainer =
+      targetNode.id === 'master-frame-buffer' ||
+      targetNode.type === 'masterFrameBuffer' ||
+      targetNode.type === 'frameBuffer' ||
+      Boolean(targetNode.data?.isContainer)
+
+    if (position === 'inside' && isTargetContainer) {
       newParentId = targetNode.id
     } else {
       newParentId = targetNode.parentId
@@ -734,11 +745,16 @@ export function LayerTreeView({
                 data-testid={`tree-delete-btn-${node.id}`}
                 onClick={(e) => {
                   e.stopPropagation()
-                  removeGraphNode(node.id)
+                  const hasChildren = graphNodes.some((n) => n.parentId === node.id)
+                  if (hasChildren) {
+                    setContainerToDelete(node)
+                  } else {
+                    removeGraphNode(node.id)
+                  }
                 }}
                 title="Delete Layer"
                 aria-label="Delete Layer"
-                className="p-1 rounded hover:bg-red-950/60 text-slate-500 hover:text-red-400 transition-colors"
+                className="p-1 rounded hover:bg-red-950/60 text-slate-500 hover:text-red-400 transition-colors cursor-pointer"
               >
                 <Trash2 className="w-3.5 h-3.5" />
               </button>
@@ -775,6 +791,53 @@ export function LayerTreeView({
     >
       {/* Root Layer Stack */}
       {rootNodes.map((rootNode) => renderNodeRow(rootNode, 0))}
+
+      {/* Delete Container Confirmation Modal */}
+      {containerToDelete && (
+        <BaseModalDialog
+          isOpen={Boolean(containerToDelete)}
+          onClose={() => setContainerToDelete(null)}
+          title="Delete Container and All Children?"
+          icon={<AlertTriangle className="w-4 h-4 text-amber-400" />}
+          maxWidthClass="max-w-md"
+          className="border-amber-500/40 shadow-amber-500/20"
+          headerTestId="delete-container-modal-header"
+        >
+          <div className="flex flex-col gap-4 text-xs font-mono select-none">
+            <p className="text-slate-300 leading-relaxed">
+              Deleting container layer{' '}
+              <span className="font-bold text-white">
+                &quot;{String(containerToDelete.data?.label || containerToDelete.id)}&quot;
+              </span>{' '}
+              will permanently remove this buffer and all of its nested child layers.
+            </p>
+            <div className="p-3 rounded-lg bg-black/40 border border-amber-500/30 flex flex-col gap-1 text-[11px] text-amber-200/90">
+              <span>This action cannot be undone. Are you sure you want to delete all nested layers?</span>
+            </div>
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-white/10">
+              <button
+                type="button"
+                data-testid="cancel-delete-container-btn"
+                onClick={() => setContainerToDelete(null)}
+                className="px-3 py-1.5 rounded-lg border border-white/10 hover:border-white/20 text-slate-300 hover:text-white transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                data-testid="confirm-delete-container-btn"
+                onClick={() => {
+                  removeGraphNode(containerToDelete.id)
+                  setContainerToDelete(null)
+                }}
+                className="px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-500 text-white font-semibold shadow-lg shadow-red-600/30 transition-all cursor-pointer"
+              >
+                Delete All
+              </button>
+            </div>
+          </div>
+        </BaseModalDialog>
+      )}
     </div>
   )
 }

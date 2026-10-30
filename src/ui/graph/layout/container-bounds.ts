@@ -214,8 +214,9 @@ export function reflowGraphStacks<T extends Record<string, unknown>>(
  * Reflows all containers bottom-up to ensure ancestor containers expand and siblings shift down.
  */
 export function snapContainerStack<T extends Record<string, unknown>>(
-  _parentId: string,
+  parentId: string,
   nodes: Node<T>[],
 ): Node<T>[] {
+  void parentId
   return reflowGraphStacks(nodes)
 }

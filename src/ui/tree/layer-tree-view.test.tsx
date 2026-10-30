@@ -37,7 +37,6 @@ describe('LayerTreeView Component', () => {
         },
       ],
       selectedNodeId: 'master-frame-buffer',
-      bottomViewMode: 'tree',
       hoveredBufferTag: null,
     })
   })
@@ -381,7 +380,7 @@ describe('LayerTreeView Component', () => {
 })
 
 describe('WorkspacePane Component', () => {
-  it('renders dedicated Layer Tree with active count badge and expand/collapse actions', () => {
+  beforeEach(() => {
     useAppStore.setState({
       graphNodes: [
         {
@@ -407,7 +406,9 @@ describe('WorkspacePane Component', () => {
       ],
       selectedNodeId: 'master-frame-buffer',
     })
+  })
 
+  it('renders dedicated Layer Tree with active count badge and expand/collapse actions', () => {
     render(<WorkspacePane />)
 
     expect(screen.getByTestId('workspace-pane')).toBeInTheDocument()
@@ -526,5 +527,47 @@ describe('WorkspacePane Component', () => {
     expect(screen.getByTestId('tree-add-child-menu-master-frame-buffer')).toBeInTheDocument()
     fireEvent.mouseDown(document.body)
     expect(screen.queryByTestId('tree-add-child-menu-master-frame-buffer')).not.toBeInTheDocument()
+  })
+
+  it('shows confirmation dialog when deleting a container with children and deletes recursively upon confirmation', () => {
+    render(<LayerTreeView />)
+
+    // source-buffer has child synth-child
+    const deleteSourceBtn = screen.getByTestId('tree-delete-btn-source-buffer')
+    fireEvent.click(deleteSourceBtn)
+
+    // Warning confirmation modal should appear
+    expect(screen.getByTestId('delete-container-modal-header')).toBeInTheDocument()
+    expect(screen.getByText(/Deleting container layer/)).toBeInTheDocument()
+    expect(screen.getAllByText(/Source Buffer/).length).toBeGreaterThanOrEqual(2)
+
+    // Cancel deletion
+    const cancelBtn = screen.getByTestId('cancel-delete-container-btn')
+    fireEvent.click(cancelBtn)
+    expect(screen.queryByTestId('delete-container-modal-header')).not.toBeInTheDocument()
+    expect(screen.getByTestId('layer-tree-item-source-buffer')).toBeInTheDocument()
+    expect(screen.getByTestId('layer-tree-item-synth-child')).toBeInTheDocument()
+
+    // Click delete again and confirm
+    fireEvent.click(deleteSourceBtn)
+    expect(screen.getByTestId('delete-container-modal-header')).toBeInTheDocument()
+    const confirmBtn = screen.getByTestId('confirm-delete-container-btn')
+    fireEvent.click(confirmBtn)
+
+    // Both source-buffer and its child synth-child should be deleted from the store
+    expect(screen.queryByTestId('layer-tree-item-source-buffer')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('layer-tree-item-synth-child')).not.toBeInTheDocument()
+  })
+
+  it('deletes a leaf node immediately without showing confirmation modal', () => {
+    render(<LayerTreeView />)
+
+    // synth-child has no children
+    const deleteLeafBtn = screen.getByTestId('tree-delete-btn-synth-child')
+    fireEvent.click(deleteLeafBtn)
+
+    // No modal shown, immediately deleted
+    expect(screen.queryByTestId('delete-container-modal-header')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('layer-tree-item-synth-child')).not.toBeInTheDocument()
   })
 })

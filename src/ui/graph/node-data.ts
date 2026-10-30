@@ -1,5 +1,5 @@
 /**
- * Data contracts and type definitions for custom React Flow nodes.
+ * Data contracts and type definitions for pipeline graph nodes.
  */
 
 export interface BaseNodeData {

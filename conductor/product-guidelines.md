@@ -33,6 +33,9 @@
     - `x` spans `-1.0` (left edge) to `1.0` (right edge).
     - `y` spans `-1.0` (bottom edge) to `1.0` (top edge).
   - Position parameters (`position_x`, `position_y`) throughout all inspectors and components map directly to this normalized space.
+- **Rotation Units & Spatial Angles (Degrees Standard):**
+  - All public signatures, user-facing parameter inspectors, component schemas, formula variables, and preset configurations use **degrees** (e.g., `-180°` to `+180°` or continuous rotational degrees).
+  - WebGL fragment shaders and Three.js 3D objects convert degrees to radians internally (`(deg * Math.PI) / 180`) at the boundary layer so that users and preset authors never need to reason about raw radian values.
 
 ## 3. Component Inspector & The `f(x)` Expression Switcher
 To maintain a unified, predictable visual language across all components when exploring presets or switching between fixed controls and dynamic formulas:

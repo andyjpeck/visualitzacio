@@ -11,6 +11,8 @@ export class BufferPool {
   private readonly bufferToNode = new Map<string, string>()
   private readonly dependencies = new Map<string, Set<string>>()
   private readonly fallbackTexture: THREE.DataTexture
+  private readonly visited = new Set<string>()
+  private readonly stack: string[] = []
 
   constructor() {
     // 1x1 RGBA opaque black fallback texture
@@ -55,60 +57,96 @@ export class BufferPool {
   }
 
   /**
-   * Records the relationship between a node and the buffer it writes to.
+   * Records or updates the relationship between a node and the buffer it writes to.
+   * Cleans up stale texture references if the buffer name changed.
    *
    * @param nodeId - Unique node ID.
-   * @param bufferName - Named buffer identifier (e.g. '@A').
+   * @param bufferName - Named buffer identifier (e.g. '@A'), or null to clear.
    */
-  recordNodeMapping(nodeId: string, bufferName: string): void {
-    this.nodeToBuffer.set(nodeId, bufferName)
-    this.bufferToNode.set(bufferName, nodeId)
+  recordNodeMapping(nodeId: string, bufferName: string | null): void {
+    const oldBuffer = this.nodeToBuffer.get(nodeId)
+    if (oldBuffer && oldBuffer !== bufferName) {
+      this.bufferToNode.delete(oldBuffer)
+      this.textures.delete(oldBuffer)
+    }
+
+    if (bufferName && bufferName.trim() !== '') {
+      this.nodeToBuffer.set(nodeId, bufferName)
+      this.bufferToNode.set(bufferName, nodeId)
+    } else {
+      this.nodeToBuffer.delete(nodeId)
+    }
   }
 
   /**
-   * Records a node's dependency on an external buffer.
+   * Records or clears a node's dependency on an external buffer.
    *
    * @param nodeId - Requesting node ID.
-   * @param targetBufferName - Target buffer being sampled (e.g. '@B').
+   * @param targetBufferName - Target buffer being sampled (e.g. '@B'), or null to clear.
    */
-  recordDependency(nodeId: string, targetBufferName: string): void {
+  recordDependency(nodeId: string, targetBufferName: string | null): void {
+    if (!targetBufferName || targetBufferName.trim() === '') {
+      this.dependencies.delete(nodeId)
+      return
+    }
+
     let deps = this.dependencies.get(nodeId)
     if (!deps) {
       deps = new Set<string>()
       this.dependencies.set(nodeId, deps)
     }
+    deps.clear()
     deps.add(targetBufferName)
   }
 
   /**
+   * Unregisters all published buffers and dependencies associated with a node.
+   *
+   * @param nodeId - Unique node ID to remove.
+   */
+  unregisterNode(nodeId: string): void {
+    const bufferName = this.nodeToBuffer.get(nodeId)
+    if (bufferName) {
+      this.textures.delete(bufferName)
+      this.bufferToNode.delete(bufferName)
+      this.nodeToBuffer.delete(nodeId)
+    }
+    this.dependencies.delete(nodeId)
+  }
+
+  /**
    * Detects whether requesting targetBufferName from nodeId creates a circular dependency graph.
+   * Zero per-frame memory allocation by reusing internal visited set and stack.
    *
    * @param nodeId - Requesting node ID.
    * @param targetBufferName - Buffer to be sampled.
    */
   isCircular(nodeId: string, targetBufferName: string): boolean {
-    const visited = new Set<string>()
     const targetNodeId = this.bufferToNode.get(targetBufferName)
 
     if (!targetNodeId) return false
     if (targetNodeId === nodeId) return true
 
-    const stack: string[] = [targetNodeId]
+    this.visited.clear()
+    this.stack.length = 0
+    this.stack.push(targetNodeId)
 
-    while (stack.length > 0) {
-      const current = stack.pop()!
+    while (this.stack.length > 0) {
+      const current = this.stack.pop()
+      if (!current) continue
+
       if (current === nodeId) {
         return true
       }
 
-      if (!visited.has(current)) {
-        visited.add(current)
+      if (!this.visited.has(current)) {
+        this.visited.add(current)
         const deps = this.dependencies.get(current)
         if (deps) {
           for (const depBuffer of deps) {
             const nextNode = this.bufferToNode.get(depBuffer)
             if (nextNode) {
-              stack.push(nextNode)
+              this.stack.push(nextNode)
             }
           }
         }

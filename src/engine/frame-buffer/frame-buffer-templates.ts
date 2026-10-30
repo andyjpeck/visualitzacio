@@ -52,7 +52,7 @@ export const FRAME_BUFFER_TEMPLATES: readonly FrameBufferTemplate[] = [
     category: 'feedback',
     config: {
       feedback: true,
-      blendMode: 'additive',
+      blendMode: 'add',
       opacity: 0.94,
       scale: 1.0,
       rotation: 0.0,
@@ -73,7 +73,7 @@ export const FRAME_BUFFER_TEMPLATES: readonly FrameBufferTemplate[] = [
       blendMode: 'replace',
       opacity: 0.96,
       scale: 0.98,
-      rotation: 0.02,
+      rotation: 1.15,
       positionX: 0.0,
       positionY: 0.0,
     },
@@ -88,7 +88,7 @@ export const FRAME_BUFFER_TEMPLATES: readonly FrameBufferTemplate[] = [
     category: 'multi-pass',
     config: {
       feedback: true,
-      blendMode: 'additive',
+      blendMode: 'add',
       opacity: 0.9,
       scale: 0.5,
       rotation: 0.0,
@@ -106,7 +106,7 @@ export const FRAME_BUFFER_TEMPLATES: readonly FrameBufferTemplate[] = [
     category: 'multi-pass',
     config: {
       feedback: true,
-      blendMode: 'additive',
+      blendMode: 'add',
       opacity: 0.85,
       scale: 0.35,
       rotation: 0.0,
@@ -124,10 +124,10 @@ export const FRAME_BUFFER_TEMPLATES: readonly FrameBufferTemplate[] = [
     category: 'audio-reactive',
     config: {
       feedback: true,
-      blendMode: 'additive',
+      blendMode: 'add',
       opacity: '0.85 + $BEAT * 0.1',
       scale: '1.0 + $BEAT * 0.08',
-      rotation: '$BASS * 0.03',
+      rotation: '$BASS * 1.5',
       positionX: 0.0,
       positionY: 0.0,
     },

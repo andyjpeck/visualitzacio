@@ -35,9 +35,6 @@ const INPUT_BLEND_MODE_OPTIONS: ParameterOption[] = [
   { label: 'Subtract', value: 'subtract', tooltip: 'Subtracts incoming colors from the existing buffer canvas.' },
   { label: 'Lighten', value: 'lighten', tooltip: 'Compares RGB channels and retains the brightest pixels.' },
   { label: 'Darken', value: 'darken', tooltip: 'Compares RGB channels and retains the darkest pixels.' },
-  { label: 'Difference', value: 'difference', tooltip: 'Calculates absolute color difference, inverting overlapping forms.' },
-  { label: 'Color Dodge', value: 'color-dodge', tooltip: 'Brightens background pixels to reflect the blend color.' },
-  { label: 'Linear Burn', value: 'linear-burn', tooltip: 'Darkens background pixels to reflect the blend color.' },
 ]
 
 const OUTPUT_BLEND_MODE_OPTIONS: ParameterOption[] = [
@@ -49,9 +46,6 @@ const OUTPUT_BLEND_MODE_OPTIONS: ParameterOption[] = [
   { label: 'Subtract', value: 'subtract', tooltip: 'Subtracts this buffer colors from the parent buffer.' },
   { label: 'Lighten', value: 'lighten', tooltip: 'Retains whichever pixels are brighter between this buffer and parent.' },
   { label: 'Darken', value: 'darken', tooltip: 'Retains whichever pixels are darker between this buffer and parent.' },
-  { label: 'Difference', value: 'difference', tooltip: 'Inverts colors where this buffer overlaps parent content.' },
-  { label: 'Color Dodge', value: 'color-dodge', tooltip: 'Brightens parent buffer based on this buffer luminosity.' },
-  { label: 'Linear Burn', value: 'linear-burn', tooltip: 'Darkens parent buffer based on this buffer luminosity.' },
 ]
 
 const FIT_MODE_OPTIONS: ParameterOption[] = [
@@ -128,36 +122,17 @@ export function ParameterInspector({
             patch.inputBlendMode = 'replace'
           }
         }
-        if (paramKey === 'outputBlendMode') {
+        if (paramKey === 'outputBlendMode' || paramKey === 'blendMode') {
           patch.outputBlendMode = value
           patch.blendMode = value
-          if (value !== 'replace' && value !== 'none') {
-            patch.feedback = true
-            const currentNode = graphNodes.find((n) => n.id === selectedNodeId)
-            if (
-              currentNode &&
-              (currentNode.data.opacity === undefined || currentNode.data.opacity === 1.0)
-            ) {
-              patch.opacity = 0.92
-            }
-          } else if (value === 'replace') {
-            patch.feedback = false
-          }
         }
-        if (paramKey === 'blendMode') {
-          patch.outputBlendMode = value
-          if (value !== 'replace' && value !== 'none') {
-            patch.feedback = true
-            const currentNode = graphNodes.find((n) => n.id === selectedNodeId)
-            if (
-              currentNode &&
-              (currentNode.data.opacity === undefined || currentNode.data.opacity === 1.0)
-            ) {
-              patch.opacity = 0.92
-            }
-          } else if (value === 'replace') {
-            patch.feedback = false
-          }
+        if (paramKey === 'offsetX' || paramKey === 'positionX') {
+          patch.offsetX = value
+          patch.positionX = value
+        }
+        if (paramKey === 'offsetY' || paramKey === 'positionY') {
+          patch.offsetY = value
+          patch.positionY = value
         }
         updateGraphNodeData(selectedNodeId, patch)
       }
@@ -181,11 +156,21 @@ export function ParameterInspector({
         appliedTemplateId: template.id,
         feedback: template.config.feedback,
         blendMode: template.config.blendMode,
+        outputBlendMode: template.config.blendMode,
         opacity: template.config.opacity,
         scale: template.config.scale,
         rotation: template.config.rotation,
         positionX: template.config.positionX,
         positionY: template.config.positionY,
+        offsetX: template.config.positionX,
+        offsetY: template.config.positionY,
+        opacity_formula: undefined,
+        scale_formula: undefined,
+        rotation_formula: undefined,
+        positionX_formula: undefined,
+        positionY_formula: undefined,
+        offsetX_formula: undefined,
+        offsetY_formula: undefined,
       })
       setPendingTemplateId(null)
     },
@@ -330,6 +315,7 @@ export function ParameterInspector({
 
   return (
     <div
+      key={selectedNode.id}
       data-testid="parameter-inspector"
       className={`w-full h-full flex flex-col overflow-y-auto p-3 bg-cyber-dark/95 select-none ${className}`}
     >
@@ -504,7 +490,6 @@ export function ParameterInspector({
               isFocused={focusedParamKey === 'offsetX' || focusedParamKey === 'positionX'}
               onChange={(val) => {
                 handleUpdate('offsetX', val)
-                handleUpdate('positionX', val)
               }}
               engine={engine}
             />
@@ -533,7 +518,6 @@ export function ParameterInspector({
               isFocused={focusedParamKey === 'offsetY' || focusedParamKey === 'positionY'}
               onChange={(val) => {
                 handleUpdate('offsetY', val)
-                handleUpdate('positionY', val)
               }}
               engine={engine}
             />
@@ -703,9 +687,13 @@ export function ParameterInspector({
             </div>
 
             <ParameterRow
-              label="Image URL / Base64"
-              value={String(data.imageUrl || '')}
-              tooltip="Web URL or asset path of the image texture (or Base64 data URL encoded into preset JSON)"
+              label="Image URL"
+              value={String(data.imageUrl || '').startsWith('data:') ? '' : String(data.imageUrl || '')}
+              tooltip={
+                String(data.imageUrl || '').startsWith('data:')
+                  ? 'Embedded Base64 image is currently loaded. Enter a web URL to override.'
+                  : 'Web URL or asset path of the image texture'
+              }
               type="text"
               allowExpression={false}
               isFocused={focusedParamKey === 'imageUrl'}
@@ -796,7 +784,6 @@ export function ParameterInspector({
               isFocused={focusedParamKey === 'offsetX' || focusedParamKey === 'positionX'}
               onChange={(val) => {
                 handleUpdate('offsetX', val)
-                handleUpdate('positionX', val)
               }}
               engine={engine}
             />
@@ -825,7 +812,6 @@ export function ParameterInspector({
               isFocused={focusedParamKey === 'offsetY' || focusedParamKey === 'positionY'}
               onChange={(val) => {
                 handleUpdate('offsetY', val)
-                handleUpdate('positionY', val)
               }}
               engine={engine}
             />

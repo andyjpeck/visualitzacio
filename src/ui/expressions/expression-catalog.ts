@@ -128,6 +128,11 @@ export const QUICK_REF_FUNCS: QuickRefItem[] = [
     tooltip: '#BEAT_FRAMES([frames = 12], [curve = "exponential"|"linear"|"logarithmic"]): Frame-based decay envelope',
   },
   {
+    name: '#BEAT_SECONDS(sec, curve)',
+    insertText: '#BEAT_SECONDS(0.2, "exponential")',
+    tooltip: '#BEAT_SECONDS([seconds = 0.2], [curve = "exponential"|"linear"|"logarithmic"]): Time-based decay envelope',
+  },
+  {
     name: '#FFT(band, width)',
     insertText: '#FFT(0.02, 0.04)',
     tooltip: '#FFT(lower_band, [band_width = 0.02]): Normalized frequency slice [0.0 - 1.0] from FFT spectrum',
