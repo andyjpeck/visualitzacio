@@ -12,23 +12,32 @@ export function WorkspacePane(): React.ReactElement {
   const graphNodes = useAppStore((state) => state.graphNodes)
   const [collapsedIds, setCollapsedIds] = useState<Set<string>>(new Set())
 
-  // Find all container IDs that can be collapsed or expanded
-  const containerIds = useMemo(
+  // Find all non-top-level container IDs (nested frame buffers) to collapse on 'Collapse All'.
+  // Keeps Master Output (and any root buffer) expanded so top-level layers remain visible.
+  const nonTopLevelContainerIds = useMemo(
     () =>
       graphNodes
-        .filter((n) => n.id === 'master-frame-buffer' || n.type === 'frameBuffer')
+        .filter(
+          (n) =>
+            n.id !== 'master-frame-buffer' &&
+            n.type !== 'masterFrameBuffer' &&
+            Boolean(n.parentId) &&
+            (n.type === 'frameBuffer' || Boolean(n.data?.isContainer)),
+        )
         .map((n) => n.id),
     [graphNodes],
   )
 
   const isAllCollapsed =
-    containerIds.length > 0 && containerIds.every((id) => collapsedIds.has(id))
+    nonTopLevelContainerIds.length > 0 &&
+    nonTopLevelContainerIds.every((id) => collapsedIds.has(id)) &&
+    !collapsedIds.has('master-frame-buffer')
 
   const handleToggleExpandAll = () => {
     if (isAllCollapsed) {
       setCollapsedIds(new Set())
     } else {
-      setCollapsedIds(new Set(containerIds))
+      setCollapsedIds(new Set(nonTopLevelContainerIds))
     }
   }
 
@@ -37,7 +46,7 @@ export function WorkspacePane(): React.ReactElement {
   }
 
   const handleCollapseAll = () => {
-    setCollapsedIds(new Set(containerIds))
+    setCollapsedIds(new Set(nonTopLevelContainerIds))
   }
 
   const handleToggleCollapse = (id: string) => {

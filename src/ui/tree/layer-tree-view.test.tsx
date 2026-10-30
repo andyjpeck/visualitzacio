@@ -360,6 +360,10 @@ describe('WorkspacePane Component', () => {
 
     // Click toggle to Collapse All
     fireEvent.click(toggleBtn)
+    // Master Output and its top-level children remain visible
+    expect(screen.getByTestId('layer-tree-item-master-frame-buffer')).toBeInTheDocument()
+    expect(screen.getByTestId('layer-tree-item-source-buffer')).toBeInTheDocument()
+    // Non-top-level buffer's child should be hidden
     expect(screen.queryByTestId('layer-tree-item-synth-child')).not.toBeInTheDocument()
     expect(toggleBtn).toHaveTextContent('Expand All')
 
@@ -372,7 +376,8 @@ describe('WorkspacePane Component', () => {
     const collapseAllBtn = screen.getByTestId('collapse-all-layers-btn')
     fireEvent.click(collapseAllBtn)
 
-    // Synth child should be hidden
+    // Master Output and top-level children stay visible, only nested child hidden
+    expect(screen.getByTestId('layer-tree-item-source-buffer')).toBeInTheDocument()
     expect(screen.queryByTestId('layer-tree-item-synth-child')).not.toBeInTheDocument()
 
     // Test Expand All
