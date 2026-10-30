@@ -45,16 +45,20 @@ Set `params.feedback: true` on the `frameBuffer` node:
 }
 ```
 
-### Feedback Modulation Parameters
-All feedback modulation parameters accept either static numbers or **dynamic mathematical expressions**:
+### Container Transformation & Feedback Modulation Parameters
+All container transformation and feedback modulation parameters accept either static numbers or **dynamic mathematical expressions**:
 
 | Parameter | Type | Default | Description | Typical Use |
 | :--- | :--- | :--- | :--- | :--- |
-| **`opacity`** | `number \| string` | `1.0` | Trail decay retention factor ($0.0 \dots 1.0$) | `0.92 + $TREBLE * 0.06` |
-| **`scale`** | `number \| string` | `1.0` | Zoom factor applied to historical feedback | `1.02` (zoom out), `0.98` (zoom in) |
-| **`rotation`** | `number \| string` | `0.0` | Angular rotation in degrees per frame | `0.5` (slow clockwise spiral) |
-| **`positionX`** | `number \| string` | `0.0` | Horizontal drift in normalized units | `sin($TIME) * 0.01` |
-| **`positionY`** | `number \| string` | `0.0` | Vertical drift in normalized units | `0.005` (rising smoke) |
+| **`opacity`** | `number \| string` | `1.0` | Container opacity / trail decay retention factor ($0.0 \dots 1.0$) | `0.92 + $TREBLE * 0.06` |
+| **`scale`** | `number \| string` | `1.0` | Uniform scale factor applied to container | `1.02` (zoom out), `0.5` (quadrant) |
+| **`scaleX`** | `number \| string` | `scale` | Independent horizontal scale (defaults to `scale`) | `0.5` (half width), `1.0` |
+| **`scaleY`** | `number \| string` | `scale` | Independent vertical scale (defaults to `scale`) | `0.5` (half height), `1.0` |
+| **`flipX`** | `boolean \| number \| string` | `false` | Horizontal axis reflection across center (`scaleX` * -1) | `true` (mirror left/right) |
+| **`flipY`** | `boolean \| number \| string` | `false` | Vertical axis reflection across center (`scaleY` * -1) | `true` (mirror top/bottom) |
+| **`rotation`** | `number \| string` | `0.0` | Angular rotation in degrees per frame | `0.5` (spiral), `90`, `180` |
+| **`positionX`** | `number \| string` | `0.0` | Horizontal position / drift in normalized coordinates | `sin($TIME) * 0.01`, `-0.5` (left) |
+| **`positionY`** | `number \| string` | `0.0` | Vertical position / drift in normalized coordinates | `0.005` (rising smoke), `0.5` (top) |
 
 ---
 

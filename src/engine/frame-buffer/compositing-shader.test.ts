@@ -121,6 +121,18 @@ describe('CompositingShader & Blend Modes', () => {
       expect(rotated[0]).toBeCloseTo(0.5)
       expect(rotated[1]).toBeCloseTo(0.25)
     })
+
+    it('supports negative scaleX and scaleY for axis flipping / reflection', () => {
+      // Horizontal reflection across center (scaleX: -1, scaleY: 1)
+      const flippedX = transformUv([0.8, 0.3], [-1.0, 1.0], 0, [0, 0])
+      expect(flippedX[0]).toBeCloseTo(0.2)
+      expect(flippedX[1]).toBeCloseTo(0.3)
+
+      // Vertical reflection across center (scaleX: 1, scaleY: -1)
+      const flippedY = transformUv([0.8, 0.3], [1.0, -1.0], 0, [0, 0])
+      expect(flippedY[0]).toBeCloseTo(0.8)
+      expect(flippedY[1]).toBeCloseTo(0.7)
+    })
   })
 
   describe('createCompositingMaterial', () => {
@@ -140,6 +152,7 @@ describe('CompositingShader & Blend Modes', () => {
       expect(mat.transparent).toBe(true)
       expect(mat.depthTest).toBe(false)
       expect(mat.depthWrite).toBe(false)
+      expect(mat.side).toBe(2) // THREE.DoubleSide
     })
   })
 })

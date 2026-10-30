@@ -26,6 +26,10 @@ export interface FrameBufferNodeData extends BaseNodeData {
   feedback?: boolean
   opacity?: number | string
   scale?: number | string
+  scaleX?: number | string
+  scaleY?: number | string
+  flipX?: boolean | number | string
+  flipY?: boolean | number | string
   rotation?: number | string
   positionX?: number | string
   positionY?: number | string

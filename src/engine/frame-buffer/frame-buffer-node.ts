@@ -21,6 +21,10 @@ export interface FrameBufferNodeOptions {
   clearColor?: string
   opacity?: number | string
   scale?: number | string
+  scaleX?: number | string
+  scaleY?: number | string
+  flipX?: boolean | number | string
+  flipY?: boolean | number | string
   rotation?: number | string
   positionX?: number | string
   positionY?: number | string
@@ -79,12 +83,20 @@ export class FrameBufferNode implements VisualNode {
 
   private opacityVal = 1.0
   private scaleVal = 1.0
+  private scaleXVal: number | null = null
+  private scaleYVal: number | null = null
+  private flipXVal = false
+  private flipYVal = false
   private rotationVal = 0.0
   private positionXVal = 0.0
   private positionYVal = 0.0
 
   private opacityParam: DynamicParam<number> | null = null
   private scaleParam: DynamicParam<number> | null = null
+  private scaleXParam: DynamicParam<number> | null = null
+  private scaleYParam: DynamicParam<number> | null = null
+  private flipXParam: DynamicParam<number> | null = null
+  private flipYParam: DynamicParam<number> | null = null
   private rotationParam: DynamicParam<number> | null = null
   private positionXParam: DynamicParam<number> | null = null
   private positionYParam: DynamicParam<number> | null = null
@@ -135,6 +147,12 @@ export class FrameBufferNode implements VisualNode {
 
     if (typeof options.opacity === 'number') this.opacityVal = options.opacity
     if (typeof options.scale === 'number') this.scaleVal = options.scale
+    if (typeof options.scaleX === 'number') this.scaleXVal = options.scaleX
+    if (typeof options.scaleY === 'number') this.scaleYVal = options.scaleY
+    if (typeof options.flipX === 'boolean') this.flipXVal = options.flipX
+    else if (typeof options.flipX === 'number') this.flipXVal = options.flipX !== 0
+    if (typeof options.flipY === 'boolean') this.flipYVal = options.flipY
+    else if (typeof options.flipY === 'number') this.flipYVal = options.flipY !== 0
     if (typeof options.rotation === 'number') this.rotationVal = options.rotation
     if (typeof posX === 'number') this.positionXVal = posX
     if (typeof posY === 'number') this.positionYVal = posY
@@ -142,6 +160,10 @@ export class FrameBufferNode implements VisualNode {
     if (options.expressionEngine) {
       if (typeof options.opacity === 'string') this.bindExpression('opacity', options.opacity, options.expressionEngine)
       if (typeof options.scale === 'string') this.bindExpression('scale', options.scale, options.expressionEngine)
+      if (typeof options.scaleX === 'string') this.bindExpression('scaleX', options.scaleX, options.expressionEngine)
+      if (typeof options.scaleY === 'string') this.bindExpression('scaleY', options.scaleY, options.expressionEngine)
+      if (typeof options.flipX === 'string') this.bindExpression('flipX', options.flipX, options.expressionEngine)
+      if (typeof options.flipY === 'string') this.bindExpression('flipY', options.flipY, options.expressionEngine)
       if (typeof options.rotation === 'string') this.bindExpression('rotation', options.rotation, options.expressionEngine)
       if (typeof posX === 'string') this.bindExpression('positionX', posX, options.expressionEngine)
       if (typeof posY === 'string') this.bindExpression('positionY', posY, options.expressionEngine)
@@ -166,6 +188,7 @@ export class FrameBufferNode implements VisualNode {
     this.compositeMaterial = new THREE.MeshBasicMaterial({
       transparent: true,
       opacity: this.opacityVal,
+      side: THREE.DoubleSide,
     })
     this.compositeQuad = new THREE.Mesh(geometry, this.compositeMaterial)
     this.compositeScene.add(this.compositeQuad)
@@ -186,6 +209,42 @@ export class FrameBufferNode implements VisualNode {
 
   get scale(): number {
     return this.scaleVal
+  }
+
+  get scaleX(): number {
+    return this.scaleXVal ?? this.scaleVal
+  }
+
+  get scaleY(): number {
+    return this.scaleYVal ?? this.scaleVal
+  }
+
+  get flipX(): boolean {
+    return this.flipXVal
+  }
+
+  get flipY(): boolean {
+    return this.flipYVal
+  }
+
+  setScale(scale: number): void {
+    this.scaleVal = scale
+  }
+
+  setScaleX(scaleX: number | null): void {
+    this.scaleXVal = scaleX
+  }
+
+  setScaleY(scaleY: number | null): void {
+    this.scaleYVal = scaleY
+  }
+
+  setFlipX(flipX: boolean): void {
+    this.flipXVal = flipX
+  }
+
+  setFlipY(flipY: boolean): void {
+    this.flipYVal = flipY
   }
 
   get rotation(): number {
@@ -438,23 +497,37 @@ export class FrameBufferNode implements VisualNode {
    * Binds an optional dynamic expression to modulation parameters.
    */
   bindExpression(
-    param: 'opacity' | 'scale' | 'rotation' | 'positionX' | 'positionY' | 'offsetX' | 'offsetY',
-    expr: string | number | null,
+    param: 'opacity' | 'scale' | 'scaleX' | 'scaleY' | 'flipX' | 'flipY' | 'rotation' | 'positionX' | 'positionY' | 'offsetX' | 'offsetY',
+    expr: string | number | boolean | null,
     engine?: ExpressionEngine,
   ): void {
     const canonical = param === 'offsetX' ? 'positionX' : param === 'offsetY' ? 'positionY' : param
     if (typeof expr === 'number') {
       if (canonical === 'opacity') { this.opacityVal = expr; this.opacityParam = null }
       if (canonical === 'scale') { this.scaleVal = expr; this.scaleParam = null }
+      if (canonical === 'scaleX') { this.scaleXVal = expr; this.scaleXParam = null }
+      if (canonical === 'scaleY') { this.scaleYVal = expr; this.scaleYParam = null }
+      if (canonical === 'flipX') { this.flipXVal = expr !== 0; this.flipXParam = null }
+      if (canonical === 'flipY') { this.flipYVal = expr !== 0; this.flipYParam = null }
       if (canonical === 'rotation') { this.rotationVal = expr; this.rotationParam = null }
       if (canonical === 'positionX') { this.positionXVal = expr; this.positionXParam = null }
       if (canonical === 'positionY') { this.positionYVal = expr; this.positionYParam = null }
       return
     }
 
+    if (typeof expr === 'boolean') {
+      if (canonical === 'flipX') { this.flipXVal = expr; this.flipXParam = null }
+      if (canonical === 'flipY') { this.flipYVal = expr; this.flipYParam = null }
+      return
+    }
+
     if (expr === null || expr === undefined || expr === '') {
       if (canonical === 'opacity') this.opacityParam = null
       if (canonical === 'scale') this.scaleParam = null
+      if (canonical === 'scaleX') this.scaleXParam = null
+      if (canonical === 'scaleY') this.scaleYParam = null
+      if (canonical === 'flipX') this.flipXParam = null
+      if (canonical === 'flipY') this.flipYParam = null
       if (canonical === 'rotation') this.rotationParam = null
       if (canonical === 'positionX') this.positionXParam = null
       if (canonical === 'positionY') this.positionYParam = null
@@ -462,6 +535,10 @@ export class FrameBufferNode implements VisualNode {
       const dynamic = createDynamicParam(expr, engine)
       if (canonical === 'opacity') this.opacityParam = dynamic
       if (canonical === 'scale') this.scaleParam = dynamic
+      if (canonical === 'scaleX') this.scaleXParam = dynamic
+      if (canonical === 'scaleY') this.scaleYParam = dynamic
+      if (canonical === 'flipX') this.flipXParam = dynamic
+      if (canonical === 'flipY') this.flipYParam = dynamic
       if (canonical === 'rotation') this.rotationParam = dynamic
       if (canonical === 'positionX') this.positionXParam = dynamic
       if (canonical === 'positionY') this.positionYParam = dynamic
@@ -510,9 +587,18 @@ export class FrameBufferNode implements VisualNode {
     // Evaluate dynamic parameters
     if (this.opacityParam) this.opacityVal = this.opacityParam.evaluate(ctx, this.opacityVal)
     if (this.scaleParam) this.scaleVal = this.scaleParam.evaluate(ctx, this.scaleVal)
+    if (this.scaleXParam) this.scaleXVal = this.scaleXParam.evaluate(ctx, this.scaleXVal ?? this.scaleVal)
+    if (this.scaleYParam) this.scaleYVal = this.scaleYParam.evaluate(ctx, this.scaleYVal ?? this.scaleVal)
+    if (this.flipXParam) this.flipXVal = Boolean(this.flipXParam.evaluate(ctx, this.flipXVal ? 1 : 0))
+    if (this.flipYParam) this.flipYVal = Boolean(this.flipYParam.evaluate(ctx, this.flipYVal ? 1 : 0))
     if (this.rotationParam) this.rotationVal = this.rotationParam.evaluate(ctx, this.rotationVal)
     if (this.positionXParam) this.positionXVal = this.positionXParam.evaluate(ctx, this.positionXVal)
     if (this.positionYParam) this.positionYVal = this.positionYParam.evaluate(ctx, this.positionYVal)
+
+    const baseSx = this.scaleXVal ?? this.scaleVal
+    const baseSy = this.scaleYVal ?? this.scaleVal
+    const effectiveScaleX = baseSx * (this.flipXVal ? -1 : 1)
+    const effectiveScaleY = baseSy * (this.flipYVal ? -1 : 1)
 
     const prevTarget = this.renderer.getRenderTarget ? this.renderer.getRenderTarget() : null
 
@@ -530,7 +616,7 @@ export class FrameBufferNode implements VisualNode {
         const loadedTex = this.bufferPool.resolve(this.loadFrom!, this.id)
         if (loadedTex && (this.isMaster || prevTarget)) {
           if (this.compositeQuad) {
-            this.compositeQuad.scale.set(this.scaleVal, this.scaleVal, 1)
+            this.compositeQuad.scale.set(effectiveScaleX, effectiveScaleY, 1)
             this.compositeQuad.position.set(this.positionXVal, this.positionYVal, 0)
             this.compositeQuad.rotation.z = (this.rotationVal * Math.PI) / 180
           }
@@ -599,7 +685,7 @@ export class FrameBufferNode implements VisualNode {
       this.feedbackMaterial.uniforms.uOpacity.value = this.opacityVal
       const blendKey = this.outputBlendMode !== 'none' ? this.outputBlendMode : 'replace'
       this.feedbackMaterial.uniforms.uBlendMode.value = BLEND_MODES[blendKey as BlendModeName] ?? 0
-      this.feedbackMaterial.uniforms.uScale.value.set(this.scaleVal, this.scaleVal)
+      this.feedbackMaterial.uniforms.uScale.value.set(effectiveScaleX, effectiveScaleY)
       this.feedbackMaterial.uniforms.uRotation.value = (this.rotationVal * Math.PI) / 180
       this.feedbackMaterial.uniforms.uOffset.value.set(this.positionXVal, this.positionYVal)
 
@@ -669,7 +755,7 @@ export class FrameBufferNode implements VisualNode {
       if (displayTarget && this.compositeScene && this.compositeCamera && this.compositeMaterial) {
         if (this.isMaster || prevTarget) {
           if (this.compositeQuad) {
-            this.compositeQuad.scale.set(this.scaleVal, this.scaleVal, 1)
+            this.compositeQuad.scale.set(effectiveScaleX, effectiveScaleY, 1)
             this.compositeQuad.position.set(this.positionXVal, this.positionYVal, 0)
             this.compositeQuad.rotation.z = (this.rotationVal * Math.PI) / 180
           }

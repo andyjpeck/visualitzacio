@@ -170,6 +170,10 @@ export function ViewportCanvas({
             feedback: Boolean(gNode.data.feedback),
             opacity: gNode.data.opacity as string | number,
             scale: gNode.data.scale as string | number,
+            scaleX: gNode.data.scaleX as string | number,
+            scaleY: gNode.data.scaleY as string | number,
+            flipX: gNode.data.flipX as boolean | number | string,
+            flipY: gNode.data.flipY as boolean | number | string,
             rotation: gNode.data.rotation as string | number,
             positionX: gNode.data.positionX as string | number,
             positionY: gNode.data.positionY as string | number,
@@ -253,6 +257,18 @@ export function ViewportCanvas({
         }
         if (gNode.data.scale !== undefined) {
           vNode.bindExpression('scale', gNode.data.scale as string | number, exprEngine)
+        }
+        if (gNode.data.scaleX !== undefined) {
+          vNode.bindExpression('scaleX', gNode.data.scaleX as string | number, exprEngine)
+        }
+        if (gNode.data.scaleY !== undefined) {
+          vNode.bindExpression('scaleY', gNode.data.scaleY as string | number, exprEngine)
+        }
+        if (gNode.data.flipX !== undefined) {
+          vNode.bindExpression('flipX', gNode.data.flipX as boolean | number | string, exprEngine)
+        }
+        if (gNode.data.flipY !== undefined) {
+          vNode.bindExpression('flipY', gNode.data.flipY as boolean | number | string, exprEngine)
         }
         if (gNode.data.rotation !== undefined) {
           vNode.bindExpression('rotation', gNode.data.rotation as string | number, exprEngine)

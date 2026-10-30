@@ -37,6 +37,10 @@ export interface PresetFeedbackConfig {
   feedbackBlendMode: string
   feedbackOpacity: number | string
   feedbackScale: number | string
+  feedbackScaleX?: number | string
+  feedbackScaleY?: number | string
+  feedbackFlipX?: boolean | number | string
+  feedbackFlipY?: boolean | number | string
   feedbackRotation: number | string
   feedbackPositionX: number | string
   feedbackPositionY: number | string
