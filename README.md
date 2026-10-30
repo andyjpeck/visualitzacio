@@ -8,6 +8,16 @@ Visualització is designed for high-performance audio reactivity, combining math
 
 ## ✨ Features
 
+- **Generative Visual Synthesis & Duperscope Engine**:
+  - Procedural 4-phase execution lifecycle (`init` → `beat` → `frame` → `point`) with cross-frame variable persistence and dynamic point density (1–4,096 points).
+  - Sandboxed `expr-eval` AST multi-statement compiler (`DuperscopeCompiler`) with inline comments (`//`), statement splitting (`;`, newline), and read-only variable assignment validation.
+  - Zero-allocation per-frame execution loop (`DuperscopeRunner`) with transient `beat`-before-`frame` semantics, logarithmic FFT frequency binning, and normalized waveform audio sampling.
+  - WebGL `DuperscopeNode` implementing `VisualNode` with zero per-frame garbage-collection allocations.
+  - Custom WebGL Instanced Screen-Space Quad Ribbon shaders (`lines`, `lineLoop`) projecting dynamic 1px–128px line thickness, miter caps, and screen-space antialiasing with aspect ratio preservation.
+  - Circular particle point shader (`points`) rendering soft antialiased point discs.
+  - 4 Built-in curated generative templates (*Oscilloscope Tunnel*, *Frequency Spectrum Ribbon*, *Reactive Lissajous Figure*, and *Single Audio-Reactive Beat Particle*) with dirty-state confirmation guards.
+  - Studio Outliner integration with "+ Duperscope" layer creation and waveform activity badge.
+  - Docked 4-phase script editor with live compilation status badges (`VALID` / `ERROR`), inline error callouts, 500ms undo coalescing, and keyboard-navigable autocomplete for local variables (`n`, `i`, `v`, `x`, `y`, `r`, `g`, `b`, `a`, `linesize`, `skip`).
 - **Two-Plane Performance Architecture**: Strict separation between the high-frequency WebGL rendering plane (60+ FPS) and low-frequency React UI plane (<10 Hz) for zero garbage-collection stutter and zero React re-renders on audio frames.
 - **Dynamic Expression Engine & Parameter Binding**:
   - Sandboxed mathematical formula parser (`ExpressionEngine`) based on `expr-eval` with AST compilation caching.
@@ -126,7 +136,7 @@ Visit [http://localhost:5173/visualitzacio/](http://localhost:5173/visualitzacio
 
 ### Test Suite
 
-Runs all 269+ unit and component tests via Vitest:
+Runs all 348+ unit and component tests via Vitest:
 
 ```bash
 npm test
