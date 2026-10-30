@@ -22,6 +22,13 @@ This guide defines the architectural standards for creating and refactoring visu
 - Prioritize graph wiring over monolithic feature accumulation.
 - Nodes should cleanly accept input textures (via `@NAME` buffers or parenting) and produce predictable visual output.
 
+### 4. Resource Conservation: Geometry Scripting vs. Texture Passes
+- **Geometry-First for Spatial Transformations & Symmetry**:
+  - When creating mirrored, rotated, or duplicated vector curves, ribbons, or particle swarms, prefer using **Duperscope mathematical formulas** over allocating offscreen `FrameBuffer` render targets.
+  - *Engineering Reason*: Evaluating 1,000–4,000 points in JavaScript takes $< 0.08\text{ ms}$ on modern CPUs ($< 0.5\%$ of a 16.6ms frame budget) and renders within a single GPU pass using $< 1\text{ MB}$ of VRAM. Conversely, an offscreen `FrameBuffer` allocates 8–33 MB of VRAM per buffer (66 MB on high-DPI displays with feedback) and triggers GPU render-target context switching and memory bandwidth overhead.
+- **When to Use FrameBuffers**:
+  - Reserve `FrameBuffer` nodes for true **texture-space transformations**: recursive dual-FBO ping-pong feedback (trails, smoke, infinite vortexes), full-screen blur, and compositing blend modes across visual passes.
+
 ---
 
 ## 🚦 Conductor Track Specification Assessment

@@ -157,3 +157,12 @@ t = i * 2 * PI;
 x = sin(t * freqA + phase) * (0.7 + v * 0.2);
 y = sin(t * freqB) * (0.7 + $BASS * 0.15);
 ```
+
+---
+
+## ⚡ Performance Tip: Symmetrical & Mirrored Curves
+
+When building symmetrical structures (like wings, crossbars, stars, or mirrored waveforms):
+- **Prefer Duperscope Geometry**: Duplicating or mirroring curves mathematically across multiple Duperscope nodes or within a single node is **vastly more resource-efficient** than routing through intermediate `FrameBuffer` render targets.
+- Evaluating 1,000–4,000 points on modern CPUs consumes $< 0.5\%$ of the 60 FPS frame budget and $< 1\text{ MB}$ of VRAM, maintaining a single-pass GPU pipeline that sips battery and keeps fans silent.
+

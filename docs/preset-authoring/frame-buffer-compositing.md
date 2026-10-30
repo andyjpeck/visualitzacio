@@ -87,3 +87,16 @@ flowchart LR
 1. Tags start with `@` (e.g. `@MAIN`, `@PARTICLES`, `@WARP`).
 2. Buffer dependencies are validated at runtime with cycle detection to prevent deadlocks.
 3. If an input buffer is pending or unready, a 1x1 neutral black fallback texture is safely provided.
+
+---
+
+## ⚡ Performance Strategy: FrameBuffers vs. Geometry Scripting
+
+When designing visual presets, it is important to choose the right tool for the job to conserve battery and memory:
+
+* **Use Duperscope Geometry Scripting For**:
+  - Mirroring, flipping, rotating, or duplicating lines, ribbons, or particle swarms.
+  - *Why*: Modern CPUs evaluate 1,000–4,000 points in $< 0.08\text{ ms}$ ($< 0.5\%$ of the frame budget). Drawing them directly in the master buffer requires $< 1\text{ MB}$ VRAM and runs in **1 single GPU render pass** without context switching.
+* **Use FrameBuffers For**:
+  - True **texture-space transformations**: recursive ping-pong feedback (trails, smoke, infinite vortexes), multi-pass blur, or compositing disparate visual layers with GLSL blend modes.
+  - *Why*: Each offscreen `FrameBuffer` allocates 8–33 MB of VRAM per target and forces the GPU to flush tile caches and switch render targets. Save this power for effects that vector math cannot achieve.

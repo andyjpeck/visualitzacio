@@ -1,0 +1,124 @@
+{
+  "schemaVersion": 2,
+  "metadata": {
+    "name": "Mirrored T Spectrum",
+    "author": "Stateless Preset Designer",
+    "version": 1,
+    "description": "Logarithmic frequency spectrum mirrored across the horizontal crossbar and flipped vertically down the stem to sculpt a dynamic audio-reactive 'T' in the center of the screen.",
+    "created": "2026-10-30T19:15:00.000Z"
+  },
+  "settings": {
+    "targetFps": 60,
+    "resolutionScale": 1.0,
+    "audioBands": {
+      "bassMin": 20,
+      "bassMax": 250,
+      "midMin": 250,
+      "midMax": 4000,
+      "trebleMin": 4000,
+      "trebleMax": 16000
+    }
+  },
+  "feedback": {
+    "selectedTemplateId": "clean-slate",
+    "feedbackEnabled": false,
+    "feedbackBlendMode": "replace",
+    "feedbackOpacity": 1.0,
+    "feedbackScale": 1.0,
+    "feedbackRotation": 0.0,
+    "feedbackPositionX": 0.0,
+    "feedbackPositionY": 0.0,
+    "isCustomFeedbackConfig": false
+  },
+  "root": {
+    "id": "master-frame-buffer",
+    "type": "masterFrameBuffer",
+    "label": "Master Output",
+    "params": {
+      "blendMode": "replace",
+      "outputBlendMode": "replace",
+      "inputBlendMode": "none",
+      "opacity": 1.0,
+      "scale": 1.0,
+      "positionX": 0.0,
+      "positionY": 0.0
+    },
+    "children": [
+      {
+        "id": "t-bar-right",
+        "type": "duperscopeNode",
+        "label": "T Crossbar (Right)",
+        "params": {
+          "drawMode": "lines",
+          "audioMode": "spectrum",
+          "channel": "center",
+          "opacity": 1.0,
+          "initCode": "n = 256;",
+          "beatCode": "linesize = 5.0;",
+          "frameCode": "linesize = 3.5; r = 0.1 + $BASS * 0.3; g = 0.8; b = 1.0;",
+          "pointCode": "x = i * 0.70; y = 0.35 + (v * 0.28); r = 0.1 + (1.0 - i) * 0.4; g = 0.8; b = 1.0;"
+        }
+      },
+      {
+        "id": "t-bar-left",
+        "type": "duperscopeNode",
+        "label": "T Crossbar (Left Mirrored)",
+        "params": {
+          "drawMode": "lines",
+          "audioMode": "spectrum",
+          "channel": "center",
+          "opacity": 1.0,
+          "initCode": "n = 256;",
+          "beatCode": "linesize = 5.0;",
+          "frameCode": "linesize = 3.5; r = 0.1 + $BASS * 0.3; g = 0.8; b = 1.0;",
+          "pointCode": "x = -i * 0.70; y = 0.35 + (v * 0.28); r = 0.1 + (1.0 - i) * 0.4; g = 0.8; b = 1.0;"
+        }
+      },
+      {
+        "id": "t-stem-left",
+        "type": "duperscopeNode",
+        "label": "T Stem (Flipped Left Rib)",
+        "params": {
+          "drawMode": "lines",
+          "audioMode": "spectrum",
+          "channel": "center",
+          "opacity": 1.0,
+          "initCode": "n = 256;",
+          "beatCode": "linesize = 5.0;",
+          "frameCode": "linesize = 3.5; r = 1.0; g = 0.2 + $MID * 0.4; b = 0.8;",
+          "pointCode": "y = 0.35 - (i * 0.90); x = -(v * 0.25); r = 0.9; g = 0.3 + (1.0 - i) * 0.5; b = 0.8 + (i * 0.2);"
+        }
+      },
+      {
+        "id": "t-stem-right",
+        "type": "duperscopeNode",
+        "label": "T Stem (Flipped Right Rib)",
+        "params": {
+          "drawMode": "lines",
+          "audioMode": "spectrum",
+          "channel": "center",
+          "opacity": 1.0,
+          "initCode": "n = 256;",
+          "beatCode": "linesize = 5.0;",
+          "frameCode": "linesize = 3.5; r = 1.0; g = 0.2 + $MID * 0.4; b = 0.8;",
+          "pointCode": "y = 0.35 - (i * 0.90); x = (v * 0.25); r = 0.9; g = 0.3 + (1.0 - i) * 0.5; b = 0.8 + (i * 0.2);"
+        }
+      },
+      {
+        "id": "t-stem-center",
+        "type": "duperscopeNode",
+        "label": "T Stem Backbone",
+        "params": {
+          "drawMode": "lines",
+          "audioMode": "spectrum",
+          "channel": "center",
+          "opacity": 0.75,
+          "initCode": "n = 64;",
+          "beatCode": "",
+          "frameCode": "linesize = 2.0; r = 0.7; g = 0.9; b = 1.0;",
+          "pointCode": "x = 0.0; y = 0.35 - (i * 0.90);"
+        }
+      }
+    ]
+  }
+}
