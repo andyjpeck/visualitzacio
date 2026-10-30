@@ -263,10 +263,15 @@ export function ViewportCanvas({
     }
 
     // Pass 3: Reconcile parent-child attachments based on gNode.parentId
-    // Sort so container frame buffers attach to their parents before leaf visual nodes
+    // Sort so container frame buffers attach to their parents before leaf visual nodes,
+    // and publisher buffers (saveTo) execute before consumer buffers (loadFrom)
     const sortedNodes = [...graphNodes].sort((a, b) => {
       if (a.type === 'frameBuffer' && b.type !== 'frameBuffer') return -1
       if (a.type !== 'frameBuffer' && b.type === 'frameBuffer') return 1
+      const aPublishes = Boolean(a.data?.saveTo)
+      const bPublishes = Boolean(b.data?.saveTo)
+      if (aPublishes && !bPublishes) return -1
+      if (!aPublishes && bPublishes) return 1
       return 0
     })
 

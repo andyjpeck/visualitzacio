@@ -39,6 +39,7 @@ function InnerVisualNodeGraph({
   const selectedNodeId = useAppStore((state) => state.selectedNodeId)
   const setSelectedNodeId = useAppStore((state) => state.setSelectedNodeId)
   const removeGraphNode = useAppStore((state) => state.removeGraphNode)
+  const updateGraphNodeData = useAppStore((state) => state.updateGraphNodeData)
 
   const [connectionWarning, setConnectionWarning] = useState<string | null>(null)
   const [copiedJson, setCopiedJson] = useState(false)
@@ -105,9 +106,17 @@ function InnerVisualNodeGraph({
   // Sync edge changes (removal, selection)
   const onEdgesChange = useCallback(
     (changes: EdgeChange[]) => {
+      for (const change of changes) {
+        if (change.type === 'remove') {
+          const removedEdge = graphEdges.find((e) => e.id === change.id)
+          if (removedEdge && removedEdge.sourceHandle === 'buffer-out' && removedEdge.target) {
+            updateGraphNodeData(removedEdge.target, { loadFrom: '' })
+          }
+        }
+      }
       setGraphEdges((eds) => applyEdgeChanges(changes, eds))
     },
-    [setGraphEdges],
+    [graphEdges, setGraphEdges, updateGraphNodeData],
   )
 
   // Handle new edge connection with validation & cycle prevention
@@ -122,6 +131,27 @@ function InnerVisualNodeGraph({
 
       setConnectionWarning(null)
       const isBuffer = connection.sourceHandle === 'buffer-out'
+
+      if (isBuffer && connection.source && connection.target) {
+        const sourceNode = graphNodes.find((n) => n.id === connection.source)
+        const targetNode = graphNodes.find((n) => n.id === connection.target)
+        if (sourceNode && targetNode) {
+          let tag = typeof sourceNode.data?.saveTo === 'string' ? sourceNode.data.saveTo.trim() : ''
+          if (!tag || tag === '@') {
+            const cleanLabel = String(sourceNode.data?.label || sourceNode.id)
+              .replace(/[^a-zA-Z0-9]/g, '_')
+              .toUpperCase()
+            tag = `@${cleanLabel}`
+            updateGraphNodeData(sourceNode.id, { saveTo: tag })
+          }
+          const patch: Record<string, unknown> = { loadFrom: tag }
+          if (!targetNode.data?.inputBlendMode || targetNode.data?.inputBlendMode === 'none') {
+            patch.inputBlendMode = 'replace'
+          }
+          updateGraphNodeData(targetNode.id, patch)
+        }
+      }
+
       const newEdge: Edge = {
         ...connection,
         id: `e-${connection.source}-${connection.target}-${connection.sourceHandle || 'exec'}`,
@@ -133,7 +163,7 @@ function InnerVisualNodeGraph({
       }
       setGraphEdges((eds) => addEdge(newEdge, eds))
     },
-    [graphEdges, setGraphEdges],
+    [graphEdges, graphNodes, setGraphEdges, updateGraphNodeData],
   )
 
   // Handle node selection

@@ -40,9 +40,9 @@ describe('VisualNodeGraph Component & Store Synchronization', () => {
     fireEvent.click(addFbBtn)
 
     const state = useAppStore.getState()
-    expect(state.graphNodes).toHaveLength(3)
+    expect(state.graphNodes).toHaveLength(DEFAULT_GRAPH_NODES.length + 1)
 
-    const addedNode = state.graphNodes.find((n) => n.type === 'frameBuffer')
+    const addedNode = state.graphNodes.find((n) => n.id !== 'master-frame-buffer' && n.id !== 'source-buffer' && n.id !== 'test-visual-1' && !n.id.startsWith('corner-'))
     expect(addedNode).toBeDefined()
     expect(addedNode?.parentId).toBe('master-frame-buffer')
     expect(state.selectedNodeId).toBe(addedNode?.id)
@@ -74,8 +74,8 @@ describe('VisualNodeGraph Component & Store Synchronization', () => {
     const master = state.graphNodes.find((n) => n.id === 'master-frame-buffer')!
     const synth = state.graphNodes.find((n) => n.id === 'test-visual-1')!
 
-    // Crystal synth is structurally nested as a child of master frame buffer
-    expect(synth.parentId).toBe('master-frame-buffer')
+    // Crystal synth is structurally nested as a child of source-buffer
+    expect(synth.parentId).toBe('source-buffer')
     expect(master).toBeDefined()
     expect(synth.position.y).toBeGreaterThanOrEqual(50)
   })

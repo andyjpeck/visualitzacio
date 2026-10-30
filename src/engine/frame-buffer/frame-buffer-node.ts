@@ -538,6 +538,11 @@ export class FrameBufferNode implements VisualNode {
       if (this.inputBlendMode !== 'none' && this.loadFrom && this.bufferPool && this.compositeScene && this.compositeCamera && this.compositeMaterial) {
         const loadedTex = this.bufferPool.resolve(this.loadFrom, this.id)
         if (loadedTex) {
+          if (this.compositeQuad) {
+            this.compositeQuad.scale.set(1, 1, 1)
+            this.compositeQuad.position.set(0, 0, 0)
+            this.compositeQuad.rotation.z = 0
+          }
           this.compositeMaterial.map = loadedTex
           this.compositeMaterial.opacity = 1.0
           this.compositeMaterial.blending = getThreeBlending(this.inputBlendMode)
@@ -593,6 +598,11 @@ export class FrameBufferNode implements VisualNode {
       if (this.inputBlendMode !== 'none' && this.loadFrom && this.bufferPool && this.compositeScene && this.compositeCamera && this.compositeMaterial) {
         const loadedTex = this.bufferPool.resolve(this.loadFrom, this.id)
         if (loadedTex) {
+          if (this.compositeQuad) {
+            this.compositeQuad.scale.set(1, 1, 1)
+            this.compositeQuad.position.set(0, 0, 0)
+            this.compositeQuad.rotation.z = 0
+          }
           this.compositeMaterial.map = loadedTex
           this.compositeMaterial.opacity = 1.0
           this.compositeMaterial.blending = getThreeBlending(this.inputBlendMode)

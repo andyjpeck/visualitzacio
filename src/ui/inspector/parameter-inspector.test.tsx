@@ -87,7 +87,7 @@ describe('ParameterInspector Component', () => {
     render(<ParameterInspector />)
 
     const parentSelect = screen.getByLabelText('Parent Container')
-    expect(parentSelect).toHaveValue('master-frame-buffer')
+    expect(parentSelect).toHaveValue('source-buffer')
 
     // Change to 'fb-target'
     fireEvent.change(parentSelect, { target: { value: 'fb-target' } })
@@ -98,13 +98,13 @@ describe('ParameterInspector Component', () => {
     expect(updatedNode?.parentId).toBe('fb-target')
     expect(updatedNode?.extent).toBe('parent')
 
-    // Change back to 'master-frame-buffer'
-    fireEvent.change(parentSelect, { target: { value: 'master-frame-buffer' } })
+    // Change back to 'source-buffer'
+    fireEvent.change(parentSelect, { target: { value: 'source-buffer' } })
 
     const reparentedNode = useAppStore
       .getState()
       .graphNodes.find((n) => n.id === 'test-visual-1')
-    expect(reparentedNode?.parentId).toBe('master-frame-buffer')
+    expect(reparentedNode?.parentId).toBe('source-buffer')
     expect(reparentedNode?.extent).toBe('parent')
   })
 

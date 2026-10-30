@@ -11,6 +11,7 @@ import {
   getNextChildPosition,
   recalculateContainerBounds,
 } from '../graph/layout/container-bounds'
+import { syncNamedBufferEdges } from '../graph/buffer-edges'
 
 export type { AudioSourceType }
 
@@ -136,11 +137,13 @@ export const DEFAULT_GRAPH_NODES: Node[] = [
   {
     id: 'master-frame-buffer',
     type: 'masterFrameBuffer',
-    position: { x: 140, y: 40 },
-    style: { width: 280, height: 160 },
+    position: { x: 40, y: 30 },
+    style: { width: 900, height: 310 },
     data: {
       label: 'Master Output',
       blendMode: 'replace',
+      outputBlendMode: 'replace',
+      inputBlendMode: 'none',
       opacity: 1.0,
       scale: 1.0,
       offsetX: 0.0,
@@ -150,11 +153,32 @@ export const DEFAULT_GRAPH_NODES: Node[] = [
     },
   },
   {
-    id: 'test-visual-1',
-    type: 'testVisual',
+    id: 'source-buffer',
+    type: 'frameBuffer',
     parentId: 'master-frame-buffer',
     extent: 'parent',
     position: { x: 20, y: 65 },
+    style: { width: 280, height: 160 },
+    data: {
+      label: 'Source Buffer',
+      saveTo: '@IMAGE',
+      inputBlendMode: 'none',
+      outputBlendMode: 'none',
+      blendMode: 'none',
+      opacity: 1.0,
+      scale: 1.0,
+      positionX: 0.0,
+      positionY: 0.0,
+      feedback: false,
+    },
+  },
+  {
+    id: 'test-visual-1',
+    type: 'testVisual',
+    parentId: 'source-buffer',
+    extent: 'parent',
+    position: { x: 20, y: 65 },
+    style: { width: 240, height: 53 },
     data: {
       label: 'Crystal Synth',
       shape: 'Crystal',
@@ -166,9 +190,130 @@ export const DEFAULT_GRAPH_NODES: Node[] = [
       positionY: 0.0,
     },
   },
+  {
+    id: 'corner-top-left',
+    type: 'frameBuffer',
+    parentId: 'master-frame-buffer',
+    extent: 'parent',
+    position: { x: 330, y: 65 },
+    style: { width: 260, height: 95 },
+    data: {
+      label: 'Top-Left Corner',
+      loadFrom: '@IMAGE',
+      inputBlendMode: 'replace',
+      outputBlendMode: 'add',
+      blendMode: 'add',
+      opacity: 1.0,
+      scale: 0.5,
+      positionX: -0.5,
+      positionY: 0.5,
+      offsetX: -0.5,
+      offsetY: 0.5,
+    },
+  },
+  {
+    id: 'corner-top-right',
+    type: 'frameBuffer',
+    parentId: 'master-frame-buffer',
+    extent: 'parent',
+    position: { x: 620, y: 65 },
+    style: { width: 260, height: 95 },
+    data: {
+      label: 'Top-Right Corner',
+      loadFrom: '@IMAGE',
+      inputBlendMode: 'replace',
+      outputBlendMode: 'add',
+      blendMode: 'add',
+      opacity: 1.0,
+      scale: 0.5,
+      positionX: 0.5,
+      positionY: 0.5,
+      offsetX: 0.5,
+      offsetY: 0.5,
+    },
+  },
+  {
+    id: 'corner-bottom-left',
+    type: 'frameBuffer',
+    parentId: 'master-frame-buffer',
+    extent: 'parent',
+    position: { x: 330, y: 185 },
+    style: { width: 260, height: 95 },
+    data: {
+      label: 'Bottom-Left Corner',
+      loadFrom: '@IMAGE',
+      inputBlendMode: 'replace',
+      outputBlendMode: 'add',
+      blendMode: 'add',
+      opacity: 1.0,
+      scale: 0.5,
+      positionX: -0.5,
+      positionY: -0.5,
+      offsetX: -0.5,
+      offsetY: -0.5,
+    },
+  },
+  {
+    id: 'corner-bottom-right',
+    type: 'frameBuffer',
+    parentId: 'master-frame-buffer',
+    extent: 'parent',
+    position: { x: 620, y: 185 },
+    style: { width: 260, height: 95 },
+    data: {
+      label: 'Bottom-Right Corner',
+      loadFrom: '@IMAGE',
+      inputBlendMode: 'replace',
+      outputBlendMode: 'add',
+      blendMode: 'add',
+      opacity: 1.0,
+      scale: 0.5,
+      positionX: 0.5,
+      positionY: -0.5,
+      offsetX: 0.5,
+      offsetY: -0.5,
+    },
+  },
 ]
 
-export const DEFAULT_GRAPH_EDGES: Edge[] = []
+export const DEFAULT_GRAPH_EDGES: Edge[] = [
+  {
+    id: 'e-source-buffer-corner-top-left-buffer',
+    source: 'source-buffer',
+    target: 'corner-top-left',
+    sourceHandle: 'buffer-out',
+    targetHandle: 'buffer-in',
+    animated: true,
+    style: { stroke: '#a855f7', strokeWidth: 2 },
+  },
+  {
+    id: 'e-source-buffer-corner-top-right-buffer',
+    source: 'source-buffer',
+    target: 'corner-top-right',
+    sourceHandle: 'buffer-out',
+    targetHandle: 'buffer-in',
+    animated: true,
+    style: { stroke: '#a855f7', strokeWidth: 2 },
+  },
+  {
+    id: 'e-source-buffer-corner-bottom-left-buffer',
+    source: 'source-buffer',
+    target: 'corner-bottom-left',
+    sourceHandle: 'buffer-out',
+    targetHandle: 'buffer-in',
+    animated: true,
+    style: { stroke: '#a855f7', strokeWidth: 2 },
+  },
+  {
+    id: 'e-source-buffer-corner-bottom-right-buffer',
+    source: 'source-buffer',
+    target: 'corner-bottom-right',
+    sourceHandle: 'buffer-out',
+    targetHandle: 'buffer-in',
+    animated: true,
+    style: { stroke: '#a855f7', strokeWidth: 2 },
+  },
+]
 
 export type DialogId = 'preset-settings' | 'formula-testbed' | 'template-selector'
 
@@ -422,12 +567,17 @@ export const useAppStore = create<AppState>((set) => ({
     }),
   setFocusedParamKey: (focusedParamKey) => set({ focusedParamKey }),
   setGraphNodes: (nodesOrUpdater) =>
-    set((state) => ({
-      graphNodes:
+    set((state) => {
+      const updatedNodes =
         typeof nodesOrUpdater === 'function'
           ? nodesOrUpdater(state.graphNodes)
-          : nodesOrUpdater,
-    })),
+          : nodesOrUpdater
+      const updatedEdges = syncNamedBufferEdges(updatedNodes, state.graphEdges)
+      return {
+        graphNodes: updatedNodes,
+        graphEdges: updatedEdges,
+      }
+    }),
   setGraphEdges: (edgesOrUpdater) =>
     set((state) => ({
       graphEdges:
@@ -481,13 +631,18 @@ export const useAppStore = create<AppState>((set) => ({
     return true
   },
   updateGraphNodeData: (nodeId, patch) =>
-    set((state) => ({
-      graphNodes: state.graphNodes.map((node) =>
+    set((state) => {
+      const updatedNodes = state.graphNodes.map((node) =>
         node.id === nodeId
           ? { ...node, data: { ...node.data, ...patch } }
           : node,
-      ),
-    })),
+      )
+      const updatedEdges = syncNamedBufferEdges(updatedNodes, state.graphEdges)
+      return {
+        graphNodes: updatedNodes,
+        graphEdges: updatedEdges,
+      }
+    }),
   setNodeParent: (nodeId, parentId) =>
     set((state) => {
       const targetNode = state.graphNodes.find((n) => n.id === nodeId)
