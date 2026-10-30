@@ -38,7 +38,7 @@ This plan implements **Duperscope** (`DuperscopeNode`) and its 4-phase multi-sta
     1. Screen-space quad ribbon vertex/fragment shader for `'lines'` and `'lineLoop'`, expanding each segment $[P_k, P_{k+1}]$ along its 2D perpendicular normal by `linesize * 0.5` pixels with 1:1 aspect projection (`x / $ASPECT`) and `skip` discard.
     2. Anti-aliased circular particle vertex/fragment shader for `'points'` mode with per-point `gl_PointSize = aSize * uPixelRatio` and 1:1 aspect projection.
   - *Verification:* Write unit tests in `src/engine/nodes/duperscope-shaders.test.ts` verifying shader material construction, uniform defaults, and attribute bindings.
-- [ ] **Task 2.2: `DuperscopeNode` Lifecycle, Buffer Pre-Allocation & Blank-on-Error State**
+- [x] **Task 2.2: `DuperscopeNode` Lifecycle, Buffer Pre-Allocation & Blank-on-Error State** [da6c4f8]
   - Create `src/engine/nodes/duperscope-node.ts` implementing `VisualNode` (`init`, `resize`, `update`, `dispose`).
   - Pre-allocate `Float32Array` buffers for up to `4096` points/segments with zero per-frame memory allocations.
   - Support dynamic switching between `'lines'`, `'lineLoop'`, and `'points'`, modulatable node `opacity` (`DynamicParam`), and `bypassed` state.
