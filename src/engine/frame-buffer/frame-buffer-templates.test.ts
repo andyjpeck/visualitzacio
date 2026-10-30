@@ -56,7 +56,7 @@ describe('FrameBufferTemplates', () => {
     applyTemplateToNode(node, trails, engine)
 
     expect(node.feedback).toBe(true)
-    expect(node.blendMode).toBe('additive')
+    expect(node.blendMode).toBe('add')
     expect(node.opacity).toBe(0.94)
     expect(node.scale).toBe(1.0)
   })

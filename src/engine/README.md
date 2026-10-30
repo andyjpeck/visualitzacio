@@ -14,7 +14,7 @@ The `engine` directory contains the high-frequency WebGL rendering orchestrator 
 
 - [**`visual-node.ts`**](file:///C:/Users/andyj/Documents/visualitzacio/src/engine/visual-node.ts):
   - Contains `TestVisualNode`, the primary audio-reactive 3D scene.
-  - Features a prominent multifaceted icosahedron crystal with neon emissive glow, an outer wireframe lattice, an orbiting cyberpunk halo ring, and dynamic multi-point neon lighting (cyan, magenta, amber).
+  - Features a prominent multifaceted icosahedron crystal with neon emissive glow, an outer wireframe lattice, and dynamic multi-point neon lighting (cyan, magenta, amber).
   - Modulates rotation with `$TIME`, scale with `$BASS` and `$BEAT`, wireframe colors with `$TREBLE`, and emissive brilliance with `$RMS`.
 
 ## Subdirectories
@@ -35,3 +35,7 @@ The `engine` directory contains the high-frequency WebGL rendering orchestrator 
 - [**`nodes/`**](file:///C:/Users/andyj/Documents/visualitzacio/src/engine/nodes/README.md):
   - Reusable 2D/3D visual scene components implementing `VisualNode`.
   - `StaticImageNode`: Static image display with aspect-ratio preservation (`cover`, `contain`, `stretch`) and BufferPool export.
+
+- [**`presets/`**](file:///C:/Users/andyj/Documents/visualitzacio/src/engine/presets/README.md):
+  - Schema-validated preset serialization and deserialization engine.
+  - Converts active scene configurations into portable JSON documents with metadata, topological hierarchies, execution indices, and dynamic parameters.

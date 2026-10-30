@@ -14,6 +14,7 @@ describe('Toolbar Component', () => {
       volume: 0.8,
       audioError: null,
       showFpsOverlay: true,
+      showDebugData: true,
       isPresetSettingsOpen: false,
     })
 
@@ -84,13 +85,17 @@ describe('Toolbar Component', () => {
     expect(await screen.findByText(/Microphone permission denied/i)).toBeInTheDocument()
   })
 
-  it('toggles FPS badge overlay visibility', () => {
+  it('toggles debug data overlay visibility (FPS tracker and audio telemetry)', () => {
     render(<Toolbar audioManager={mockAudioManager} />)
 
-    const fpsToggleButton = screen.getByRole('button', { name: /toggle fps/i })
-    fireEvent.click(fpsToggleButton)
+    const debugToggleButton = screen.getByRole('button', { name: /toggle debug data/i })
+    expect(debugToggleButton).toHaveAttribute('title', 'Hide Debug Data')
 
+    fireEvent.click(debugToggleButton)
+
+    expect(useAppStore.getState().showDebugData).toBe(false)
     expect(useAppStore.getState().showFpsOverlay).toBe(false)
+    expect(debugToggleButton).toHaveAttribute('title', 'Show Debug Data')
   })
 
   it('opens Preset Performance Settings modal on gear click', () => {
@@ -182,18 +187,6 @@ describe('Toolbar Component', () => {
     expect(mockAudioManager.seek).toHaveBeenCalledWith(60)
   })
 
-  it('toggles dynamic expression testbed when f(x) button is clicked', () => {
-    render(<Toolbar audioManager={mockAudioManager} />)
-    const fxBtn = screen.getByRole('button', { name: /open dynamic expression testbed/i })
-    expect(useAppStore.getState().isFormulaTestbedOpen).toBe(false)
-
-    fireEvent.click(fxBtn)
-    expect(useAppStore.getState().isFormulaTestbedOpen).toBe(true)
-
-    fireEvent.click(fxBtn)
-    expect(useAppStore.getState().isFormulaTestbedOpen).toBe(false)
-  })
-
   it('displays audio loading progress bar and stage message when audio file is loading', () => {
     useAppStore.setState({
       isAudioLoading: true,
@@ -208,5 +201,76 @@ describe('Toolbar Component', () => {
     expect(indicator).toHaveAttribute('aria-valuenow', '45')
     expect(screen.getByText('Decoding audio buffer...')).toBeInTheDocument()
     expect(screen.getAllByText('45%').length).toBeGreaterThanOrEqual(1)
+  })
+
+  it('toggles studio and live performance mode on mode button click', () => {
+    useAppStore.setState({ studioMode: 'editor' })
+    render(<Toolbar audioManager={mockAudioManager} />)
+
+    const modeBtn = screen.getByLabelText('Enter Live Performance Mode')
+    expect(modeBtn).toBeInTheDocument()
+
+    fireEvent.click(modeBtn)
+    expect(useAppStore.getState().studioMode).toBe('live')
+  })
+
+  it('scales to fit available horizontal space and shifts row when parent is narrow', () => {
+    const parentDiv = document.createElement('div')
+    Object.defineProperty(parentDiv, 'clientWidth', { value: 400, configurable: true })
+    document.body.appendChild(parentDiv)
+
+    render(<Toolbar audioManager={mockAudioManager} />, { container: parentDiv })
+
+    const toolbarHeader = screen.getByTestId('playback-toolbar')
+    expect(toolbarHeader).toBeInTheDocument()
+
+    // Mock natural layout width
+    Object.defineProperty(toolbarHeader, 'offsetWidth', { value: 600, configurable: true })
+    fireEvent(window, new Event('resize'))
+
+    // When narrow with FPS overlay, shifts to top-14 to avoid overlapping FPS badge and scales
+    expect(toolbarHeader.className).toContain('top-14')
+    expect(toolbarHeader.style.transform).toContain('scale(')
+
+    document.body.removeChild(parentDiv)
+  })
+
+  it('renders tactile Undo and Redo buttons reflecting canUndo and canRedo state', () => {
+    const undoMock = vi.fn()
+    const redoMock = vi.fn()
+    useAppStore.setState({
+      canUndo: false,
+      canRedo: false,
+      undo: undoMock,
+      redo: redoMock,
+    })
+
+    const { rerender } = render(<Toolbar audioManager={mockAudioManager} />)
+
+    const undoBtn = screen.getByTestId('toolbar-undo-btn')
+    const redoBtn = screen.getByTestId('toolbar-redo-btn')
+
+    expect(undoBtn).toBeInTheDocument()
+    expect(redoBtn).toBeInTheDocument()
+    expect(undoBtn).toBeDisabled()
+    expect(redoBtn).toBeDisabled()
+
+    // Enable undo
+    act(() => {
+      useAppStore.setState({ canUndo: true })
+    })
+    rerender(<Toolbar audioManager={mockAudioManager} />)
+    expect(undoBtn).not.toBeDisabled()
+    fireEvent.click(undoBtn)
+    expect(undoMock).toHaveBeenCalledTimes(1)
+
+    // Enable redo
+    act(() => {
+      useAppStore.setState({ canRedo: true })
+    })
+    rerender(<Toolbar audioManager={mockAudioManager} />)
+    expect(redoBtn).not.toBeDisabled()
+    fireEvent.click(redoBtn)
+    expect(redoMock).toHaveBeenCalledTimes(1)
   })
 })

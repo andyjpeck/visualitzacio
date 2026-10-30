@@ -1,4 +1,5 @@
 import React from 'react'
+import { createPortal } from 'react-dom'
 import { GripHorizontal, X } from 'lucide-react'
 import { useAppStore, type DialogId } from '../store/app-store'
 import { useDraggableDialog, type DraggableDialogOptions } from '../hooks/use-draggable-dialog'
@@ -59,6 +60,9 @@ export interface BaseModalDialogProps extends DraggableDialogOptions {
   /** Additional classes applied to header */
   headerClassName?: string
 
+  /** Whether to render a dimmed, blurred backdrop overlay behind the dialog (defaults to true) */
+  hasBackdrop?: boolean
+
   /** Dialog content body */
   children: React.ReactNode
 }
@@ -89,6 +93,7 @@ export function BaseModalDialog({
   paddingClass = 'p-6',
   className = '',
   headerClassName = '',
+  hasBackdrop = true,
   defaultWidth,
   defaultHeight,
   initialX,
@@ -101,8 +106,6 @@ export function BaseModalDialog({
       return state.dialogStack[state.dialogStack.length - 1] === dialogId
     }
     if (dialogId === 'preset-settings') return state.isPresetSettingsOpen
-    if (dialogId === 'formula-testbed') return state.isFormulaTestbedOpen
-    if (dialogId === 'template-selector') return state.isTemplateSelectorOpen
     return false
   })
   const storeCloseDialog = useAppStore((state) => state.closeDialog)
@@ -137,53 +140,72 @@ export function BaseModalDialog({
 
   const resolvedTitleId = titleId ?? (dialogId ? `${dialogId}-title` : 'modal-dialog-title')
 
-  return (
-    <div
-      ref={dialogRef}
-      style={{
-        position: 'fixed',
-        left: `${position.x}px`,
-        top: `${position.y}px`,
-      }}
-      className={`fixed z-50 w-[92vw] ${maxWidthClass} ${maxHeightClass} flex flex-col ${paddingClass} rounded-xl border border-cyber-cyan/40 bg-cyber-panel/95 backdrop-blur-md text-slate-100 shadow-2xl shadow-cyber-cyan/20 animate-in fade-in ${className}`.trim()}
-      role="dialog"
-      aria-modal="false"
-      aria-labelledby={resolvedTitleId}
-    >
-      {/* Header (Draggable Handle) */}
-      <div
-        onPointerDown={handlePointerDown}
-        onPointerMove={handlePointerMove}
-        onPointerUp={handlePointerUp}
-        onPointerCancel={handlePointerUp}
-        title={dragTooltip}
-        data-testid={headerTestId}
-        className={`flex items-center justify-between pb-4 border-b border-white/10 shrink-0 select-none ${
-          isDragging ? 'cursor-grabbing' : 'cursor-grab'
-        } ${headerClassName}`.trim()}
-      >
-        <div className="flex items-center gap-2 text-cyber-cyan pointer-events-none">
-          <GripHorizontal className="w-5 h-5 text-slate-400" />
-          {icon}
-          <h2 id={resolvedTitleId} className="text-base font-bold tracking-wide">
-            {title}
-          </h2>
-        </div>
-        <div className="flex items-center gap-2 pointer-events-auto">
-          {headerExtra}
-          <button
-            type="button"
-            onClick={handleClose}
-            className="p-1 rounded-md text-slate-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
-            aria-label={closeAriaLabel}
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-      </div>
+  const dialogElement = (
+    <>
+      {/* Semi-transparent Backdrop Overlay */}
+      {hasBackdrop && (
+        <div
+          data-testid="modal-backdrop"
+          onClick={handleClose}
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9998] animate-in fade-in transition-opacity cursor-pointer"
+          aria-hidden="true"
+        />
+      )}
 
-      {/* Dialog Body Content */}
-      {children}
-    </div>
+      {/* Floating Modal Window */}
+      <div
+        ref={dialogRef}
+        style={{
+          position: 'fixed',
+          left: `${position.x}px`,
+          top: `${position.y}px`,
+        }}
+        className={`fixed z-[9999] w-[92vw] ${maxWidthClass} ${maxHeightClass} flex flex-col ${paddingClass} rounded-xl border border-cyber-cyan/40 bg-cyber-panel/95 backdrop-blur-md text-slate-100 shadow-2xl shadow-cyber-cyan/20 animate-in fade-in ${className}`.trim()}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={resolvedTitleId}
+      >
+        {/* Header (Draggable Handle) */}
+        <div
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
+          onPointerCancel={handlePointerUp}
+          title={dragTooltip}
+          data-testid={headerTestId}
+          className={`flex items-center justify-between pb-4 border-b border-white/10 shrink-0 select-none ${
+            isDragging ? 'cursor-grabbing' : 'cursor-grab'
+          } ${headerClassName}`.trim()}
+        >
+          <div className="flex items-center gap-2 text-cyber-cyan pointer-events-none">
+            <GripHorizontal className="w-5 h-5 text-slate-400" />
+            {icon}
+            <h2 id={resolvedTitleId} className="text-base font-bold tracking-wide">
+              {title}
+            </h2>
+          </div>
+          <div className="flex items-center gap-2 pointer-events-auto">
+            {headerExtra}
+            <button
+              type="button"
+              onClick={handleClose}
+              className="p-1 rounded-md text-slate-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+              aria-label={closeAriaLabel}
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+
+        {/* Dialog Body Content */}
+        {children}
+      </div>
+    </>
   )
+
+  if (typeof document !== 'undefined' && document.body) {
+    return createPortal(dialogElement, document.body)
+  }
+
+  return dialogElement
 }

@@ -79,10 +79,10 @@ describe('BaseModalDialog Component', () => {
   })
 
   it('calls store closeDialog when close button clicked without explicit onClose', () => {
-    useAppStore.getState().openDialog('formula-testbed')
+    useAppStore.getState().openDialog('preset-settings')
     render(
-      <BaseModalDialog dialogId="formula-testbed" title="Formula Testbed">
-        <div>Formula Body</div>
+      <BaseModalDialog dialogId="preset-settings" title="Preset Settings">
+        <div>Preset Body</div>
       </BaseModalDialog>
     )
 
@@ -90,7 +90,7 @@ describe('BaseModalDialog Component', () => {
     fireEvent.click(closeBtn)
 
     expect(useAppStore.getState().dialogStack).toEqual([])
-    expect(useAppStore.getState().isFormulaTestbedOpen).toBe(false)
+    expect(useAppStore.getState().isPresetSettingsOpen).toBe(false)
   })
 
   it('dismisses dialog when Escape key is pressed', () => {

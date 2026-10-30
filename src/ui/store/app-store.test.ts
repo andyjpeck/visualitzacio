@@ -4,12 +4,14 @@ import { useAppStore } from './app-store'
 describe('useAppStore (Zustand State Plane)', () => {
   beforeEach(() => {
     // Reset to defaults before each test
+    useAppStore.getState().clearHistory()
     useAppStore.setState({
       isPlaying: false,
       sourceType: 'sample',
       volume: 0.8,
       audioError: null,
       showFpsOverlay: true,
+      showDebugData: true,
       isPresetSettingsOpen: false,
       currentFps: 60,
       targetFps: 60,
@@ -28,13 +30,19 @@ describe('useAppStore (Zustand State Plane)', () => {
     expect(useAppStore.getState().sourceType).toBe('mic')
   })
 
-  it('toggles FPS overlay and preset settings modal', () => {
+  it('toggles debug data overlay and preset settings modal', () => {
     const store = useAppStore.getState()
+    expect(store.showDebugData).toBe(true)
     expect(store.showFpsOverlay).toBe(true)
     expect(store.isPresetSettingsOpen).toBe(false)
 
-    store.toggleFpsOverlay()
+    store.toggleDebugData()
+    expect(useAppStore.getState().showDebugData).toBe(false)
     expect(useAppStore.getState().showFpsOverlay).toBe(false)
+
+    store.toggleFpsOverlay()
+    expect(useAppStore.getState().showDebugData).toBe(true)
+    expect(useAppStore.getState().showFpsOverlay).toBe(true)
 
     store.togglePresetSettings()
     expect(useAppStore.getState().isPresetSettingsOpen).toBe(true)
@@ -155,5 +163,220 @@ describe('useAppStore (Zustand State Plane)', () => {
     expect(useAppStore.getState().isPresetSettingsOpen).toBe(false)
     expect(useAppStore.getState().isTemplateSelectorOpen).toBe(false)
     expect(useAppStore.getState().isFormulaTestbedOpen).toBe(false)
+  })
+
+  it('manages studio mode switching and persistence', () => {
+    const store = useAppStore.getState()
+    expect(store.studioMode).toBe('editor')
+
+    store.setStudioMode('live')
+    expect(useAppStore.getState().studioMode).toBe('live')
+
+    store.toggleStudioMode()
+    expect(useAppStore.getState().studioMode).toBe('editor')
+
+    store.toggleStudioMode()
+    expect(useAppStore.getState().studioMode).toBe('live')
+  })
+
+  it('manages studio split ratio and reset functionality', () => {
+    const store = useAppStore.getState()
+    expect(store.studioSplitRatio).toBe(0.5)
+
+    store.setStudioSplitRatio(0.6)
+    expect(useAppStore.getState().studioSplitRatio).toBe(0.6)
+
+    store.resetStudioSplitRatio()
+    expect(useAppStore.getState().studioSplitRatio).toBe(0.5)
+  })
+
+  it('manages inspector vertical ratio and reset functionality', () => {
+    const store = useAppStore.getState()
+    expect(store.inspectorVerticalRatio).toBe(0.45)
+
+    store.setInspectorVerticalRatio(0.55)
+    expect(useAppStore.getState().inspectorVerticalRatio).toBe(0.55)
+
+    store.resetInspectorVerticalRatio()
+    expect(useAppStore.getState().inspectorVerticalRatio).toBe(0.45)
+  })
+
+  it('updates graph node data in real time via updateGraphNodeData', () => {
+    const store = useAppStore.getState()
+    const masterNode = store.graphNodes.find((n) => n.id === 'master-frame-buffer')
+    expect(masterNode?.data.opacity).toBe(1.0)
+
+    store.updateGraphNodeData('master-frame-buffer', { opacity: 0.75, blendMode: 'screen' })
+
+    const updated = useAppStore
+      .getState()
+      .graphNodes.find((n) => n.id === 'master-frame-buffer')
+    expect(updated?.data.opacity).toBe(0.75)
+    expect(updated?.data.blendMode).toBe('screen')
+  })
+
+  it('tracks focused parameter key and clears on node selection switch', () => {
+    const store = useAppStore.getState()
+    expect(store.focusedParamKey).toBeNull()
+
+    store.setFocusedParamKey('blendMode')
+    expect(useAppStore.getState().focusedParamKey).toBe('blendMode')
+
+    store.setSelectedNodeId('test-visual-1')
+    expect(useAppStore.getState().selectedNodeId).toBe('test-visual-1')
+    expect(useAppStore.getState().focusedParamKey).toBeNull()
+  })
+
+  it('recursively deletes a container node and all its nested descendants via removeGraphNode', () => {
+    const store = useAppStore.getState()
+    store.addGraphNode({
+      id: 'parent-buffer',
+      type: 'frameBuffer',
+      parentId: 'master-frame-buffer',
+      position: { x: 20, y: 65 },
+      data: { label: 'Parent Buffer' },
+    })
+    store.addGraphNode({
+      id: 'child-buffer',
+      type: 'frameBuffer',
+      parentId: 'parent-buffer',
+      position: { x: 20, y: 65 },
+      data: { label: 'Child Buffer' },
+    })
+    store.addGraphNode({
+      id: 'grandchild-synth',
+      type: 'testVisual',
+      parentId: 'child-buffer',
+      position: { x: 20, y: 65 },
+      data: { label: 'Grandchild Synth' },
+    })
+
+    // Verify all 3 added
+    expect(useAppStore.getState().graphNodes.some((n) => n.id === 'parent-buffer')).toBe(true)
+    expect(useAppStore.getState().graphNodes.some((n) => n.id === 'child-buffer')).toBe(true)
+    expect(useAppStore.getState().graphNodes.some((n) => n.id === 'grandchild-synth')).toBe(true)
+
+    // Remove parent container
+    const success = store.removeGraphNode('parent-buffer')
+    expect(success).toBe(true)
+
+    // All 3 should be removed
+    expect(useAppStore.getState().graphNodes.some((n) => n.id === 'parent-buffer')).toBe(false)
+    expect(useAppStore.getState().graphNodes.some((n) => n.id === 'child-buffer')).toBe(false)
+    expect(useAppStore.getState().graphNodes.some((n) => n.id === 'grandchild-synth')).toBe(false)
+
+    // Master Output cannot be removed
+    expect(store.removeGraphNode('master-frame-buffer')).toBe(false)
+  })
+
+  it('records undo snapshots on node addition and restoration on undo/redo', () => {
+    const store = useAppStore.getState()
+    expect(store.canUndo).toBe(false)
+    expect(store.canRedo).toBe(false)
+
+    const initialCount = store.graphNodes.length
+
+    // Add node
+    store.addGraphNode({
+      id: 'undoable-synth',
+      type: 'testVisual',
+      parentId: 'master-frame-buffer',
+      position: { x: 20, y: 65 },
+      data: { label: 'Undoable Synth' },
+    })
+
+    expect(useAppStore.getState().graphNodes.length).toBe(initialCount + 1)
+    expect(useAppStore.getState().canUndo).toBe(true)
+    expect(useAppStore.getState().canRedo).toBe(false)
+
+    // Undo addition
+    const undone = store.undo()
+    expect(undone).toBe(true)
+    expect(useAppStore.getState().graphNodes.length).toBe(initialCount)
+    expect(useAppStore.getState().graphNodes.some((n) => n.id === 'undoable-synth')).toBe(false)
+    expect(useAppStore.getState().canUndo).toBe(false)
+    expect(useAppStore.getState().canRedo).toBe(true)
+
+    // Redo addition
+    const redone = store.redo()
+    expect(redone).toBe(true)
+    expect(useAppStore.getState().graphNodes.length).toBe(initialCount + 1)
+    expect(useAppStore.getState().graphNodes.some((n) => n.id === 'undoable-synth')).toBe(true)
+    expect(useAppStore.getState().canUndo).toBe(true)
+    expect(useAppStore.getState().canRedo).toBe(false)
+  })
+
+  it('records undo snapshots on parameter mutation and restores previous values on undo', () => {
+    const store = useAppStore.getState()
+    const targetNode = store.graphNodes[0]
+    const initialOpacity = targetNode.data.opacity ?? 1.0
+
+    // Update parameter
+    store.updateGraphNodeData(targetNode.id, { opacity: 0.33 })
+    expect(
+      useAppStore.getState().graphNodes.find((n) => n.id === targetNode.id)?.data.opacity
+    ).toBe(0.33)
+    expect(useAppStore.getState().canUndo).toBe(true)
+
+    // Undo parameter update
+    store.undo()
+    expect(
+      useAppStore.getState().graphNodes.find((n) => n.id === targetNode.id)?.data.opacity
+    ).toBe(initialOpacity)
+    expect(useAppStore.getState().canRedo).toBe(true)
+
+    // Redo parameter update
+    store.redo()
+    expect(
+      useAppStore.getState().graphNodes.find((n) => n.id === targetNode.id)?.data.opacity
+    ).toBe(0.33)
+  })
+
+  it('records undo snapshots on performance settings and audio band mutations', () => {
+    const store = useAppStore.getState()
+    expect(store.targetFps).toBe(60)
+
+    store.setTargetFps(30)
+    expect(useAppStore.getState().targetFps).toBe(30)
+    expect(useAppStore.getState().canUndo).toBe(true)
+
+    store.undo()
+    expect(useAppStore.getState().targetFps).toBe(60)
+
+    store.redo()
+    expect(useAppStore.getState().targetFps).toBe(30)
+
+    // Audio bands
+    store.setAudioBands({ bassMax: 400 })
+    expect(useAppStore.getState().audioBands.bassMax).toBe(400)
+
+    store.undo()
+    expect(useAppStore.getState().audioBands.bassMax).toBe(250)
+
+    store.redo()
+    expect(useAppStore.getState().audioBands.bassMax).toBe(400)
+  })
+
+  it('records undo snapshots when applying frame buffer templates and restores prior state on undo', () => {
+    const store = useAppStore.getState()
+    const initialTemplateId = store.selectedTemplateId
+    const initialFeedbackOpacity = store.feedbackOpacity
+
+    // Apply template to feedback system
+    store.applyFrameBufferTemplate('feedback-vortex')
+    expect(useAppStore.getState().selectedTemplateId).toBe('feedback-vortex')
+    expect(useAppStore.getState().feedbackOpacity).toBe(0.96)
+    expect(useAppStore.getState().canUndo).toBe(true)
+
+    // Undo template application
+    store.undo()
+    expect(useAppStore.getState().selectedTemplateId).toBe(initialTemplateId)
+    expect(useAppStore.getState().feedbackOpacity).toBe(initialFeedbackOpacity)
+    expect(useAppStore.getState().canRedo).toBe(true)
+
+    // Redo template application
+    store.redo()
+    expect(useAppStore.getState().selectedTemplateId).toBe('feedback-vortex')
+    expect(useAppStore.getState().feedbackOpacity).toBe(0.96)
   })
 })

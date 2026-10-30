@@ -36,8 +36,9 @@ To guarantee uncompromised 60+ FPS rendering while providing rich interactive UI
 - **Shaders:** Custom GLSL fragment and vertex passes.
 - **Runtime Shader Error Boundary:** Intercepts shader compilation logs (`gl.getShaderInfoLog`) and surfaces diagnostics to the in-app Diagnostics Console without crashing WebGL context.
 - **Context Loss & Asset Recovery:** Listens to `webglcontextlost` and `webglcontextrestored` to rebuild render targets and materials seamlessly. Raw asset references/URLs are retained in the State Plane memory so textures re-instantiate automatically.
-- **Screen Coordinate System (Winamp AVS / WebGL NDC):**
+- **Screen Coordinate System (Winamp AVS / WebGL NDC) & Angular Units:**
   - All 2D visual elements, quads, and container transformations (`position_x`, `position_y`) operate in normalized Cartesian coordinates $[-1.0, 1.0]$ with `(0.0, 0.0)` at screen center (see [Product Guidelines](./product-guidelines.md)).
+  - All public signatures, user-facing parameter inspectors, expressions, and component schemas standardize on **degrees** for rotation (`-180°` to `+180°`), converted to radians internally (`(deg * Math.PI) / 180`) for WebGL shaders and Three.js 3D transforms.
 - **Viewport Resizing, DPR Clamping & Resolution Scale:** Window resize events debounce FBO reallocation by 150ms, clamp device pixel ratio (`Math.min(window.devicePixelRatio, 2)`), and multiply internal WebGL canvas and `BufferPool` render target dimensions by the preset's `settings.resolution_scale` (`1.0`, `0.75`, `0.5`, or `0.25`) to eliminate GC memory thrashing and allow users to trade off resolution for frame rate on heavy presets.
 - **Frame-Time Budget & Adaptive Pacing:** The render loop runs natively via `requestAnimationFrame` paced against the preset's `settings.target_fps` (default `60`). If a frame exceeds the frame budget, `requestAnimationFrame` naturally drops to the next display refresh without skipping passes or altering visual output, while clamping `$DT` (`Math.min(dt, 0.1)`) to prevent physics/time jumps and shifting the clickable FPS badge to amber as soon as measured FPS falls below `target_fps`.
 

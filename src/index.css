@@ -1,3 +1,5 @@
+@import '@xyflow/react/dist/style.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -14,4 +16,56 @@ body {
   color: #f1f5f9;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
+}
+
+/* Cyberpunk React Flow overrides */
+.react-flow {
+  background-color: #08080c !important;
+}
+
+.react-flow__background {
+  background-color: #08080c;
+}
+
+.react-flow__edge-path {
+  stroke: rgba(6, 182, 212, 0.6) !important;
+  stroke-width: 2 !important;
+}
+
+.react-flow__edge.selected .react-flow__edge-path {
+  stroke: #00f0ff !important;
+  stroke-width: 3 !important;
+  filter: drop-shadow(0 0 4px #00f0ff);
+}
+
+.react-flow__handle {
+  background: #00f0ff !important;
+  border: 2px solid #08080c !important;
+  width: 10px !important;
+  height: 10px !important;
+  border-radius: 50% !important;
+  transition: transform 0.15s ease, background-color 0.15s ease;
+}
+
+.react-flow__handle:hover {
+  transform: scale(1.4);
+  background: #ff007f !important;
+}
+
+.react-flow__controls {
+  background: rgba(16, 18, 26, 0.9) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 8px !important;
+  backdrop-filter: blur(8px);
+}
+
+.react-flow__controls-button {
+  background: transparent !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+  fill: #94a3b8 !important;
+}
+
+.react-flow__controls-button:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+  fill: #00f0ff !important;
 }

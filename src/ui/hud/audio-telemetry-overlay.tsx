@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react'
 import type { RenderEngine } from '../../engine/render-engine'
+import { useAppStore } from '../store/app-store'
 
 export interface AudioTelemetryOverlayProps {
   engine: RenderEngine | null
@@ -12,6 +13,9 @@ export interface AudioTelemetryOverlayProps {
 export function AudioTelemetryOverlay({
   engine,
 }: AudioTelemetryOverlayProps): React.ReactElement | null {
+  const showDebugData = useAppStore(
+    (state) => state.showDebugData ?? state.showFpsOverlay,
+  )
   const bassBarRef = useRef<HTMLDivElement>(null)
   const midBarRef = useRef<HTMLDivElement>(null)
   const trebleBarRef = useRef<HTMLDivElement>(null)
@@ -22,7 +26,7 @@ export function AudioTelemetryOverlay({
   const frameRef = useRef<HTMLSpanElement>(null)
 
   useEffect(() => {
-    if (!engine) return
+    if (!engine || !showDebugData) return
 
     let rafId: number
     const updateDOM = () => {
@@ -71,12 +75,14 @@ export function AudioTelemetryOverlay({
     return () => {
       cancelAnimationFrame(rafId)
     }
-  }, [engine])
+  }, [engine, showDebugData])
+
+  if (!showDebugData) return null
 
   return (
     <div
       data-testid="audio-telemetry-overlay"
-      className="fixed bottom-4 left-4 z-40 p-3 rounded-lg backdrop-blur-md bg-cyber-void/85 border border-white/10 shadow-xl space-y-2 select-none w-64 pointer-events-none"
+      className="absolute bottom-4 left-4 z-40 p-3 rounded-lg backdrop-blur-md bg-cyber-void/85 border border-white/10 shadow-xl space-y-2 select-none w-64 pointer-events-none"
     >
       <div className="flex items-center justify-between border-b border-white/10 pb-1.5">
         <span className="font-mono text-[10px] font-semibold text-slate-400 uppercase tracking-wider">

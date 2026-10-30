@@ -93,6 +93,24 @@ describe('FrameBufferNode', () => {
     expect(childMock.update).toHaveBeenCalledWith(ctx)
   })
 
+  it('clears depth between multiple sibling children during update pass', () => {
+    const node = new FrameBufferNode({ id: 'fb-multi-child' })
+    node.init(mockRenderer)
+    node.resize(800, 600, 1.0, 1.0)
+
+    const child1: VisualNode = { update: vi.fn() }
+    const child2: VisualNode = { update: vi.fn() }
+    node.addChild(child1)
+    node.addChild(child2)
+
+    const ctx = createDefaultFrameContext()
+    node.update(ctx)
+
+    expect(child1.update).toHaveBeenCalledWith(ctx)
+    expect(child2.update).toHaveBeenCalledWith(ctx)
+    expect(mockRenderer.clearDepth).toHaveBeenCalledTimes(1)
+  })
+
   it('supports removing child nodes and disposing them', () => {
     const node = new FrameBufferNode({ id: 'fb-parent' })
     node.init(mockRenderer)
@@ -167,7 +185,7 @@ describe('FrameBufferNode', () => {
 
     expect(mat?.uniforms.uOpacity.value).toBeCloseTo(0.85)
     expect(mat?.uniforms.uScale.value.x).toBeCloseTo(1.2)
-    expect(mat?.uniforms.uRotation.value).toBeCloseTo(1.0)
+    expect(mat?.uniforms.uRotation.value).toBeCloseTo((1.0 * Math.PI) / 180)
     expect(mat?.uniforms.uOffset.value.x).toBeCloseTo(0.04)
     expect(mat?.uniforms.uOffset.value.y).toBeCloseTo(-0.02)
     expect(mat?.uniforms.uBlendMode.value).toBe(1) // BLEND_MODES.additive
@@ -213,5 +231,65 @@ describe('FrameBufferNode', () => {
 
     // Should set target to fboA and clear, then fboB and clear
     expect(mockRenderer.clear).toHaveBeenCalledTimes(2)
+  })
+
+  it('skips compositing to parent when outputBlendMode is none while publishing to BufferPool', async () => {
+    const { BufferPool } = await import('./buffer-pool')
+    const pool = new BufferPool()
+
+    const node = new FrameBufferNode({
+      id: 'fb-offscreen',
+      saveTo: '@OFFSCREEN',
+      outputBlendMode: 'none',
+    })
+    node.init(mockRenderer, pool)
+    node.resize(800, 600, 1.0, 1.0)
+
+    const childMock: VisualNode = { update: vi.fn() }
+    node.addChild(childMock)
+
+    // Simulate being inside a parent buffer (mockRenderer.getRenderTarget returns an FBO)
+    const THREE = await import('three')
+    const parentTarget = new THREE.WebGLRenderTarget(800, 600)
+    mockRenderer.getRenderTarget = vi.fn().mockReturnValue(parentTarget)
+    const renderSpy = vi.spyOn(mockRenderer, 'render')
+
+    const ctx = createDefaultFrameContext()
+    node.update(ctx)
+
+    // Child should have been updated
+    expect(childMock.update).toHaveBeenCalledWith(ctx)
+
+    // Output texture should be published into pool under @OFFSCREEN
+    expect(pool.has('@OFFSCREEN')).toBe(true)
+    expect(pool.get('@OFFSCREEN')).toBe(node.getWriteTarget()?.texture)
+
+    // The composite quad render to parent target should NOT have been called
+    expect(renderSpy).not.toHaveBeenCalled()
+  })
+
+  it('skips sampling input when inputBlendMode is none', async () => {
+    const { BufferPool } = await import('./buffer-pool')
+    const pool = new BufferPool()
+    const THREE = await import('three')
+    const inputTex = new THREE.DataTexture(new Uint8Array(4), 1, 1)
+    pool.register('@SOURCE', inputTex)
+
+    const node = new FrameBufferNode({
+      id: 'fb-input-test',
+      isMaster: true,
+      loadFrom: '@SOURCE',
+      inputBlendMode: 'none',
+      outputBlendMode: 'replace',
+    })
+    node.init(mockRenderer, pool)
+    node.resize(800, 600, 1.0, 1.0)
+
+    const renderSpy = vi.spyOn(mockRenderer, 'render')
+    const ctx = createDefaultFrameContext()
+    node.update(ctx)
+
+    // With inputBlendMode 'none', loadFrom quad is not rendered; only output quad is rendered to display
+    expect(renderSpy).toHaveBeenCalledTimes(1)
   })
 })

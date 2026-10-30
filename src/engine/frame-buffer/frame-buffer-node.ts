@@ -16,17 +16,40 @@ export interface FrameBufferNodeOptions {
   name?: string
   isMaster?: boolean
   blendMode?: string
+  inputBlendMode?: string
+  outputBlendMode?: string
   clearColor?: string
   opacity?: number | string
   scale?: number | string
   rotation?: number | string
   positionX?: number | string
   positionY?: number | string
+  offsetX?: number | string
+  offsetY?: number | string
   feedback?: boolean
   saveTo?: string | null
   loadFrom?: string | null
   children?: VisualNode[]
   expressionEngine?: ExpressionEngine
+}
+
+/**
+ * Maps standard blend mode names to Three.js Blending modes for scene composition.
+ */
+function getThreeBlending(mode: string): THREE.Blending {
+  switch (mode) {
+    case 'add':
+    case 'additive':
+      return THREE.AdditiveBlending
+    case 'multiply':
+    case 'multiplicative':
+      return THREE.MultiplyBlending
+    case 'subtract':
+    case 'subtractive':
+      return THREE.SubtractiveBlending
+    default:
+      return THREE.NormalBlending
+  }
 }
 
 /**
@@ -38,11 +61,21 @@ export class FrameBufferNode implements VisualNode {
   readonly id: string
   name: string
   isMaster: boolean
-  blendMode: string
+  inputBlendMode: string
+  outputBlendMode: string
   clearColor: string
   feedback: boolean
   saveTo: string | null
   loadFrom: string | null
+  bypassed = false
+
+  get blendMode(): string {
+    return this.outputBlendMode
+  }
+
+  set blendMode(mode: string) {
+    this.setOutputBlendMode(mode)
+  }
 
   private opacityVal = 1.0
   private scaleVal = 1.0
@@ -63,6 +96,7 @@ export class FrameBufferNode implements VisualNode {
   private fboA: THREE.WebGLRenderTarget | null = null
   private fboB: THREE.WebGLRenderTarget | null = null
   private pingPongIndex: 0 | 1 = 0
+  private readonly clearColorInstance: THREE.Color
 
   private width = 1920
   private height = 1080
@@ -88,24 +122,29 @@ export class FrameBufferNode implements VisualNode {
     this.id = options.id
     this.name = options.name ?? 'Frame Buffer'
     this.isMaster = options.isMaster ?? false
-    this.blendMode = options.blendMode ?? 'replace'
+    this.outputBlendMode = options.outputBlendMode ?? options.blendMode ?? 'replace'
+    this.inputBlendMode = options.inputBlendMode ?? (options.loadFrom ? 'replace' : 'none')
     this.clearColor = options.clearColor ?? '#000000'
+    this.clearColorInstance = new THREE.Color(this.clearColor)
     this.feedback = options.feedback ?? false
     this.saveTo = options.saveTo ?? null
     this.loadFrom = options.loadFrom ?? null
 
+    const posX = options.offsetX !== undefined ? options.offsetX : options.positionX
+    const posY = options.offsetY !== undefined ? options.offsetY : options.positionY
+
     if (typeof options.opacity === 'number') this.opacityVal = options.opacity
     if (typeof options.scale === 'number') this.scaleVal = options.scale
     if (typeof options.rotation === 'number') this.rotationVal = options.rotation
-    if (typeof options.positionX === 'number') this.positionXVal = options.positionX
-    if (typeof options.positionY === 'number') this.positionYVal = options.positionY
+    if (typeof posX === 'number') this.positionXVal = posX
+    if (typeof posY === 'number') this.positionYVal = posY
 
     if (options.expressionEngine) {
       if (typeof options.opacity === 'string') this.bindExpression('opacity', options.opacity, options.expressionEngine)
       if (typeof options.scale === 'string') this.bindExpression('scale', options.scale, options.expressionEngine)
       if (typeof options.rotation === 'string') this.bindExpression('rotation', options.rotation, options.expressionEngine)
-      if (typeof options.positionX === 'string') this.bindExpression('positionX', options.positionX, options.expressionEngine)
-      if (typeof options.positionY === 'string') this.bindExpression('positionY', options.positionY, options.expressionEngine)
+      if (typeof posX === 'string') this.bindExpression('positionX', posX, options.expressionEngine)
+      if (typeof posY === 'string') this.bindExpression('positionY', posY, options.expressionEngine)
     }
 
     if (options.children) {
@@ -161,6 +200,14 @@ export class FrameBufferNode implements VisualNode {
     return this.positionYVal
   }
 
+  get offsetX(): number {
+    return this.positionXVal
+  }
+
+  get offsetY(): number {
+    return this.positionYVal
+  }
+
   /**
    * Dynamically toggles ping-pong feedback loop mode, allocating or releasing second FBO.
    *
@@ -169,7 +216,7 @@ export class FrameBufferNode implements VisualNode {
   setFeedback(feedback: boolean): void {
     if (this.feedback === feedback) return
     this.feedback = feedback
-    if (feedback && !this.feedbackQuad) {
+    if (this.feedback && !this.feedbackQuad) {
       this.initFeedbackQuad()
     }
     const targetW = Math.max(1, Math.floor(this.width * this.pixelRatio * this.resolutionScale))
@@ -177,16 +224,33 @@ export class FrameBufferNode implements VisualNode {
     this.allocateRenderTargets(targetW, targetH)
   }
 
+  /**
+   * Sets the input compositing blend mode for sampled source textures (@NAME).
+   */
+  setInputBlendMode(blendMode: string): void {
+    this.inputBlendMode = blendMode
+  }
+
+  /**
+   * Sets the output compositing blend mode.
+   */
+  setOutputBlendMode(blendMode: string): void {
+    this.outputBlendMode = blendMode
+  }
+
+  /**
+   * Sets the active compositing blend mode (alias for output blend mode).
+   */
+  setBlendMode(blendMode: string): void {
+    this.setOutputBlendMode(blendMode)
+  }
+
   init(renderer: RendererLike, bufferPool?: BufferPool): void {
     this.renderer = renderer
     if (bufferPool) {
       this.bufferPool = bufferPool
-      if (this.saveTo) {
-        this.bufferPool.recordNodeMapping(this.id, this.saveTo)
-      }
-      if (this.loadFrom) {
-        this.bufferPool.recordDependency(this.id, this.loadFrom)
-      }
+      this.bufferPool.recordNodeMapping(this.id, this.saveTo)
+      this.bufferPool.recordDependency(this.id, this.loadFrom)
     }
     for (const child of this.children) {
       if (child.init) {
@@ -196,6 +260,38 @@ export class FrameBufferNode implements VisualNode {
           child.init(renderer)
         }
       }
+    }
+  }
+
+  /**
+   * Configures or clears the destination buffer pool tag (@NAME).
+   */
+  setSaveTo(name: string | null): void {
+    const formatted =
+      name && name.trim() !== ''
+        ? name.trim().startsWith('@')
+          ? name.trim()
+          : `@${name.trim()}`
+        : null
+    this.saveTo = formatted
+    if (this.bufferPool) {
+      this.bufferPool.recordNodeMapping(this.id, formatted)
+    }
+  }
+
+  /**
+   * Configures or clears the source buffer pool tag (@NAME) to sample from.
+   */
+  setLoadFrom(name: string | null): void {
+    const formatted =
+      name && name.trim() !== ''
+        ? name.trim().startsWith('@')
+          ? name.trim()
+          : `@${name.trim()}`
+        : null
+    this.loadFrom = formatted
+    if (this.bufferPool) {
+      this.bufferPool.recordDependency(this.id, formatted)
     }
   }
 
@@ -300,15 +396,34 @@ export class FrameBufferNode implements VisualNode {
   }
 
   /**
-   * Removes a child visual node from this buffer container and triggers its disposal.
+   * Removes a child visual node from this buffer container, optionally triggering its disposal.
    */
-  removeChild(node: VisualNode): void {
+  removeChild(node: VisualNode, autoDispose = true): void {
     const idx = this.children.indexOf(node)
     if (idx !== -1) {
       this.children.splice(idx, 1)
-      if (node.dispose) {
+      if (autoDispose && node.dispose) {
         node.dispose()
       }
+    }
+  }
+
+  /**
+   * Detaches a child visual node from this buffer container without disposing it (for reparenting).
+   */
+  detachChild(node: VisualNode): void {
+    this.removeChild(node, false)
+  }
+
+  /**
+   * Reorders child visual nodes to match a specified sequence.
+   */
+  setChildrenOrder(orderedChildren: VisualNode[]): void {
+    const childSet = new Set(this.children)
+    const valid = orderedChildren.filter((c) => childSet.has(c))
+    if (valid.length === this.children.length) {
+      this.children.length = 0
+      this.children.push(...valid)
     }
   }
 
@@ -323,32 +438,33 @@ export class FrameBufferNode implements VisualNode {
    * Binds an optional dynamic expression to modulation parameters.
    */
   bindExpression(
-    param: 'opacity' | 'scale' | 'rotation' | 'positionX' | 'positionY',
+    param: 'opacity' | 'scale' | 'rotation' | 'positionX' | 'positionY' | 'offsetX' | 'offsetY',
     expr: string | number | null,
     engine?: ExpressionEngine,
   ): void {
+    const canonical = param === 'offsetX' ? 'positionX' : param === 'offsetY' ? 'positionY' : param
     if (typeof expr === 'number') {
-      if (param === 'opacity') { this.opacityVal = expr; this.opacityParam = null }
-      if (param === 'scale') { this.scaleVal = expr; this.scaleParam = null }
-      if (param === 'rotation') { this.rotationVal = expr; this.rotationParam = null }
-      if (param === 'positionX') { this.positionXVal = expr; this.positionXParam = null }
-      if (param === 'positionY') { this.positionYVal = expr; this.positionYParam = null }
+      if (canonical === 'opacity') { this.opacityVal = expr; this.opacityParam = null }
+      if (canonical === 'scale') { this.scaleVal = expr; this.scaleParam = null }
+      if (canonical === 'rotation') { this.rotationVal = expr; this.rotationParam = null }
+      if (canonical === 'positionX') { this.positionXVal = expr; this.positionXParam = null }
+      if (canonical === 'positionY') { this.positionYVal = expr; this.positionYParam = null }
       return
     }
 
     if (expr === null || expr === undefined || expr === '') {
-      if (param === 'opacity') this.opacityParam = null
-      if (param === 'scale') this.scaleParam = null
-      if (param === 'rotation') this.rotationParam = null
-      if (param === 'positionX') this.positionXParam = null
-      if (param === 'positionY') this.positionYParam = null
+      if (canonical === 'opacity') this.opacityParam = null
+      if (canonical === 'scale') this.scaleParam = null
+      if (canonical === 'rotation') this.rotationParam = null
+      if (canonical === 'positionX') this.positionXParam = null
+      if (canonical === 'positionY') this.positionYParam = null
     } else if (engine) {
       const dynamic = createDynamicParam(expr, engine)
-      if (param === 'opacity') this.opacityParam = dynamic
-      if (param === 'scale') this.scaleParam = dynamic
-      if (param === 'rotation') this.rotationParam = dynamic
-      if (param === 'positionX') this.positionXParam = dynamic
-      if (param === 'positionY') this.positionYParam = dynamic
+      if (canonical === 'opacity') this.opacityParam = dynamic
+      if (canonical === 'scale') this.scaleParam = dynamic
+      if (canonical === 'rotation') this.rotationParam = dynamic
+      if (canonical === 'positionX') this.positionXParam = dynamic
+      if (canonical === 'positionY') this.positionYParam = dynamic
     }
   }
 
@@ -357,6 +473,13 @@ export class FrameBufferNode implements VisualNode {
    */
   getFeedbackMaterial(): THREE.ShaderMaterial | null {
     return this.feedbackMaterial
+  }
+
+  /**
+   * Returns the composite display quad mesh.
+   */
+  getCompositeQuad(): THREE.Mesh | null {
+    return this.compositeQuad
   }
 
   /**
@@ -382,7 +505,7 @@ export class FrameBufferNode implements VisualNode {
    * and composites to the parent target or screen.
    */
   update(ctx: FrameContext): void {
-    if (!this.renderer) return
+    if (!this.renderer || this.bypassed) return
 
     // Evaluate dynamic parameters
     if (this.opacityParam) this.opacityVal = this.opacityParam.evaluate(ctx, this.opacityVal)
@@ -392,11 +515,41 @@ export class FrameBufferNode implements VisualNode {
     if (this.positionYParam) this.positionYVal = this.positionYParam.evaluate(ctx, this.positionYVal)
 
     const prevTarget = this.renderer.getRenderTarget ? this.renderer.getRenderTarget() : null
+
+    // Fast-path: When a buffer has no feedback, no children, and only routes an input texture (without publishing a new tag),
+    // it can composite directly from the input texture onto the parent target, bypassing an intermediate full-screen FBO copy.
+    const isDirectPassThrough =
+      !this.feedback &&
+      this.children.length === 0 &&
+      Boolean(this.loadFrom) &&
+      this.inputBlendMode !== 'none' &&
+      !this.saveTo
+
+    if (isDirectPassThrough) {
+      if (this.outputBlendMode !== 'none' && this.bufferPool && this.compositeScene && this.compositeCamera && this.compositeMaterial) {
+        const loadedTex = this.bufferPool.resolve(this.loadFrom!, this.id)
+        if (loadedTex && (this.isMaster || prevTarget)) {
+          if (this.compositeQuad) {
+            this.compositeQuad.scale.set(this.scaleVal, this.scaleVal, 1)
+            this.compositeQuad.position.set(this.positionXVal, this.positionYVal, 0)
+            this.compositeQuad.rotation.z = (this.rotationVal * Math.PI) / 180
+          }
+          this.compositeMaterial.map = loadedTex
+          this.compositeMaterial.opacity = this.opacityVal
+          this.compositeMaterial.blending = getThreeBlending(this.outputBlendMode)
+          this.renderer.render(this.compositeScene, this.compositeCamera)
+        }
+      }
+      return
+    }
+
     const writeTarget = this.getWriteTarget()
     const readTarget = this.getReadTarget()
 
+    const needsMultiPass = this.feedback
+
     // 1. Direct render pass into write FBO
-    if (this.feedback && readTarget && this.childTarget && this.feedbackMaterial && this.feedbackScene && this.feedbackCamera) {
+    if (needsMultiPass && readTarget && this.childTarget && this.feedbackMaterial && this.feedbackScene && this.feedbackCamera) {
       // Step A: Render children isolated into childTarget
       if (this.renderer.setRenderTarget) {
         this.renderer.setRenderTarget(this.childTarget)
@@ -404,8 +557,31 @@ export class FrameBufferNode implements VisualNode {
       if (this.renderer.clear) {
         this.renderer.clear()
       }
+
+      if (this.inputBlendMode !== 'none' && this.loadFrom && this.bufferPool && this.compositeScene && this.compositeCamera && this.compositeMaterial) {
+        const loadedTex = this.bufferPool.resolve(this.loadFrom, this.id)
+        if (loadedTex) {
+          if (this.compositeQuad) {
+            this.compositeQuad.scale.set(1, 1, 1)
+            this.compositeQuad.position.set(0, 0, 0)
+            this.compositeQuad.rotation.z = 0
+          }
+          this.compositeMaterial.map = loadedTex
+          this.compositeMaterial.opacity = 1.0
+          this.compositeMaterial.blending = getThreeBlending(this.inputBlendMode)
+          this.renderer.render(this.compositeScene, this.compositeCamera)
+        }
+      }
+
+      let isFirstChild = true
       for (const child of this.children) {
-        child.update(ctx)
+        if (!child.bypassed) {
+          if (!isFirstChild && this.renderer.clearDepth) {
+            this.renderer.clearDepth()
+          }
+          child.update(ctx)
+          isFirstChild = false
+        }
       }
 
       // Step B: Render feedbackScene quad into writeTarget combining feedback history and child render
@@ -421,9 +597,10 @@ export class FrameBufferNode implements VisualNode {
       this.feedbackMaterial.uniforms.uBlendTexture.value = this.childTarget.texture
       this.feedbackMaterial.uniforms.uHasBase.value = 1
       this.feedbackMaterial.uniforms.uOpacity.value = this.opacityVal
-      this.feedbackMaterial.uniforms.uBlendMode.value = BLEND_MODES[this.blendMode as BlendModeName] ?? 0
+      const blendKey = this.outputBlendMode !== 'none' ? this.outputBlendMode : 'replace'
+      this.feedbackMaterial.uniforms.uBlendMode.value = BLEND_MODES[blendKey as BlendModeName] ?? 0
       this.feedbackMaterial.uniforms.uScale.value.set(this.scaleVal, this.scaleVal)
-      this.feedbackMaterial.uniforms.uRotation.value = this.rotationVal
+      this.feedbackMaterial.uniforms.uRotation.value = (this.rotationVal * Math.PI) / 180
       this.feedbackMaterial.uniforms.uOffset.value.set(this.positionXVal, this.positionYVal)
 
       // Render composited feedback quad
@@ -434,24 +611,37 @@ export class FrameBufferNode implements VisualNode {
       }
 
       if (this.clearColor && this.renderer.setClearColor) {
-        this.renderer.setClearColor(this.clearColor)
+        this.renderer.setClearColor(this.clearColorInstance)
       }
 
-      if (this.blendMode === 'replace' && this.renderer.clear) {
+      if (this.renderer.clear) {
         this.renderer.clear()
       }
 
-      if (this.loadFrom && this.bufferPool && this.compositeScene && this.compositeCamera && this.compositeMaterial) {
+      if (this.inputBlendMode !== 'none' && this.loadFrom && this.bufferPool && this.compositeScene && this.compositeCamera && this.compositeMaterial) {
         const loadedTex = this.bufferPool.resolve(this.loadFrom, this.id)
         if (loadedTex) {
+          if (this.compositeQuad) {
+            this.compositeQuad.scale.set(1, 1, 1)
+            this.compositeQuad.position.set(0, 0, 0)
+            this.compositeQuad.rotation.z = 0
+          }
           this.compositeMaterial.map = loadedTex
           this.compositeMaterial.opacity = 1.0
+          this.compositeMaterial.blending = getThreeBlending(this.inputBlendMode)
           this.renderer.render(this.compositeScene, this.compositeCamera)
         }
       }
 
+      let isFirstChild = true
       for (const child of this.children) {
-        child.update(ctx)
+        if (!child.bypassed) {
+          if (!isFirstChild && this.renderer.clearDepth) {
+            this.renderer.clearDepth()
+          }
+          child.update(ctx)
+          isFirstChild = false
+        }
       }
     }
 
@@ -460,26 +650,34 @@ export class FrameBufferNode implements VisualNode {
       this.renderer.setRenderTarget(prevTarget)
     }
 
-    // 3. Swap ping-pong buffers if feedback is active
-    if (this.feedback) {
+    // 3. Swap ping-pong buffers if feedback or multi-pass is active
+    if (needsMultiPass) {
       this.swap()
     }
 
     // Register texture in global BufferPool if saveTo is configured
     if (this.saveTo && this.bufferPool) {
-      const outputTarget = this.feedback ? this.getReadTarget() : writeTarget
+      const outputTarget = needsMultiPass ? this.getReadTarget() : writeTarget
       if (outputTarget) {
         this.bufferPool.register(this.saveTo, outputTarget.texture)
       }
     }
 
     // 4. Composite to display if master root, or onto parent target if nested
-    const displayTarget = this.feedback ? this.getReadTarget() : writeTarget
-    if (displayTarget && this.compositeScene && this.compositeCamera && this.compositeMaterial) {
-      if (this.isMaster || prevTarget) {
-        this.compositeMaterial.map = displayTarget.texture
-        this.compositeMaterial.opacity = this.opacityVal
-        this.renderer.render(this.compositeScene, this.compositeCamera)
+    if (this.outputBlendMode !== 'none') {
+      const displayTarget = needsMultiPass ? this.getReadTarget() : writeTarget
+      if (displayTarget && this.compositeScene && this.compositeCamera && this.compositeMaterial) {
+        if (this.isMaster || prevTarget) {
+          if (this.compositeQuad) {
+            this.compositeQuad.scale.set(this.scaleVal, this.scaleVal, 1)
+            this.compositeQuad.position.set(this.positionXVal, this.positionYVal, 0)
+            this.compositeQuad.rotation.z = (this.rotationVal * Math.PI) / 180
+          }
+          this.compositeMaterial.map = displayTarget.texture
+          this.compositeMaterial.opacity = this.opacityVal
+          this.compositeMaterial.blending = getThreeBlending(this.outputBlendMode)
+          this.renderer.render(this.compositeScene, this.compositeCamera)
+        }
       }
     }
   }
@@ -529,5 +727,9 @@ export class FrameBufferNode implements VisualNode {
       }
     }
     this.children.length = 0
+
+    if (this.bufferPool) {
+      this.bufferPool.unregisterNode(this.id)
+    }
   }
 }

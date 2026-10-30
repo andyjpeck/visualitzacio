@@ -9,6 +9,7 @@ export interface ExpressionInputProps {
   isValid: boolean
   error?: string
   placeholder?: string
+  inputRef?: React.RefObject<HTMLInputElement | null>
 }
 
 /**
@@ -22,6 +23,7 @@ export function ExpressionInput({
   isValid,
   error,
   placeholder = 'e.g. 1.0 + $BASS * 0.8 + #BEAT(0.2) * 0.5',
+  inputRef,
 }: ExpressionInputProps): React.ReactElement {
   return (
     <div>
@@ -44,6 +46,7 @@ export function ExpressionInput({
 
       <div className="relative">
         <input
+          ref={inputRef}
           id={id}
           type="text"
           value={value}
@@ -59,8 +62,8 @@ export function ExpressionInput({
         />
       </div>
 
-      {!isValid && error && (
-        <p className="mt-1.5 text-xs font-mono text-cyber-crimson leading-tight">
+      {error && !isValid && (
+        <p className="mt-1 text-xs font-mono text-cyber-crimson/90">
           {error}
         </p>
       )}

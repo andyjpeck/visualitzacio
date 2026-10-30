@@ -2,6 +2,8 @@ import React, { useEffect, useRef } from 'react'
 import { RenderEngine } from '../../engine/render-engine'
 import { TestVisualNode } from '../../engine/visual-node'
 import { FrameBufferNode } from '../../engine/frame-buffer/frame-buffer-node'
+import { StaticImageNode, type ImageFitMode } from '../../engine/nodes/static-image-node'
+import type { VisualNode } from '../../contracts/renderer-like'
 import {
   type ExpressionEngine,
   getDefaultExpressionEngine,
@@ -14,7 +16,8 @@ export interface ViewportCanvasProps {
 
 /**
  * Main WebGL rendering canvas container mounted in the DOM.
- * Manages RenderEngine lifecycle, ResizeObserver with debouncing, and master frame buffer bindings.
+ * Manages RenderEngine lifecycle, ResizeObserver with debouncing,
+ * and live synchronization between the visual node graph and RenderEngine scene hierarchy.
  */
 export function ViewportCanvas({
   onEngineReady,
@@ -22,20 +25,15 @@ export function ViewportCanvas({
   const containerRef = useRef<HTMLDivElement>(null)
   const engineRef = useRef<RenderEngine | null>(null)
   const masterBufferRef = useRef<FrameBufferNode | null>(null)
+  const nodeMapRef = useRef<Map<string, VisualNode>>(new Map())
+  const parentMapRef = useRef<Map<string, FrameBufferNode>>(new Map())
   const exprEngineRef = useRef<ExpressionEngine>(getDefaultExpressionEngine())
   const resizeTimeoutRef = useRef<number | null>(null)
 
   const targetFps = useAppStore((state) => state.targetFps)
   const resolutionScale = useAppStore((state) => state.resolutionScale)
   const setCurrentFps = useAppStore((state) => state.setCurrentFps)
-
-  const feedbackEnabled = useAppStore((state) => state.feedbackEnabled)
-  const feedbackBlendMode = useAppStore((state) => state.feedbackBlendMode)
-  const feedbackOpacity = useAppStore((state) => state.feedbackOpacity)
-  const feedbackScale = useAppStore((state) => state.feedbackScale)
-  const feedbackRotation = useAppStore((state) => state.feedbackRotation)
-  const feedbackPositionX = useAppStore((state) => state.feedbackPositionX)
-  const feedbackPositionY = useAppStore((state) => state.feedbackPositionY)
+  const graphNodes = useAppStore((state) => state.graphNodes)
 
   const onEngineReadyRef = useRef(onEngineReady)
   useEffect(() => {
@@ -78,11 +76,11 @@ export function ViewportCanvas({
       expressionEngine: exprEngineRef.current,
     })
 
-    const visualNode = new TestVisualNode()
-    masterBuffer.addChild(visualNode)
     engine.addNode(masterBuffer)
 
     masterBufferRef.current = masterBuffer
+    nodeMapRef.current.set('master-frame-buffer', masterBuffer)
+
     engineRef.current = engine
     if (onEngineReadyRef.current) {
       onEngineReadyRef.current(engine)
@@ -105,6 +103,8 @@ export function ViewportCanvas({
       }, 150)
     }
 
+    const nodeMap = nodeMapRef.current
+    const parentMap = parentMapRef.current
     const observer = new ResizeObserver(handleResize)
     observer.observe(container)
 
@@ -118,6 +118,8 @@ export function ViewportCanvas({
         canvas.parentNode.removeChild(canvas)
       }
       engineRef.current = null
+      nodeMap.clear()
+      parentMap.clear()
     }
   }, [setCurrentFps])
 
@@ -131,26 +133,210 @@ export function ViewportCanvas({
     }
   }, [targetFps, resolutionScale])
 
-  // Synchronize dynamic frame buffer & feedback changes
+  // Synchronize visual node graph pipeline changes into WebGL RenderEngine in real time
   useEffect(() => {
-    if (masterBufferRef.current) {
-      masterBufferRef.current.setFeedback(feedbackEnabled)
-      masterBufferRef.current.blendMode = feedbackBlendMode
-      masterBufferRef.current.bindExpression('opacity', feedbackOpacity, exprEngineRef.current)
-      masterBufferRef.current.bindExpression('scale', feedbackScale, exprEngineRef.current)
-      masterBufferRef.current.bindExpression('rotation', feedbackRotation, exprEngineRef.current)
-      masterBufferRef.current.bindExpression('positionX', feedbackPositionX, exprEngineRef.current)
-      masterBufferRef.current.bindExpression('positionY', feedbackPositionY, exprEngineRef.current)
+    const engine = engineRef.current
+    const masterBuffer = masterBufferRef.current
+    if (!engine || !masterBuffer) return
+
+    const nodeMap = nodeMapRef.current
+    const parentMap = parentMapRef.current
+    const exprEngine = exprEngineRef.current
+
+    // Synchronize each node in the store
+    for (const gNode of graphNodes) {
+      let vNode = nodeMap.get(gNode.id)
+
+      // Instantiate new nodes dynamically if added to the graph
+      if (!vNode) {
+        if (gNode.type === 'testVisual') {
+          vNode = new TestVisualNode(gNode.id)
+          nodeMap.set(gNode.id, vNode)
+        } else if (gNode.type === 'frameBuffer') {
+          vNode = new FrameBufferNode({
+            id: gNode.id,
+            name: String(gNode.data.label || 'Frame Buffer'),
+            blendMode: String(gNode.data.blendMode || 'replace'),
+            inputBlendMode: gNode.data.inputBlendMode ? String(gNode.data.inputBlendMode) : undefined,
+            outputBlendMode: gNode.data.outputBlendMode ? String(gNode.data.outputBlendMode) : undefined,
+            feedback: Boolean(gNode.data.feedback),
+            opacity: gNode.data.opacity as string | number,
+            scale: gNode.data.scale as string | number,
+            rotation: gNode.data.rotation as string | number,
+            positionX: gNode.data.positionX as string | number,
+            positionY: gNode.data.positionY as string | number,
+            saveTo: (gNode.data.saveTo as string) || null,
+            loadFrom: (gNode.data.loadFrom as string) || null,
+            expressionEngine: exprEngine,
+          })
+          nodeMap.set(gNode.id, vNode)
+        } else if (gNode.type === 'staticImage') {
+          vNode = new StaticImageNode({
+            id: gNode.id,
+            url: String(gNode.data.imageUrl || ''),
+            fit: (gNode.data.fitMode as ImageFitMode) || 'cover',
+            opacity: gNode.data.opacity as string | number,
+            saveTo: (gNode.data.saveTo as string) || null,
+            expressionEngine: exprEngine,
+          })
+          nodeMap.set(gNode.id, vNode)
+        }
+      }
+
+      if (!vNode) continue
+
+      // Apply common properties
+      vNode.bypassed = Boolean(gNode.data.bypassed)
+
+      // Apply type-specific properties
+      if (vNode instanceof TestVisualNode) {
+        if (gNode.data.shape) {
+          vNode.setShape(String(gNode.data.shape))
+        }
+        if (gNode.data.reactive !== undefined) {
+          vNode.setAudioReactive(Boolean(gNode.data.reactive))
+        }
+        if (gNode.data.scale !== undefined) {
+          vNode.setScaleExpression(gNode.data.scale as string | number, exprEngine)
+        }
+        const posX = gNode.data.offsetX !== undefined ? gNode.data.offsetX : gNode.data.positionX
+        if (posX !== undefined) {
+          vNode.setPositionXExpression(posX as string | number, exprEngine)
+        }
+        const posY = gNode.data.offsetY !== undefined ? gNode.data.offsetY : gNode.data.positionY
+        if (posY !== undefined) {
+          vNode.setPositionYExpression(posY as string | number, exprEngine)
+        }
+      } else if (vNode instanceof FrameBufferNode) {
+        if (gNode.data.inputBlendMode !== undefined) {
+          vNode.setInputBlendMode(String(gNode.data.inputBlendMode))
+        }
+        if (gNode.data.outputBlendMode !== undefined) {
+          vNode.setOutputBlendMode(String(gNode.data.outputBlendMode))
+        } else if (gNode.data.blendMode !== undefined) {
+          vNode.setBlendMode(String(gNode.data.blendMode))
+        }
+        if (gNode.data.feedback !== undefined) {
+          vNode.setFeedback(Boolean(gNode.data.feedback))
+        }
+        if (gNode.data.opacity !== undefined) {
+          vNode.bindExpression('opacity', gNode.data.opacity as string | number, exprEngine)
+        }
+        if (gNode.data.scale !== undefined) {
+          vNode.bindExpression('scale', gNode.data.scale as string | number, exprEngine)
+        }
+        if (gNode.data.rotation !== undefined) {
+          vNode.bindExpression('rotation', gNode.data.rotation as string | number, exprEngine)
+        }
+        const posX = gNode.data.offsetX !== undefined ? gNode.data.offsetX : gNode.data.positionX
+        if (posX !== undefined) {
+          vNode.bindExpression('positionX', posX as string | number, exprEngine)
+        }
+        const posY = gNode.data.offsetY !== undefined ? gNode.data.offsetY : gNode.data.positionY
+        if (posY !== undefined) {
+          vNode.bindExpression('positionY', posY as string | number, exprEngine)
+        }
+        if (gNode.data.saveTo !== undefined) {
+          vNode.setSaveTo((gNode.data.saveTo as string) || null)
+        }
+        if (gNode.data.loadFrom !== undefined) {
+          vNode.setLoadFrom((gNode.data.loadFrom as string) || null)
+        }
+      } else if (vNode instanceof StaticImageNode) {
+        if (gNode.data.imageUrl !== undefined) {
+          vNode.setUrl(String(gNode.data.imageUrl))
+        }
+        if (gNode.data.fitMode) {
+          vNode.setFit(gNode.data.fitMode as ImageFitMode)
+        }
+        if (gNode.data.opacity !== undefined) {
+          vNode.setOpacity(gNode.data.opacity as string | number, exprEngine)
+        }
+        if (gNode.data.saveTo !== undefined) {
+          vNode.setSaveTo((gNode.data.saveTo as string) || null)
+        }
+      }
     }
-  }, [
-    feedbackEnabled,
-    feedbackBlendMode,
-    feedbackOpacity,
-    feedbackScale,
-    feedbackRotation,
-    feedbackPositionX,
-    feedbackPositionY,
-  ])
+
+    // Pass 2.5: Clean up removed nodes BEFORE hierarchy reconciliation
+    // (excluding permanent master root)
+    const activeIds = new Set(graphNodes.map((n) => n.id))
+    for (const [id, node] of nodeMap.entries()) {
+      if (id !== 'master-frame-buffer' && !activeIds.has(id)) {
+        const parent = parentMap.get(id) || masterBuffer
+        parent.removeChild(node, true)
+        nodeMap.delete(id)
+        parentMap.delete(id)
+      }
+    }
+
+    // Pass 3: Reconcile parent-child attachments based on gNode.parentId
+    // Containers attach first so nested children can attach to them
+    const sortedForAttachment = [...graphNodes].sort((a, b) => {
+      if (a.type === 'frameBuffer' && b.type !== 'frameBuffer') return -1
+      if (a.type !== 'frameBuffer' && b.type === 'frameBuffer') return 1
+      return 0
+    })
+
+    for (const gNode of sortedForAttachment) {
+      if (gNode.id === 'master-frame-buffer') continue
+      const vNode = nodeMap.get(gNode.id)
+      if (!vNode) continue
+
+      let targetParent: FrameBufferNode = masterBuffer
+      if (gNode.parentId) {
+        const candidate = nodeMap.get(gNode.parentId)
+        if (candidate instanceof FrameBufferNode) {
+          targetParent = candidate
+        }
+      }
+
+      const currentParent = parentMap.get(gNode.id)
+      if (currentParent !== targetParent) {
+        if (currentParent) {
+          currentParent.detachChild(vNode)
+        }
+        targetParent.addChild(vNode)
+        parentMap.set(gNode.id, targetParent)
+      }
+    }
+
+    // Pass 4: Synchronize exact sibling execution order strictly following visual top-to-bottom tree order
+    const visuallyOrderedNodes = [...graphNodes].sort((a, b) => {
+      const aY = a.position?.y ?? 0
+      const bY = b.position?.y ?? 0
+      if (aY !== bY) return aY - bY
+
+      const aX = a.position?.x ?? 0
+      const bX = b.position?.x ?? 0
+      return aX - bX
+    })
+
+    const childrenByParent = new Map<string, VisualNode[]>()
+    for (const gNode of visuallyOrderedNodes) {
+      if (gNode.id === 'master-frame-buffer') continue
+      const vNode = nodeMap.get(gNode.id)
+      if (!vNode) continue
+      const parentId = (gNode.parentId && nodeMap.has(gNode.parentId)) ? gNode.parentId : 'master-frame-buffer'
+      const list = childrenByParent.get(parentId) || []
+      list.push(vNode)
+      childrenByParent.set(parentId, list)
+    }
+
+    const masterChildren = childrenByParent.get('master-frame-buffer')
+    if (masterChildren) {
+      masterBuffer.setChildrenOrder(masterChildren)
+    }
+
+    for (const [id, vNode] of nodeMap.entries()) {
+      if (vNode instanceof FrameBufferNode && id !== 'master-frame-buffer') {
+        const containerChildren = childrenByParent.get(id)
+        if (containerChildren) {
+          vNode.setChildrenOrder(containerChildren)
+        }
+      }
+    }
+  }, [graphNodes])
 
   return (
     <div

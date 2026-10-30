@@ -6,12 +6,14 @@ import { useAppStore } from '../store/app-store'
  * Displays current measured FPS against target with cyberpunk status color-coding.
  */
 export function FpsBadge(): React.ReactElement | null {
-  const showFpsOverlay = useAppStore((state) => state.showFpsOverlay)
+  const showDebugData = useAppStore(
+    (state) => state.showDebugData ?? state.showFpsOverlay,
+  )
   const currentFps = useAppStore((state) => state.currentFps)
   const targetFps = useAppStore((state) => state.targetFps)
   const toggleDialog = useAppStore((state) => state.toggleDialog)
 
-  if (!showFpsOverlay) return null
+  if (!showDebugData) return null
 
   // Determine badge color:
   // - Nominal (Cyan): currentFps >= targetFps
@@ -34,7 +36,7 @@ export function FpsBadge(): React.ReactElement | null {
       type="button"
       onClick={() => toggleDialog('preset-settings')}
       title="Click to configure Target FPS & Resolution Scale"
-      className={`fixed top-4 left-4 z-40 flex items-center gap-2 px-3 py-1.5 rounded-md font-mono text-xs font-semibold backdrop-blur-md bg-cyber-void/80 border shadow-lg transition-colors cursor-pointer select-none hover:brightness-125 focus:outline-none focus:ring-1 focus:ring-cyber-cyan ${badgeColor}`}
+      className={`absolute top-4 left-4 z-40 flex items-center gap-2 px-3 py-1.5 rounded-md font-mono text-xs font-semibold backdrop-blur-md bg-cyber-void/80 border shadow-lg transition-colors cursor-pointer select-none hover:brightness-125 focus:outline-none focus:ring-1 focus:ring-cyber-cyan ${badgeColor}`}
       aria-label={`Frame rate ${currentFps} FPS of target ${targetFps} FPS. Click to configure preset settings.`}
     >
       <span className={`w-2 h-2 rounded-full ${dotColor}`} />

@@ -24,10 +24,11 @@ export interface StaticImageNodeOptions {
  */
 export class StaticImageNode implements VisualNode {
   readonly id: string
-  readonly url: string
+  url: string
+  bypassed = false
   private fitMode: ImageFitMode
   private opacityVal = 1.0
-  readonly saveTo: string | null
+  saveTo: string | null
 
   private opacityParam: DynamicParam<number> | null = null
   private renderer?: RendererLike
@@ -88,6 +89,18 @@ export class StaticImageNode implements VisualNode {
   }
 
   private loadTexture(url: string): void {
+    if (!url || url.trim() === '') {
+      this.texture.dispose()
+      this.texture = this.createDefaultTexture()
+      this.material.map = this.texture
+      this.material.needsUpdate = true
+      this.setImageDimensions(1920, 1080)
+      if (this.bufferPool && this.saveTo) {
+        this.bufferPool.register(this.saveTo, this.texture)
+      }
+      return
+    }
+
     if (typeof Image === 'undefined') return
 
     const img = new Image()
@@ -118,6 +131,22 @@ export class StaticImageNode implements VisualNode {
   setFit(fit: ImageFitMode): void {
     this.fitMode = fit
     this.recalculateAspect()
+  }
+
+  setUrl(url: string): void {
+    if (this.url === url) return
+    this.url = url
+    this.loadTexture(url)
+  }
+
+  setOpacity(opacity: number | string, engine?: ExpressionEngine): void {
+    if (typeof opacity === 'number') {
+      this.opacityVal = opacity
+      this.opacityParam = null
+      this.material.opacity = opacity
+    } else if (engine && typeof opacity === 'string') {
+      this.opacityParam = createDynamicParam(opacity, engine)
+    }
   }
 
   setImageDimensions(width: number, height: number): void {
@@ -176,6 +205,25 @@ export class StaticImageNode implements VisualNode {
     }
   }
 
+  /**
+   * Configures or clears the destination buffer pool tag (@NAME).
+   */
+  setSaveTo(name: string | null): void {
+    const formatted =
+      name && name.trim() !== ''
+        ? name.trim().startsWith('@')
+          ? name.trim()
+          : `@${name.trim()}`
+        : null
+    this.saveTo = formatted
+    if (this.bufferPool) {
+      this.bufferPool.recordNodeMapping(this.id, formatted)
+      if (formatted && this.texture) {
+        this.bufferPool.register(formatted, this.texture)
+      }
+    }
+  }
+
   init(renderer: RendererLike, bufferPool?: BufferPool): void {
     this.renderer = renderer
     this.bufferPool = bufferPool
@@ -194,6 +242,8 @@ export class StaticImageNode implements VisualNode {
   }
 
   update(ctx: FrameContext): void {
+    if (this.bypassed) return
+
     if (this.opacityParam) {
       this.opacityVal = this.opacityParam.evaluate(ctx, this.opacityVal)
       this.material.opacity = this.opacityVal
@@ -208,5 +258,8 @@ export class StaticImageNode implements VisualNode {
     this.geometry.dispose()
     this.material.dispose()
     this.texture.dispose()
+    if (this.bufferPool) {
+      this.bufferPool.unregisterNode(this.id)
+    }
   }
 }

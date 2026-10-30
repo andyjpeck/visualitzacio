@@ -1,16 +1,17 @@
-import React, { useRef } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import {
   Activity,
   Disc,
   FileAudio,
-  Layers,
   Loader2,
+  Maximize2,
   Mic,
+  Minimize2,
   Pause,
   Play,
+  Redo2,
   Settings,
-  Volume2,
-  VolumeX,
+  Undo2,
 } from 'lucide-react'
 import { useAppStore } from '../store/app-store'
 import type { AudioManager } from '../../audio/audio-manager'
@@ -19,14 +20,18 @@ import { AudioErrorToast } from './audio-error-toast'
 
 export interface ToolbarProps {
   audioManager: AudioManager | null
+  className?: string
 }
 
 /**
  * Top floating glassmorphic toolbar for audio playback controls, source selection,
- * volume, FPS counter toggle, preset settings modal, and expression testbed f(x).
+ * FPS counter toggle, preset settings modal, and expression testbed f(x).
  */
-export function Toolbar({ audioManager }: ToolbarProps): React.ReactElement {
+export function Toolbar({ audioManager, className = '' }: ToolbarProps): React.ReactElement {
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const headerRef = useRef<HTMLElement>(null)
+  const [scale, setScale] = useState(1)
+  const [isNarrow, setIsNarrow] = useState(false)
 
   const isPlaying = useAppStore((state) => state.isPlaying)
   const setIsPlaying = useAppStore((state) => state.setIsPlaying)
@@ -34,16 +39,19 @@ export function Toolbar({ audioManager }: ToolbarProps): React.ReactElement {
   const setSourceType = useAppStore((state) => state.setSourceType)
   const audioFileName = useAppStore((state) => state.audioFileName)
   const setAudioFileName = useAppStore((state) => state.setAudioFileName)
-  const volume = useAppStore((state) => state.volume)
-  const setVolume = useAppStore((state) => state.setVolume)
   const audioError = useAppStore((state) => state.audioError)
   const setAudioError = useAppStore((state) => state.setAudioError)
-  const showFpsOverlay = useAppStore((state) => state.showFpsOverlay)
-  const toggleFpsOverlay = useAppStore((state) => state.toggleFpsOverlay)
+  const showDebugData = useAppStore(
+    (state) => state.showDebugData ?? state.showFpsOverlay,
+  )
+  const toggleDebugData = useAppStore((state) => state.toggleDebugData)
   const toggleDialog = useAppStore((state) => state.toggleDialog)
-  const isFormulaTestbedOpen = useAppStore((state) => state.isFormulaTestbedOpen)
-  const isTemplateSelectorOpen = useAppStore((state) => state.isTemplateSelectorOpen)
-  const feedbackEnabled = useAppStore((state) => state.feedbackEnabled)
+  const studioMode = useAppStore((state) => state.studioMode)
+  const toggleStudioMode = useAppStore((state) => state.toggleStudioMode)
+  const canUndo = useAppStore((state) => state.canUndo)
+  const canRedo = useAppStore((state) => state.canRedo)
+  const undo = useAppStore((state) => state.undo)
+  const redo = useAppStore((state) => state.redo)
   const isAudioLoading = useAppStore((state) => state.isAudioLoading)
   const audioLoadingProgress = useAppStore((state) => state.audioLoadingProgress)
   const audioLoadingStage = useAppStore((state) => state.audioLoadingStage)
@@ -53,6 +61,56 @@ export function Toolbar({ audioManager }: ToolbarProps): React.ReactElement {
   )
 
   const isMicActive = sourceType === 'mic'
+
+  // Dynamically scale toolbar to fit available horizontal space in preview window
+  useEffect(() => {
+    const el = headerRef.current
+    if (!el) return
+
+    const updateScale = () => {
+      const parent = el.parentElement
+      const parentWidth = parent ? parent.clientWidth : window.innerWidth
+      if (!parentWidth || parentWidth <= 0) {
+        setScale(1)
+        return
+      }
+
+      // If preview pane is narrow (< 480px) and FPS badge is shown, position toolbar on row 2
+      const isNarrowWithDebug = showDebugData && parentWidth < 480
+      setIsNarrow(isNarrowWithDebug)
+
+      const leftReserved = isNarrowWithDebug ? 16 : showDebugData ? 135 : 16
+      const rightReserved = 16
+      const availableWidth = Math.max(100, parentWidth - leftReserved - rightReserved)
+
+      // Layout width before CSS transforms
+      const naturalWidth = el.offsetWidth || el.scrollWidth || 0
+
+      if (naturalWidth > availableWidth && naturalWidth > 0) {
+        const targetScale = Math.min(1, Math.max(0.35, availableWidth / naturalWidth))
+        setScale(targetScale)
+      } else {
+        setScale(1)
+      }
+    }
+
+    updateScale()
+
+    const resizeObserver = new ResizeObserver(() => {
+      updateScale()
+    })
+
+    if (el.parentElement) {
+      resizeObserver.observe(el.parentElement)
+    }
+    resizeObserver.observe(el)
+
+    window.addEventListener('resize', updateScale)
+    return () => {
+      resizeObserver.disconnect()
+      window.removeEventListener('resize', updateScale)
+    }
+  }, [showDebugData, sourceType, audioFileName, isPlaying])
 
   const handlePlayPause = async () => {
     if (!audioManager || isMicActive) return
@@ -150,14 +208,6 @@ export function Toolbar({ audioManager }: ToolbarProps): React.ReactElement {
     }
   }
 
-  const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = parseFloat(e.target.value)
-    setVolume(val)
-    if (audioManager) {
-      audioManager.setVolume(val)
-    }
-  }
-
   return (
     <>
       {/* Hidden Audio File Input */}
@@ -170,8 +220,16 @@ export function Toolbar({ audioManager }: ToolbarProps): React.ReactElement {
         className="hidden"
       />
 
-      {/* Top Floating Glassmorphic Toolbar */}
-      <header className="fixed top-4 right-4 z-40 flex items-center gap-2 p-1.5 rounded-xl backdrop-blur-md bg-cyber-void/85 border border-white/10 shadow-2xl select-none">
+      {/* Top Floating Glassmorphic Toolbar (floats within playback window, scales to fit available horizontal space) */}
+      <header
+        ref={headerRef}
+        data-testid="playback-toolbar"
+        style={{
+          transform: scale < 1 ? `scale(${scale})` : undefined,
+          transformOrigin: 'top right',
+        }}
+        className={`absolute ${isNarrow ? 'top-14' : 'top-4'} right-4 z-40 flex items-center gap-2 p-1.5 rounded-xl backdrop-blur-md bg-cyber-void/85 border border-white/10 shadow-2xl select-none transition-all duration-75 max-w-[calc(100%-2rem)] ${className}`}
+      >
         {/* Play / Pause (Controls Sample/File playback; disabled when Mic is active) */}
         <button
           type="button"
@@ -267,70 +325,46 @@ export function Toolbar({ audioManager }: ToolbarProps): React.ReactElement {
           audioLoadingStage={audioLoadingStage}
         />
 
-        {/* Volume Slider */}
-        <div className="flex items-center gap-2 px-2 py-1 bg-white/5 rounded-lg border border-white/5">
-          {volume === 0 ? (
-            <VolumeX className="w-3.5 h-3.5 text-slate-500" />
-          ) : (
-            <Volume2 className="w-3.5 h-3.5 text-slate-400" />
-          )}
-          <input
-            type="range"
-            min="0"
-            max="1"
-            step="0.05"
-            value={volume}
-            onChange={handleVolumeChange}
-            aria-label="Volume slider"
-            className="w-16 h-1 bg-white/20 rounded-lg appearance-none cursor-pointer accent-cyber-cyan"
-          />
-        </div>
-
-        {/* FPS Badge Toggle */}
+        {/* Undo Action */}
         <button
           type="button"
-          onClick={toggleFpsOverlay}
-          aria-label="Toggle FPS overlay"
-          title={showFpsOverlay ? 'Hide FPS Counter' : 'Show FPS Counter'}
+          data-testid="toolbar-undo-btn"
+          disabled={!canUndo}
+          onClick={() => undo()}
+          title="Undo (Ctrl+Z)"
+          aria-label="Undo"
+          className="p-2 rounded-lg bg-white/5 transition-colors border border-transparent disabled:opacity-25 disabled:cursor-not-allowed hover:bg-white/10 text-slate-300 hover:text-white hover:border-white/10 cursor-pointer"
+        >
+          <Undo2 className="w-4 h-4" />
+        </button>
+
+        {/* Redo Action */}
+        <button
+          type="button"
+          data-testid="toolbar-redo-btn"
+          disabled={!canRedo}
+          onClick={() => redo()}
+          title="Redo (Ctrl+Y / Ctrl+Shift+Z)"
+          aria-label="Redo"
+          className="p-2 rounded-lg bg-white/5 transition-colors border border-transparent disabled:opacity-25 disabled:cursor-not-allowed hover:bg-white/10 text-slate-300 hover:text-white hover:border-white/10 cursor-pointer"
+        >
+          <Redo2 className="w-4 h-4" />
+        </button>
+
+        {/* Debug Data Overlay Toggle (FPS tracker & Audio DSP Telemetry) */}
+        <button
+          type="button"
+          data-testid="toolbar-debug-data-btn"
+          onClick={toggleDebugData}
+          aria-label="Toggle debug data overlay"
+          title={showDebugData ? 'Hide Debug Data' : 'Show Debug Data'}
           className={`p-2 rounded-lg border transition-colors cursor-pointer ${
-            showFpsOverlay
+            showDebugData
               ? 'bg-cyber-cyan/15 border-cyber-cyan/30 text-cyber-cyan'
               : 'bg-white/5 border-transparent text-slate-400 hover:text-white'
           }`}
         >
           <Activity className="w-4 h-4" />
-        </button>
-
-        {/* Dynamic Formula Testbed f(x) Button */}
-        <button
-          type="button"
-          onClick={() => toggleDialog('formula-testbed')}
-          aria-label="Open Dynamic Expression Testbed"
-          title="Open Dynamic Expression Testbed f(x)"
-          className={`px-2.5 py-1.5 rounded-lg border transition-colors cursor-pointer font-mono font-bold text-xs select-none ${
-            isFormulaTestbedOpen
-              ? 'bg-cyber-cyan/20 border-cyber-cyan text-cyber-cyan shadow-md shadow-cyber-cyan/20'
-              : 'bg-white/5 border-transparent text-slate-300 hover:text-white hover:bg-white/10 hover:border-white/10'
-          }`}
-        >
-          f(x)
-        </button>
-
-        {/* Frame Buffer & Ping-Pong Feedback Templates Button */}
-        <button
-          type="button"
-          onClick={() => toggleDialog('template-selector')}
-          aria-label="Open Frame Buffer Templates"
-          title="Open Frame Buffer & Ping-Pong Feedback Templates"
-          className={`p-2 rounded-lg border transition-colors cursor-pointer ${
-            feedbackEnabled
-              ? 'bg-purple-950/40 border-purple-400/60 text-purple-300 shadow-sm shadow-purple-500/20'
-              : isTemplateSelectorOpen
-                ? 'bg-white/15 border-white/30 text-white'
-                : 'bg-white/5 border-transparent text-slate-300 hover:text-white hover:bg-white/10'
-          }`}
-        >
-          <Layers className="w-4 h-4" />
         </button>
 
         {/* Preset Settings Modal Button */}
@@ -342,6 +376,33 @@ export function Toolbar({ audioManager }: ToolbarProps): React.ReactElement {
           className="p-2 rounded-lg bg-white/5 text-slate-300 hover:text-white hover:bg-white/10 transition-colors border border-transparent hover:border-white/10 cursor-pointer"
         >
           <Settings className="w-4 h-4" />
+        </button>
+
+        {/* Studio / Live Performance Mode Toggle Button */}
+        <button
+          type="button"
+          onClick={toggleStudioMode}
+          aria-label={
+            studioMode === 'live'
+              ? 'Exit Live Performance Mode'
+              : 'Enter Live Performance Mode'
+          }
+          title={
+            studioMode === 'live'
+              ? 'Exit Live Performance Mode (F11 / Esc)'
+              : 'Enter Live Performance Mode (F11)'
+          }
+          className={`p-2 rounded-lg border transition-colors cursor-pointer ${
+            studioMode === 'live'
+              ? 'bg-cyber-cyan/20 border-cyber-cyan text-cyber-cyan shadow-sm shadow-cyber-cyan/20'
+              : 'bg-white/5 border-transparent text-slate-300 hover:text-white hover:bg-white/10 hover:border-white/10'
+          }`}
+        >
+          {studioMode === 'live' ? (
+            <Minimize2 className="w-4 h-4" />
+          ) : (
+            <Maximize2 className="w-4 h-4" />
+          )}
         </button>
       </header>
 

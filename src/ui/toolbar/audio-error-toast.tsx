@@ -18,7 +18,7 @@ export function AudioErrorToast({
   return (
     <div
       role="alert"
-      className="fixed top-20 right-4 z-50 flex items-center gap-3 p-3 max-w-sm rounded-xl backdrop-blur-md bg-cyber-void/95 border border-cyber-crimson/50 text-slate-200 shadow-2xl shadow-cyber-crimson/20 animate-in fade-in slide-in-from-top-2"
+      className="absolute top-20 right-4 z-50 flex items-center gap-3 p-3 max-w-sm rounded-xl backdrop-blur-md bg-cyber-void/95 border border-cyber-crimson/50 text-slate-200 shadow-2xl shadow-cyber-crimson/20 animate-in fade-in slide-in-from-top-2"
     >
       <AlertCircle className="w-5 h-5 text-cyber-crimson shrink-0" />
       <div className="flex-1 text-xs">
