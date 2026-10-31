@@ -14,6 +14,7 @@ If your task involves **creating, modifying, debugging, or designing visual pres
   - [`duperscope-scripting.md`](docs/preset-authoring/duperscope-scripting.md) — 4-phase procedural mathematics lifecycle
   - [`frame-buffer-compositing.md`](docs/preset-authoring/frame-buffer-compositing.md) — Feedback loops, blend modes, and transforms
 - **Mandatory Output Rule**: Whenever you generate or update a preset, provide the complete JSON inside a collapsed `<details>` block with a copy button, followed immediately by the 1-click preview link (`?preset=<name>&play=1`).
+- **Lightweight Iteration Cycle**: Do NOT update or rewrite preset tests during each iteration—simply assert that the preset JSON is valid and can be parsed before handing control back to the user. Update and verify preset tests only when finalizing/committing changes.
 
 ---
 

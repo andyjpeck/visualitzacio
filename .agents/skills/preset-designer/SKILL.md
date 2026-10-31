@@ -22,13 +22,17 @@ You are **strictly stateless** and must ground your technical knowledge **only i
 flowchart TD
     Prompt["1. Elicit Visual Intent & Vibe from User"] --> Inspect["2. Inspect docs/preset-authoring/ for Current Capabilities"]
     Inspect --> Compose["3. Compose Candidate Preset JSON & Mathematical Scripts"]
-    Compose --> Validate["4. Validate Schema & Script Compilation"]
+    Compose --> Validate["4. Lightweight Check: Assert JSON Parses & Schema Valid"]
     Validate --> Feasibility{"Is Vision Fully Realizable Cleanly?"}
     
-    Feasibility -- Yes --> Deliver["5. Output Validated Preset JSON in Code Block & Instructions"]
+    Feasibility -- Yes --> Deliver["5. Output Validated Preset JSON, Preview Link, and Await User Feedback"]
+    Deliver --> UserReview{"User Satisfied & Ready to Commit?"}
+    UserReview -- More Iterations Needed --> Prompt
+    UserReview -- Ready to Commit --> Finalize["6. Pre-Commit Gate: Update Smoke/Preset Tests & Verify"]
+    Finalize --> Commit["7. Commit Changes (Conventional Commits)"]
     
-    Feasibility -- Missing Feature / Friction / Gap --> Friction["6. Log Structured Feature Request via GitHub Issues"]
-    Friction --> Gate["7. Prompt User: Pause for Developer Session or Approximate?"]
+    Feasibility -- Missing Feature / Friction / Gap --> Friction["Log Structured Feature Request via GitHub Issues"]
+    Friction --> Gate["Prompt User: Pause for Developer Session or Approximate?"]
 ```
 
 ---
@@ -49,17 +53,20 @@ You must read and adhere to:
 - [`docs/preset-authoring/duperscope-scripting.md`](../../../docs/preset-authoring/duperscope-scripting.md)
 - [`docs/preset-authoring/frame-buffer-compositing.md`](../../../docs/preset-authoring/frame-buffer-compositing.md)
 
-### 3. Composition & Validation Gate
-1. Construct the complete `PresetSchema` v2 JSON payload.
-2. Validate the preset by executing the repository's native validation script:
-   ```bash
-   npx vitest run src/engine/presets/preset-render-smoke.test.ts
-   ```
-   Or execute inline validation:
-   ```bash
-   node -e "const { validatePreset } = require('./src/contracts/preset-schema.ts'); console.log(validatePreset(YOUR_PRESET_JSON));"
-   ```
-3. Ensure all Duperscope scripts (`init`, `beat`, `frame`, `point`) compile cleanly with zero syntax errors.
+### 3. Composition & Lightweight Validation Gate (Per Iteration)
+1. Construct or update the `PresetSchema` v2 JSON payload.
+2. **Do NOT update or write unit tests during each creative iteration**:
+   - Presets are subjective visual art ("they either look good or they don't"). Updating unit tests during every parameter tweak creates unnecessary friction.
+3. **The ONLY check before handing control back to the user is asserting that the preset JSON is valid and can be properly parsed**:
+   - Check that JSON conforms to `PresetSchema` and deserializes cleanly:
+     ```bash
+     npx tsx -e "import fs from 'fs'; import { validatePreset } from './src/contracts/preset-schema.ts'; import { deserializePreset } from './src/engine/presets/preset-deserializer.ts'; const json = JSON.parse(fs.readFileSync('presets/<preset-name>.json', 'utf8')); const v = validatePreset(json); const d = deserializePreset(json); if (!v.isValid || !d.success) { console.error('Errors:', v.errors, d.errors); process.exit(1); } else { console.log('Preset valid and parsed cleanly!'); }"
+     ```
+   - Or inline schema check:
+     ```bash
+     node -e "const { validatePreset } = require('./src/contracts/preset-schema.ts'); console.log(validatePreset(YOUR_PRESET_JSON));"
+     ```
+4. Ensure all Duperscope scripts (`init`, `beat`, `frame`, `point`) compile cleanly with zero syntax errors.
 
 ### 4. Delivery, Collapsible Copy & Quick Preview Link (Mandatory) 📋⚡
 Whenever you generate a new preset or modify an existing preset:
@@ -84,6 +91,16 @@ Whenever you generate a new preset or modify an existing preset:
    - Provide a direct deep-link that auto-loads the preset and triggers audio playback:
      `🌐 **[Preview in Visualització (Local)](http://localhost:5173/visualitzacio/?preset=<preset-name>&play=1)**`
      *(And optionally the production link: `https://andyjpeck.github.io/visualitzacio/?preset=<preset-name>&play=1`)*
+
+### 5. Finalization & Commit Gate (Pre-Commit Test Update) 🧪✅
+Once the user is satisfied with how the preset looks and behaves, and we are ready to commit changes to git:
+1. **Update the associated smoke/preset tests**:
+   - If a dedicated smoke test exists for the preset (e.g. `src/engine/presets/<preset-name>.test.ts`), update its assertions (node IDs, formulas, feedback, scale/rotation) to match the final preset JSON.
+   - Run the test suite to ensure all tests pass:
+     ```bash
+     npm test -- --run
+     ```
+2. Commit the changes following Conventional Commits format (`feat(presets): ...` or `fix(presets): ...`).
 
 ---
 
