@@ -34,8 +34,8 @@ describe('Preset Verification: Quadrant Mirrored Spectrum', () => {
 
     // Check beat bounce and twist on master root
     const masterNode = result.nodes.find((n) => n.id === 'master-frame-buffer')
-    expect(masterNode?.data.scale).toBe('1.0 + #BEAT(0.35) * 0.12')
-    expect(masterNode?.data.rotation).toBe('#BEAT(0.35) * 4.0')
+    expect(masterNode?.data.scale).toBe('1.0 + #BEAT(0.35) * 0.32')
+    expect(masterNode?.data.rotation).toBe('#BEAT(0.35) * 16.0')
 
     // Check feedback and sand-smearing on myframe
     const myframeNode = result.nodes.find((n) => n.id === 'myframe')

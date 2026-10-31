@@ -6,7 +6,7 @@
     "version": 2,
     "description": "Dual frequency spectrum lines composed into 'myframe' along the bottom and right edges with ping-pong feedback (sand-smear sideways drift and phosphor decay), replicated across 4 symmetric quadrants, featuring beat-reactive zoom bounce and angular twist on the master output canvas.",
     "created": "2026-10-30T19:55:00.000Z",
-    "modified": "2026-10-30T23:15:00.000Z"
+    "modified": "2026-10-31T00:10:00.000Z"
   },
   "settings": {
     "targetFps": 60,
@@ -40,8 +40,8 @@
       "outputBlendMode": "replace",
       "inputBlendMode": "none",
       "opacity": 1,
-      "scale": "1.0 + #BEAT(0.35) * 0.12",
-      "rotation": "#BEAT(0.35) * 4.0",
+      "scale": "1.0 + #BEAT(0.35) * 0.32",
+      "rotation": "#BEAT(0.35) * 16.0",
       "positionX": 0,
       "positionY": 0
     },
