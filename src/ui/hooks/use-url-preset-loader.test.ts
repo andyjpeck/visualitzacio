@@ -1,3 +1,4 @@
+import React from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { renderHook, waitFor } from '@testing-library/react'
 import {
@@ -127,6 +128,43 @@ describe('useUrlPresetLoader & Security Sanitization', () => {
       expect(onSuccess).toHaveBeenCalledWith('quadrant-mirrored-spectrum')
       expect(result.current.isLoading).toBe(false)
       expect(result.current.error).toBeNull()
+    })
+
+    it('successfully loads preset even under React StrictMode double-mounting', async () => {
+      window.history.pushState({}, '', '/visualitzacio/?preset=quadrant-mirrored-spectrum')
+
+      const mockPresetData = {
+        schemaVersion: 2,
+        metadata: { name: 'Quadrant Test', version: 2, created: '2026-10-30T00:00:00Z' },
+        settings: { targetFps: 60, resolutionScale: 1, audioBands: { bassMin: 20, bassMax: 250, midMin: 250, midMax: 4000, trebleMin: 4000, trebleMax: 16000 } },
+        root: {
+          id: 'master-frame-buffer',
+          type: 'masterFrameBuffer',
+          params: {},
+          children: [],
+        },
+      }
+
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => mockPresetData,
+      })
+
+      const loadPresetSpy = vi.spyOn(useAppStore.getState(), 'loadPreset')
+      const onSuccess = vi.fn()
+
+      const { result } = renderHook(() => useUrlPresetLoader({ onSuccess }), {
+        wrapper: React.StrictMode,
+      })
+
+      await waitFor(() => {
+        expect(result.current.loadedPresetName).toBe('quadrant-mirrored-spectrum')
+      })
+
+      expect(loadPresetSpy).toHaveBeenCalledWith(mockPresetData)
+      expect(onSuccess).toHaveBeenCalledWith('quadrant-mirrored-spectrum')
+      expect(result.current.isLoading).toBe(false)
     })
 
     it('does not trigger fetch or set error when query is malicious or absent', () => {

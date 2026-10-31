@@ -61,7 +61,7 @@ export function useUrlPresetLoader(
   })
   const [loadedPresetName, setLoadedPresetName] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const hasExecutedRef = useRef(false)
+  const hasLoadedRef = useRef(false)
   const optionsRef = useRef(options)
 
   useEffect(() => {
@@ -73,8 +73,7 @@ export function useUrlPresetLoader(
   const setSourceType = useAppStore((state) => state.setSourceType)
 
   useEffect(() => {
-    if (hasExecutedRef.current) return
-    hasExecutedRef.current = true
+    if (hasLoadedRef.current) return
 
     if (typeof window === 'undefined' || !window.location) return
 
@@ -111,6 +110,7 @@ export function useUrlPresetLoader(
           return
         }
 
+        hasLoadedRef.current = true
         setLoadedPresetName(presetName)
         optionsRef.current.onSuccess?.(presetName)
 
