@@ -12,7 +12,8 @@ function presetsPlugin(): Plugin {
     name: 'visualitzacio-presets',
     configureServer(server) {
       server.middlewares.use((req, res, next) => {
-        if (req.url && !req.url.includes('import') && (req.url.startsWith('/visualitzacio/presets/') || req.url.startsWith('/presets/'))) {
+        const hasImportQuery = /[?&]import\b/.test(req.url || '')
+        if (req.url && !hasImportQuery && (req.url.startsWith('/visualitzacio/presets/') || req.url.startsWith('/presets/'))) {
           const cleanUrl = req.url.split('?')[0]
           const filename = path.basename(cleanUrl)
           if (filename.endsWith('.json')) {

@@ -207,4 +207,38 @@ describe('PresetSelector Component', () => {
     expect(state.graphNodes.some((n) => n.id === 'user-active-layer')).toBe(false)
     expect(state.canUndo).toBe(true)
   })
+
+  it('dismisses confirmation modal on Escape key without modifying canvas', () => {
+    const existingNodes: Node[] = [
+      {
+        id: 'master-frame-buffer',
+        type: 'masterFrameBuffer',
+        position: { x: 0, y: 0 },
+        data: { label: 'Master Output' },
+      },
+      {
+        id: 'user-active-layer',
+        type: 'duperscopeNode',
+        parentId: 'master-frame-buffer',
+        position: { x: 20, y: 20 },
+        data: { label: 'Active Layer' },
+      },
+    ]
+    useAppStore.setState({ graphNodes: existingNodes })
+
+    render(<PresetSelector presets={mockPresets} />)
+
+    const select = screen.getByTestId('toolbar-preset-selector')
+    fireEvent.change(select, { target: { value: 'mock-sample-preset' } })
+
+    expect(screen.getByTestId('confirm-overwrite-preset-btn')).toBeInTheDocument()
+
+    // Press Escape
+    fireEvent.keyDown(window, { key: 'Escape', code: 'Escape' })
+
+    expect(screen.queryByTestId('confirm-overwrite-preset-btn')).not.toBeInTheDocument()
+    const state = useAppStore.getState()
+    expect(state.graphNodes.some((n) => n.id === 'user-active-layer')).toBe(true)
+    expect(state.graphNodes.some((n) => n.id === 'child-from-preset')).toBe(false)
+  })
 })

@@ -9,8 +9,10 @@ import type { Preset } from '../../contracts/preset-schema'
 
 describe('preset-catalog: dynamic preset discovery & emptiness detection', () => {
   describe('hasChildLayers', () => {
-    it('returns false when graphNodes is empty or contains only master-frame-buffer', () => {
+    it('returns false when graphNodes is empty, null, or contains only master-frame-buffer', () => {
       expect(hasChildLayers([])).toBe(false)
+      expect(hasChildLayers(null)).toBe(false)
+      expect(hasChildLayers(undefined)).toBe(false)
       const rootOnly: Node[] = [
         {
           id: 'master-frame-buffer',
@@ -43,6 +45,11 @@ describe('preset-catalog: dynamic preset discovery & emptiness detection', () =>
   })
 
   describe('buildPresetCatalog', () => {
+    it('handles nil/undefined input cleanly returning an empty array', () => {
+      expect(buildPresetCatalog(null)).toEqual([])
+      expect(buildPresetCatalog(undefined)).toEqual([])
+    })
+
     it('parses raw glob modules into sorted PresetCatalogItem records', () => {
       const mockModules: Record<string, { default?: Preset } | Preset> = {
         '/presets/b-preset.json': {
@@ -81,7 +88,7 @@ describe('preset-catalog: dynamic preset discovery & emptiness detection', () =>
       expect(catalog[1].author).toBe('VJ Alpha')
     })
 
-    it('falls back to file slug if metadata.name is absent', () => {
+    it('falls back to file slug if metadata.name is absent or non-string', () => {
       const mockModules: Record<string, { default?: Preset } | Preset> = {
         '/presets/custom-flow.json': {
           default: {

@@ -13,18 +13,20 @@ export interface PresetCatalogItem {
 
 /**
  * Determines whether a graph contains 1 or more child layers under Master Output.
- * Returns false if the canvas contains only master-frame-buffer or is empty.
+ * Returns false if the canvas contains only master-frame-buffer, is empty, or is not an array.
  */
-export function hasChildLayers(graphNodes: Node[] = []): boolean {
-  return graphNodes.some((node) => node.id !== 'master-frame-buffer')
+export function hasChildLayers(graphNodes?: Node[] | null): boolean {
+  if (!Array.isArray(graphNodes)) return false
+  return graphNodes.some((node) => node && node.id !== 'master-frame-buffer')
 }
 
 /**
  * Parses raw glob import records from Vite into a cleanly sorted array of PresetCatalogItem.
  */
 export function buildPresetCatalog(
-  rawModules: Record<string, { default?: Preset } | Preset>,
+  rawModules?: Record<string, { default?: Preset } | Preset> | null,
 ): PresetCatalogItem[] {
+  if (!rawModules || typeof rawModules !== 'object') return []
   const items: PresetCatalogItem[] = []
 
   for (const [filepath, mod] of Object.entries(rawModules)) {
@@ -37,7 +39,8 @@ export function buildPresetCatalog(
     // Derive ID from filename e.g. /presets/mirrored-t-spectrum.json -> mirrored-t-spectrum
     const filename = filepath.split('/').pop() || filepath
     const id = filename.replace(/\.json$/i, '')
-    const name = rawPreset.metadata?.name?.trim() || id
+    const rawName = rawPreset.metadata?.name
+    const name = typeof rawName === 'string' && rawName.trim() ? rawName.trim() : id
 
     items.push({
       id,

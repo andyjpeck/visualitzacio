@@ -26,7 +26,6 @@ export function PresetSelector({
     return customPresets ?? getAvailablePresets()
   }, [customPresets])
 
-  const graphNodes = useAppStore((state) => state.graphNodes)
   const loadPreset = useAppStore((state) => state.loadPreset)
 
   const [selectedPresetId, setSelectedPresetId] = useState<string>('')
@@ -43,26 +42,35 @@ export function PresetSelector({
       const target = availablePresets.find((p) => p.id === presetId)
       if (!target) return
 
+      // Read graph nodes imperatively from store to avoid re-rendering toolbar on node drags
+      const currentNodes = useAppStore.getState().graphNodes
+
       // If the scene currently has child layers, guard with confirmation modal
-      if (hasChildLayers(graphNodes)) {
+      if (hasChildLayers(currentNodes)) {
+        setSelectedPresetId(target.id)
         setPendingPreset(target)
       } else {
-        loadPreset(target.preset)
-        setSelectedPresetId(target.id)
+        const result = loadPreset(target.preset)
+        if (result.success) {
+          setSelectedPresetId('')
+        }
       }
     },
-    [availablePresets, graphNodes, loadPreset],
+    [availablePresets, loadPreset],
   )
 
   const handleCancelOverwrite = useCallback(() => {
+    setSelectedPresetId('')
     setPendingPreset(null)
   }, [])
 
   const handleConfirmOverwrite = useCallback(() => {
     if (!pendingPreset) return
-    loadPreset(pendingPreset.preset)
-    setSelectedPresetId(pendingPreset.id)
-    setPendingPreset(null)
+    const result = loadPreset(pendingPreset.preset)
+    if (result.success) {
+      setSelectedPresetId('')
+      setPendingPreset(null)
+    }
   }, [loadPreset, pendingPreset])
 
   return (
