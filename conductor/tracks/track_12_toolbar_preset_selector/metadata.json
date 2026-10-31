@@ -1,0 +1,10 @@
+{
+  "track_id": "track_12_toolbar_preset_selector",
+  "type": "feature",
+  "status": "completed",
+  "created_at": "2026-10-30T20:18:00-07:00",
+  "updated_at": "2026-10-30T20:36:00-07:00",
+  "description": "Toolbar Preset Selector & Overwrite Confirmation Guard: Upper toolbar dropdown for dynamic preset discovery from presets/*.json and protective BaseModalDialog confirmation guard on non-empty scenes.",
+  "branch": "feat/toolbar-preset-selector",
+  "tasks": []
+}

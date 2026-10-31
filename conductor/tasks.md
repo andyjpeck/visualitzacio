@@ -74,9 +74,16 @@
 
 ---
 
+- [x] **Track 12: Toolbar Preset Selector & Overwrite Confirmation Guard**
+  - [x] Phase 1: Dynamic Preset Discovery & Emptiness Detection Utilities (TDD).
+  - [x] Phase 2: Preset Selector Component & Confirmation Dialog (TDD).
+  - [x] Phase 3: Integration, Regression Verification & Documentation.
+
+---
+
 ## Active Track
 
-*None currently active. Track 11 completed.*
+*None currently active. Track 12 completed.*
 
 ---
 

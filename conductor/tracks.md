@@ -54,3 +54,8 @@ This registry tracks the planned, active, and completed workstreams across Visua
 - [x] **Track 11: High-Fidelity Verification Overhaul (Playwright, WebGL Smoke Tests, & Agent Quality Gates)**
   *Goal: Real Chromium E2E Playwright actionability checks for modal/dialog stacking, WebGL pipeline & non-empty pixel smoke tests, Chrome DevTools MCP visual inspection rules, and updated Conductor 3-tier quality gates.*  
   *Link: [./tracks/track_11_high_fidelity_verification/index.md](./tracks/track_11_high_fidelity_verification/index.md)* (Completed)
+
+
+- [x] **Track 12: Toolbar Preset Selector & Overwrite Confirmation Guard**
+  *Goal: Dynamic preset discovery from presets/*.json, upper toolbar preset selector, and protective BaseModalDialog confirmation guard on non-empty scenes.*  
+  *Link: [./tracks/track_12_toolbar_preset_selector/index.md](./tracks/track_12_toolbar_preset_selector/index.md)* (Completed)
