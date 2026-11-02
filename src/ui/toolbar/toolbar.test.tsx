@@ -273,4 +273,10 @@ describe('Toolbar Component', () => {
     fireEvent.click(redoBtn)
     expect(redoMock).toHaveBeenCalledTimes(1)
   })
+
+  it('renders the preset selector dropdown within the toolbar', () => {
+    render(<Toolbar audioManager={mockAudioManager} />)
+    const presetSelector = screen.getByTestId('toolbar-preset-selector')
+    expect(presetSelector).toBeInTheDocument()
+  })
 })
