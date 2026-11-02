@@ -69,6 +69,6 @@ This registry tracks the planned, active, and completed workstreams across Visua
   *Goal: Semantic control clustering, multi-row flexbox wrapping, right-aligned stacking, and adaptive scaling down to 320px to ensure all toolbar buttons and dialog triggers remain within preview canvas boundaries and fully interactive.*  
   *Link: [./tracks/track_13_responsive_toolbar_overflow_wrapping/index.md](./tracks/track_13_responsive_toolbar_overflow_wrapping/index.md)* (Completed)
 
-- [~] **Track 14: Engine Performance — Render Pass, VRAM & Bandwidth Optimizations (#14)**
+- [x] **Track 14: Engine Performance — Render Pass, VRAM & Bandwidth Optimizations (#14)**
   *Goal: Disable main canvas MSAA/depth, default `FrameBufferNode` to `depthBuffer: false` and skip direct pass-through FBO allocations, fix high-refresh display frame pacing with accumulator remainder carry-over, and optimize Duperscope dynamic buffer upload ranges and dormant point loop execution.*  
-  *Link: [./tracks/track_14_engine_perf_bottlenecks/index.md](./tracks/track_14_engine_perf_bottlenecks/index.md)* (In Progress)
+  *Link: [./tracks/track_14_engine_perf_bottlenecks/index.md](./tracks/track_14_engine_perf_bottlenecks/index.md)* (Completed)
