@@ -7,7 +7,7 @@ Implement a lean, dedicated `MaskCompositorNode` (`type: "maskCompositor"`) that
 
 ## Phase 1: Contract, Shader & Core Node Implementation (TDD)
 
-- [ ] Task 1.1: Schema contracts and validation for `maskCompositor` (#18)
+- [~] Task 1.1: Schema contracts and validation for `maskCompositor` (#18)
   - [ ] Add `'maskCompositor'` to `NODE_TYPES` in `src/contracts/node-types.ts`
   - [ ] Define `MaskCompositorNodeData` in `src/ui/graph/node-data.ts` (`foregroundFrom`, `backgroundFrom`, `maskFrom`, `maskInvert`)
   - [ ] Update `validatePreset` in `src/contracts/preset-schema.ts` and write failing tests in `src/contracts/preset-schema.test.ts`

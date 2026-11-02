@@ -8,6 +8,7 @@ import { FrameBufferNode } from '../frame-buffer/frame-buffer-node'
 import { DuperscopeNode } from '../nodes/duperscope-node'
 import { DUPERSCOPE_TEMPLATES } from '../nodes/duperscope-templates'
 import { StaticImageNode } from '../nodes/static-image-node'
+import { MaskCompositorNode } from '../nodes/mask-compositor-node'
 import { TestVisualNode } from '../visual-node'
 
 /**
@@ -67,6 +68,22 @@ const NODE_FIXTURE_REGISTRY: Record<
         url: String(params.imageUrl),
         fit: params.fitMode as 'contain',
         opacity: params.opacity as number,
+      }),
+  },
+  maskCompositor: {
+    params: {
+      foregroundFrom: null,
+      backgroundFrom: null,
+      maskFrom: null,
+      maskInvert: false,
+    },
+    instantiate: (id, params) =>
+      new MaskCompositorNode({
+        id,
+        foregroundFrom: (params.foregroundFrom as string) ?? null,
+        backgroundFrom: (params.backgroundFrom as string) ?? null,
+        maskFrom: (params.maskFrom as string) ?? null,
+        maskInvert: Boolean(params.maskInvert),
       }),
   },
   testVisual: {

@@ -77,3 +77,11 @@ export interface TestVisualNodeData extends BaseNodeData {
   offsetX?: number | string
   offsetY?: number | string
 }
+
+
+export interface MaskCompositorNodeData extends BaseNodeData {
+  foregroundFrom?: string | null
+  backgroundFrom?: string | null
+  maskFrom?: string | null
+  maskInvert?: boolean
+}

@@ -7,6 +7,7 @@ import type {
   MasterFrameBufferNodeData,
   FrameBufferNodeData,
   StaticImageNodeData,
+  MaskCompositorNodeData,
   DuperscopeNodeData,
   TestVisualNodeData,
 } from '../graph/node-data'
@@ -100,11 +101,19 @@ const TEST_VISUAL_PARAM_MAP: ParamUIMap<TestVisualNodeData> = {
   offsetY: null, // Alias for positionY
 }
 
+const MASK_COMPOSITOR_PARAM_MAP: ParamUIMap<MaskCompositorNodeData> = {
+  foregroundFrom: 'Foreground Buffer',
+  backgroundFrom: 'Background Buffer',
+  maskFrom: 'Mask Buffer',
+  maskInvert: 'Invert Mask',
+}
+
 const SCHEMA_PARAM_MAPPINGS: Record<AllNodeType, Record<string, string | null>> = {
   masterFrameBuffer: MASTER_FRAME_BUFFER_PARAM_MAP,
   frameBuffer: FRAME_BUFFER_PARAM_MAP,
   staticImage: STATIC_IMAGE_PARAM_MAP,
   duperscopeNode: DUPERSCOPE_PARAM_MAP,
+  maskCompositor: MASK_COMPOSITOR_PARAM_MAP,
   testVisual: TEST_VISUAL_PARAM_MAP,
 }
 
