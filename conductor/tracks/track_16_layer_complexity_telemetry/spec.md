@@ -57,7 +57,7 @@ This track implements a **Tier 0 Static Computational Complexity & Lint Model** 
 ---
 
 ## 4. Acceptance Criteria
-- [ ] Every layer row in `LayerTreeView` displays a color-graded percentage complexity badge (`{sharePercent}%`) when `showLayerComplexity` is enabled.
-- [ ] Toggling **Layer Complexity Indicators** to `Off` in the toolbar Settings modal immediately hides the badges in `LayerTreeView`.
-- [ ] Hovering a complexity badge displays a portaled breakdown tooltip showing pass count, estimated VRAM, AST/point operations, and actionable optimization tips.
-- [ ] Unit tests and Playwright E2E tests verify the complexity calculator, badge rendering, tooltip breakdown, and settings toggle integration.
+- [x] Every layer row in `LayerTreeView` displays a color-graded percentage complexity badge (`{sharePercent}%`) when `showLayerComplexity` is enabled.
+- [x] Toggling **Layer Complexity Indicators** to `Off` in the toolbar Settings modal immediately hides the badges in `LayerTreeView`.
+- [x] Hovering a complexity badge displays a portaled breakdown tooltip showing pass count, estimated VRAM, AST/point operations, and actionable optimization tips.
+- [x] Unit tests and Playwright E2E tests verify the complexity calculator, badge rendering, tooltip breakdown, and settings toggle integration.

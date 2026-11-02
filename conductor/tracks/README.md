@@ -27,4 +27,4 @@ This directory houses the execution tracks and task plans for Visualització mil
 - [**`track_15_editor_performance_settings/`**](file:///C:/Users/andyj/Documents/visualitzacio/conductor/tracks/track_15_editor_performance_settings/index.md):
   Track 15: Editor & Performance Settings Section in Toolbar Menu (#15) (Completed).
 - [**`track_16_layer_complexity_telemetry/`**](file:///C:/Users/andyj/Documents/visualitzacio/conductor/tracks/track_16_layer_complexity_telemetry/index.md):
-  Track 16: Computational Complexity Cost Indicators in Layers Tree (#16) (In Progress).
+  Track 16: Computational Complexity Cost Indicators in Layers Tree (#16) (Completed).

@@ -77,6 +77,6 @@ This registry tracks the planned, active, and completed workstreams across Visua
   *Goal: Add a localStorage-backed Editor & Performance Settings section (Layer Complexity Cost Estimates toggle & Debug Telemetry Overlay toggle) to the toolbar Settings modal, isolated from preset JSON serialization.*  
   *Link: [./tracks/track_15_editor_performance_settings/index.md](./tracks/track_15_editor_performance_settings/index.md)* (Completed)
 
-- [~] **Track 16: Computational Complexity Cost Indicators in Layers Tree (#16)**
+- [x] **Track 16: Computational Complexity Cost Indicators in Layers Tree (#16)**
   *Goal: Implement Tier 0 static computational complexity model, color-graded percentage share badges (`{sharePercent}%`), and portaled hover breakdown tooltips with anti-pattern lint tips in `LayerTreeView`.*  
-  *Link: [./tracks/track_16_layer_complexity_telemetry/index.md](./tracks/track_16_layer_complexity_telemetry/index.md)* (In Progress)
+  *Link: [./tracks/track_16_layer_complexity_telemetry/index.md](./tracks/track_16_layer_complexity_telemetry/index.md)* (Completed)
