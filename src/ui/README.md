@@ -43,6 +43,9 @@ The UI components operate on the **Low-Frequency User Plane** (<10 Hz). They do 
 - [**`studio/`**](file:///C:/Users/andyj/Documents/visualitzacio/src/ui/studio/README.md)
   Studio workspace layout engine (`StudioSplitView`) providing resizable 3-pane partitioning (preview, workspace outliner pane, parameter inspector), Studio vs. Live performance modes, and floating toolbar scaling.
 
+- [**`telemetry/`**](file:///C:/Users/andyj/Documents/visualitzacio/src/ui/telemetry/README.md)
+  Zero-overhead Tier 0 static computational complexity calculator (`computeSceneLayerComplexity`) providing relative percentage cost shares, pass/VRAM/AST estimates, and anti-pattern lint warnings for the Layers Outliner.
+
 - [**`toolbar/`**](file:///C:/Users/andyj/Documents/visualitzacio/src/ui/toolbar/README.md)
   Top floating glassmorphic toolbar housing transport controls, audio source selectors (Sample -> File -> Mic), audio seek progress bar, volume control, and settings toggles.
 
