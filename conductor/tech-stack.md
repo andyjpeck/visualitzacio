@@ -31,7 +31,7 @@ To guarantee uncompromised 60+ FPS rendering while providing rich interactive UI
 - **Named Buffer Architecture (`save_to` & `load_from`):**
   - Managed via an offscreen `BufferPool` maintaining a registry of `THREE.WebGLRenderTarget` instances keyed by `@NAME`.
   - Topological sort guarantees upstream producer buffers render prior to downstream consumers. If a cyclic dependency or nonexistent buffer is detected, the affected buffer is disabled from rendering, flagged with an error state, and logged to the Diagnostics Console.
-  - Offscreen `FrameBufferNode` render targets default to `depthBuffer: false` (unless explicitly enabled for 3D children) and skip FBO allocation altogether on direct pass-through replicator nodes (`loadFrom` with no children, no feedback, and no `saveTo`), allocating on-demand if later mutated.
+  - Offscreen `FrameBufferNode` render targets default to `depthBuffer: false` (unless explicitly enabled for 3D children) and skip FBO allocation altogether on direct pass-through replicator nodes (`loadFrom` with no children, no feedback, `inputBlendMode !== 'none'`, and no `saveTo`), allocating on-demand if later mutated.
   - Full specification: [Frame Buffer Component Proposal](../component_proposals/frame_buffer.md).
 - **Master Frame Buffer & Dual-FBO Ping-Pong Feedback Loop:**
   - Every preset pipeline is rooted in a single **Master Frame Buffer** that manages dual `THREE.WebGLRenderTarget` instances (ping-pong FBOs) supporting both Clean Slate (`replace`, opacity `1.0`) and Frame Feedback modes (see [Frame Buffer Component Proposal](../component_proposals/frame_buffer.md)).
@@ -61,7 +61,7 @@ To guarantee uncompromised 60+ FPS rendering while providing rich interactive UI
 ## 6. Dynamic Expression Engine
 - **Two-Tier Expression Architecture:**
   1. **Tier 1 (Universal Parameter Modulation — MVP):** `expr-eval` (lightweight, zero-`eval` safe AST evaluator compiling scalar formulas evaluated **once per frame** for uniform and parameter modulation). Pre-allocated variable scope object (`scope`) is mutated in-place each frame to eliminate garbage collection.
-  2. **Tier 2 (High-Throughput Procedural Loops — Track 5 Duperscope):** Sandboxed multi-statement evaluator (`init`, `frame`, `beat`, `point`) supporting up to 4,096 points (`[0, 4096]`), automatic dormant point loop short-circuiting when `n <= 0`, node `opacity <= 0`, or frame-end `a <= 0.001` / `linesize <= 0.0` (without point-phase override), and `THREE.DynamicDrawUsage` partial GPU attribute upload ranges (`BufferAttribute.addUpdateRange(0, activeCount * itemSize)`).
+  2. **Tier 2 (High-Throughput Procedural Loops — Track 5 Duperscope):** Sandboxed multi-statement evaluator (`init`, `frame`, `beat`, `point`) supporting up to 4,096 points (`[0, 4096]`), automatic dormant point loop short-circuiting when `n <= 0`, node `opacity <= 0.001`, or frame-end `a <= 0.001` / `linesize <= 0.0` (without point-phase override), and `THREE.DynamicDrawUsage` partial GPU attribute upload ranges (`BufferAttribute.addUpdateRange(0, activeCount * itemSize)`).
 - **Language & Symbol Reference:**
   - System reactive variables (`$VARIABLE`): See [System Variables Reference](./system_variables.md).
   - Built-in audio/DSP functions (`#FUNCTION`): See [System Functions Reference](./system_functions.md).

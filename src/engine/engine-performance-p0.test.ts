@@ -225,9 +225,16 @@ describe('Track 14 — Engine Performance: Render Pass, VRAM & Bandwidth Optimiz
       const child: VisualNode = { update: vi.fn() }
       quadrantNode.addChild(child)
 
-      expect(quadrantNode.getWriteTarget()).not.toBeNull()
-      expect(quadrantNode.getWriteTarget()?.width).toBe(1920)
-      expect(quadrantNode.getWriteTarget()?.height).toBe(1080)
+      const allocatedFbo = quadrantNode.getWriteTarget()
+      expect(allocatedFbo).not.toBeNull()
+      expect(allocatedFbo?.width).toBe(1920)
+      expect(allocatedFbo?.height).toBe(1080)
+
+      // Mutating node back into pass-through mode (removing the child) disposes the FBO to reclaim VRAM
+      const disposeSpy = vi.spyOn(allocatedFbo!, 'dispose')
+      quadrantNode.removeChild(child)
+      expect(disposeSpy).toHaveBeenCalledTimes(1)
+      expect(quadrantNode.getWriteTarget()).toBeNull()
 
       parentTarget.dispose()
       quadrantNode.dispose()
@@ -395,6 +402,42 @@ describe('Track 14 — Engine Performance: Render Pass, VRAM & Bandwidth Optimiz
       )
 
       expect(pointCount).toBe(10)
+
+      // Independent check 1: a = 0.0 with linesize = 2.0 and no 'a' assignment in point -> short-circuits (0 points)
+      const frameZeroAlphaOnly = compiler.compilePhase('a = 0.0; linesize = 2.0;', 'frame')
+      const pointNoAlphaAssign = compiler.compilePhase('x = i;', 'point')
+      const resZeroAlpha = runner.runFrame(
+        compiledBeat,
+        frameZeroAlphaOnly,
+        pointNoAlphaAssign,
+        createDefaultFrameContext(),
+        {
+          audioMode: 'waveform',
+          channel: 'center',
+          positions: new Float32Array(4096 * 3),
+          colors: new Float32Array(4096 * 4),
+          sizes: new Float32Array(4096),
+        },
+      )
+      expect(resZeroAlpha.pointCount).toBe(0)
+
+      // Independent check 2: linesize = 0.0 with a = 1.0 and no 'linesize' assignment in point -> short-circuits (0 points)
+      const frameZeroSizeOnly = compiler.compilePhase('a = 1.0; linesize = 0.0;', 'frame')
+      const pointNoSizeAssign = compiler.compilePhase('x = i;', 'point')
+      const resZeroSize = runner.runFrame(
+        compiledBeat,
+        frameZeroSizeOnly,
+        pointNoSizeAssign,
+        createDefaultFrameContext(),
+        {
+          audioMode: 'waveform',
+          channel: 'center',
+          positions: new Float32Array(4096 * 3),
+          colors: new Float32Array(4096 * 4),
+          sizes: new Float32Array(4096),
+        },
+      )
+      expect(resZeroSize.pointCount).toBe(0)
     })
   })
 })

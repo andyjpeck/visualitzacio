@@ -290,7 +290,8 @@ export class RenderEngine {
   }
 
   private renderFrame(timestamp: number): void {
-    const targetIntervalMs = 1000.0 / this.presetSettings.target_fps
+    const safeFps = Math.max(1, this.presetSettings.target_fps || 60)
+    const targetIntervalMs = 1000.0 / safeFps
     const pacingElapsedMs = timestamp - this.pacingTimestamp
     const toleranceMs = Math.min(1.5, targetIntervalMs * 0.1)
 
@@ -305,16 +306,13 @@ export class RenderEngine {
     }
 
     // Advance accumulator pacing timestamp with remainder carry-over, clamping on long stalls
-    if (this.frameContext.$FRAME === 0) {
-      this.pacingTimestamp =
-        pacingElapsedMs >= targetIntervalMs - toleranceMs &&
-        pacingElapsedMs < targetIntervalMs * 2
-          ? this.pacingTimestamp + targetIntervalMs
-          : timestamp
-    } else if (pacingElapsedMs >= targetIntervalMs * 2 || pacingElapsedMs < 0) {
-      this.pacingTimestamp = timestamp
-    } else {
+    if (
+      pacingElapsedMs >= targetIntervalMs - toleranceMs &&
+      pacingElapsedMs < targetIntervalMs * 2
+    ) {
       this.pacingTimestamp += targetIntervalMs
+    } else {
+      this.pacingTimestamp = timestamp
     }
 
     // Delta time calculation from last actually rendered frame

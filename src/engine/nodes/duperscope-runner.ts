@@ -194,12 +194,16 @@ export class DuperscopeRunner {
     // Short-circuit dormant point loops when frame-end alpha or linesize is non-positive
     // and not reassigned inside the point phase
     if (this.scope.a <= 0.001 || this.scope.linesize <= 0.0) {
-      let assignsAlpha = false
-      let assignsLinesize = false
-      for (let s = 0; s < stmtsLen; s++) {
-        const target = pointStmts[s].target
-        if (target === 'a') assignsAlpha = true
-        else if (target === 'linesize') assignsLinesize = true
+      let assignsAlpha = compiledPoint.assignsAlpha
+      let assignsLinesize = compiledPoint.assignsLinesize
+      if (assignsAlpha === undefined || assignsLinesize === undefined) {
+        assignsAlpha = false
+        assignsLinesize = false
+        for (let s = 0; s < stmtsLen; s++) {
+          const target = pointStmts[s].target
+          if (target === 'a') assignsAlpha = true
+          else if (target === 'linesize') assignsLinesize = true
+        }
       }
       if (
         (this.scope.a <= 0.001 && !assignsAlpha) ||

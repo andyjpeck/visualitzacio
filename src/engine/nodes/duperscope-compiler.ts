@@ -43,6 +43,10 @@ export interface DuperscopeCompilationResult {
   errorStatementIndex?: number
   /** List of compiled statements in execution sequence. */
   statements: CompiledStatement[]
+  /** Precomputed flag indicating whether any statement in this phase assigns to `a`. */
+  assignsAlpha?: boolean
+  /** Precomputed flag indicating whether any statement in this phase assigns to `linesize`. */
+  assignsLinesize?: boolean
 }
 
 /**
@@ -298,9 +302,19 @@ export class DuperscopeCompiler {
       }
     }
 
+    let assignsAlpha = false
+    let assignsLinesize = false
+    for (let i = 0; i < compiledStatements.length; i++) {
+      const target = compiledStatements[i].target
+      if (target === 'a') assignsAlpha = true
+      else if (target === 'linesize') assignsLinesize = true
+    }
+
     return {
       isValid: true,
       statements: compiledStatements,
+      assignsAlpha,
+      assignsLinesize,
     }
   }
 
