@@ -3,10 +3,10 @@
   "metadata": {
     "name": "Quadrant Mirrored Spectrum",
     "author": "Stateless Preset Designer",
-    "version": 2,
-    "description": "Dual frequency spectrum lines composed into 'myframe' along the bottom and right edges with ping-pong feedback (sand-smear sideways drift and phosphor decay), replicated across 4 symmetric quadrants, featuring beat-reactive zoom bounce and angular twist on the master output canvas.",
+    "version": 3,
+    "description": "Dual frequency spectrum lines composed into 'myframe' with directional ping-pong feedback wind flowing outward from the X and Y axes, plus adaptive moving-average RMS-normalized jagged lightning strikes that slowly fade out over time, replicated across 4 symmetric quadrants, featuring beat-reactive zoom bounce and angular twist on the master output canvas.",
     "created": "2026-10-30T19:55:00.000Z",
-    "modified": "2026-10-31T00:50:00.000Z"
+    "modified": "2026-10-31T03:55:00.000Z"
   },
   "settings": {
     "targetFps": 60,
@@ -40,8 +40,8 @@
       "outputBlendMode": "replace",
       "inputBlendMode": "none",
       "opacity": 1,
-      "scale": "1.0 + #BEAT(0.8) * 0.55",
-      "rotation": "#BEAT(0.8) * 36.0",
+      "scale": "1.0 + #BEAT(0.8) * clamp(0.25 + $BASS * 0.45, 0.25, 0.70)",
+      "rotation": "#BEAT(0.8) * (sin($TIME * 1.7 + sin($TIME * 0.8) * 1.5) > 0 ? 1 : -1) * clamp(18.0 + $RMS * 36.0, 18.0, 54.0)",
       "positionX": 0,
       "positionY": 0
     },
@@ -53,41 +53,101 @@
         "params": {
           "saveTo": "@FRAME",
           "outputBlendMode": "none",
-          "feedback": true,
-          "opacity": 0.93,
+          "feedback": false,
+          "opacity": 1,
           "scale": 1,
-          "positionX": 0.006,
+          "positionX": 0,
           "positionY": 0
         },
         "children": [
           {
-            "id": "myline-bottom",
+            "id": "myframe-bottom",
+            "type": "frameBuffer",
+            "label": "myframe-bottom (Horizontal Spectrum Feedback - Y Drift)",
+            "params": {
+              "feedback": true,
+              "outputBlendMode": "additive",
+              "opacity": 0.94,
+              "scale": 1,
+              "positionX": 0,
+              "positionY": 0.011
+            },
+            "children": [
+              {
+                "id": "myline-bottom",
+                "type": "duperscopeNode",
+                "label": "myline (Bottom Spectrum Line)",
+                "params": {
+                  "drawMode": "lines",
+                  "audioMode": "spectrum",
+                  "channel": "center",
+                  "opacity": 1,
+                  "initCode": "n = 256;",
+                  "beatCode": "linesize = 5.0;",
+                  "frameCode": "linesize = 3.5; r = 0.1 + $BASS * 0.4; g = 0.75; b = 1.0;",
+                  "pointCode": "x = -1.0 + (i * 2.0); y = -1.0 + (v * 0.45); r = 0.1 + i * 0.5; g = 0.7 + (1.0 - i) * 0.3; b = 1.0;"
+                }
+              }
+            ]
+          },
+          {
+            "id": "myframe-right",
+            "type": "frameBuffer",
+            "label": "myframe-right (Vertical Spectrum Feedback - X Drift)",
+            "params": {
+              "feedback": true,
+              "outputBlendMode": "additive",
+              "opacity": 0.94,
+              "scale": 1,
+              "positionX": -0.011,
+              "positionY": 0
+            },
+            "children": [
+              {
+                "id": "myline-right",
+                "type": "duperscopeNode",
+                "label": "myline (Right Spectrum Line)",
+                "params": {
+                  "drawMode": "lines",
+                  "audioMode": "spectrum",
+                  "channel": "center",
+                  "opacity": 1,
+                  "initCode": "n = 256;",
+                  "beatCode": "linesize = 5.0;",
+                  "frameCode": "linesize = 3.5; r = 0.2 + $BASS * 0.4; g = 0.70; b = 1.0;",
+                  "pointCode": "y = 1.0 - (i * 2.0); x = 1.0 - (v * 0.45); r = 0.2 + (1.0 - i) * 0.4; g = 0.6 + i * 0.4; b = 1.0;"
+                }
+              }
+            ]
+          },
+          {
+            "id": "myline-lightning",
             "type": "duperscopeNode",
-            "label": "myline (Bottom Spectrum Line)",
+            "label": "myline (RMS Lightning Strike)",
             "params": {
               "drawMode": "lines",
-              "audioMode": "spectrum",
+              "audioMode": "waveform",
               "channel": "center",
               "opacity": 1,
-              "initCode": "n = 256;",
-              "beatCode": "linesize = 5.0;",
-              "frameCode": "linesize = 3.5; r = 0.1 + $BASS * 0.4; g = 0.75; b = 1.0;",
-              "pointCode": "x = -1.0 + (i * 2.0); y = -1.0 + (v * 0.45); r = 0.1 + i * 0.5; g = 0.7 + (1.0 - i) * 0.3; b = 1.0;"
+              "initCode": "n = 160; avgRms = 0.3; prevSurge = 0.0; surgeThreshold = 0.10; minRms = 0.12; strike = 0.0; seed = 1.0; decay = 0.965; edgeA = 0; edgeB = 2; uA = 0.0; uB = 0.0; x0 = 0.0; y0 = 1.0; x1 = 0.0; y1 = -1.0; dx = 0.0; dy = -2.0; len = 2.0; nx = 1.0; ny = 0.0;",
+              "beatCode": "",
+              "frameCode": "avgRms = avgRms * 0.992 + $RMS * 0.008; surge = $RMS - avgRms; isStrike = (surge >= surgeThreshold) and (prevSurge < surgeThreshold) and ($RMS > minRms) ? 1.0 : 0.0; prevSurge = surge; strike = isStrike ? 1.0 : (strike * decay); seed = isStrike ? (seed + 19.37) : seed; edgeA = isStrike ? floor(random(4)) : edgeA; edgeB = isStrike ? ((edgeA + 1 + floor(random(3))) % 4) : edgeB; uA = isStrike ? (-0.85 + random(1.7)) : uA; uB = isStrike ? (-0.85 + random(1.7)) : uB; x0 = isStrike ? (edgeA == 0 ? uA : (edgeA == 1 ? 1.0 : (edgeA == 2 ? uA : -1.0))) : x0; y0 = isStrike ? (edgeA == 0 ? 1.0 : (edgeA == 1 ? uA : (edgeA == 2 ? -1.0 : uA))) : y0; x1 = isStrike ? (edgeB == 0 ? uB : (edgeB == 1 ? 1.0 : (edgeB == 2 ? uB : -1.0))) : x1; y1 = isStrike ? (edgeB == 0 ? 1.0 : (edgeB == 1 ? uB : (edgeB == 2 ? -1.0 : uB))) : y1; dx = x1 - x0; dy = y1 - y0; len = max(0.001, sqrt(dx * dx + dy * dy)); nx = -dy / len; ny = dx / len; linesize = strike > 0.001 ? (1.5 + strike * 5.0) : 0.0; r = 0.8 + strike * 0.2; g = 0.9 + strike * 0.1; b = 1.0; a = strike;",
+              "pointCode": "envelope = sin(i * PI); h1 = sin(i * 37.0 + seed); h2 = sin(i * 89.0 + seed * 2.3); h3 = sin(i * 211.0 + seed * 4.7); h4 = sin(i * 433.0 + seed * 8.9); jagged = (h1 * 0.12 + h2 * 0.07 + h3 * 0.035 + h4 * 0.015) * envelope; x = x0 + dx * i + nx * jagged; y = y0 + dy * i + ny * jagged; r = strike * (0.85 + 0.15 * (1.0 - i)); g = strike * (0.9 + 0.1 * (1.0 - i)); b = strike; a = strike;"
             }
           },
           {
-            "id": "myline-right",
+            "id": "myline-lightning-secondary",
             "type": "duperscopeNode",
-            "label": "myline (Right Spectrum Line)",
+            "label": "myline (Secondary Lightning Strike - 40%)",
             "params": {
               "drawMode": "lines",
-              "audioMode": "spectrum",
+              "audioMode": "waveform",
               "channel": "center",
               "opacity": 1,
-              "initCode": "n = 256;",
-              "beatCode": "linesize = 5.0;",
-              "frameCode": "linesize = 3.5; r = 0.2 + $BASS * 0.4; g = 0.70; b = 1.0;",
-              "pointCode": "y = 1.0 - (i * 2.0); x = 1.0 - (v * 0.45); r = 0.2 + (1.0 - i) * 0.4; g = 0.6 + i * 0.4; b = 1.0;"
+              "initCode": "n = 160; avgRms = 0.3; prevSurge = 0.0; surgeThreshold = 0.10; minRms = 0.12; strike = 0.0; seed = 2.0; decay = 0.965; edgeA = 1; edgeB = 3; uA = 0.0; uB = 0.0; x0 = 1.0; y0 = 0.0; x1 = -1.0; y1 = 0.0; dx = -2.0; dy = 0.0; len = 2.0; nx = 0.0; ny = 1.0;",
+              "beatCode": "",
+              "frameCode": "avgRms = avgRms * 0.992 + $RMS * 0.008; surge = $RMS - avgRms; isSurge = (surge >= surgeThreshold) and (prevSurge < surgeThreshold) and ($RMS > minRms) ? 1.0 : 0.0; prevSurge = surge; isStrike = isSurge and (random() < 0.40) ? 1.0 : 0.0; strike = isStrike ? 1.0 : (strike * decay); seed = isStrike ? (seed + 29.41) : seed; edgeA = isStrike ? floor(random(4)) : edgeA; edgeB = isStrike ? ((edgeA + 1 + floor(random(3))) % 4) : edgeB; uA = isStrike ? (-0.85 + random(1.7)) : uA; uB = isStrike ? (-0.85 + random(1.7)) : uB; x0 = isStrike ? (edgeA == 0 ? uA : (edgeA == 1 ? 1.0 : (edgeA == 2 ? uA : -1.0))) : x0; y0 = isStrike ? (edgeA == 0 ? 1.0 : (edgeA == 1 ? uA : (edgeA == 2 ? -1.0 : uA))) : y0; x1 = isStrike ? (edgeB == 0 ? uB : (edgeB == 1 ? 1.0 : (edgeB == 2 ? uB : -1.0))) : x1; y1 = isStrike ? (edgeB == 0 ? 1.0 : (edgeB == 1 ? uB : (edgeB == 2 ? -1.0 : uB))) : y1; dx = x1 - x0; dy = y1 - y0; len = max(0.001, sqrt(dx * dx + dy * dy)); nx = -dy / len; ny = dx / len; linesize = strike > 0.001 ? (1.2 + strike * 4.0) : 0.0; r = 0.75 + strike * 0.25; g = 0.85 + strike * 0.15; b = 1.0; a = strike;",
+              "pointCode": "envelope = sin(i * PI); h1 = sin(i * 41.0 + seed); h2 = sin(i * 97.0 + seed * 2.1); h3 = sin(i * 223.0 + seed * 4.3); h4 = sin(i * 449.0 + seed * 8.7); jagged = (h1 * 0.11 + h2 * 0.065 + h3 * 0.03 + h4 * 0.015) * envelope; x = x0 + dx * i + nx * jagged; y = y0 + dy * i + ny * jagged; r = strike * (0.8 + 0.2 * (1.0 - i)); g = strike * (0.85 + 0.15 * (1.0 - i)); b = strike; a = strike;"
             }
           }
         ]

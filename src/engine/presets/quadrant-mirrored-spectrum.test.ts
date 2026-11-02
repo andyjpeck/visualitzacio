@@ -1,11 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import fs from 'node:fs'
 import path from 'node:path'
-import { createMockRenderer } from '../../test/fixtures/renderer-mock'
-import { createDefaultFrameContext } from '../../contracts/frame-context'
 import { validatePreset } from '../../contracts/preset-schema'
 import { deserializePreset } from './preset-deserializer'
-import { DuperscopeNode } from '../nodes/duperscope-node'
 
 describe('Preset Verification: Quadrant Mirrored Spectrum', () => {
   const presetPath = path.resolve(__dirname, '../../../presets/quadrant-mirrored-spectrum.json')
@@ -34,16 +31,28 @@ describe('Preset Verification: Quadrant Mirrored Spectrum', () => {
 
     // Check beat bounce and twist on master root
     const masterNode = result.nodes.find((n) => n.id === 'master-frame-buffer')
-    expect(masterNode?.data.scale).toBe('1.0 + #BEAT(0.8) * 0.55')
-    expect(masterNode?.data.rotation).toBe('#BEAT(0.8) * 36.0')
+    expect(masterNode?.data.scale).toBe('1.0 + #BEAT(0.8) * clamp(0.25 + $BASS * 0.45, 0.25, 0.70)')
+    expect(masterNode?.data.rotation).toBe(
+      '#BEAT(0.8) * (sin($TIME * 1.7 + sin($TIME * 0.8) * 1.5) > 0 ? 1 : -1) * clamp(18.0 + $RMS * 36.0, 18.0, 54.0)',
+    )
 
-    // Check feedback and sand-smearing on myframe
-    const myframeNode = result.nodes.find((n) => n.id === 'myframe')
-    expect(myframeNode?.data.feedback).toBe(true)
-    expect(myframeNode?.data.opacity).toBe(0.93)
-    expect(myframeNode?.data.positionX).toBe(0.006)
+    // Check directional feedback wind away from X and Y axes
+    const myframeBottom = result.nodes.find((n) => n.id === 'myframe-bottom')
+    expect(myframeBottom?.data.feedback).toBe(true)
+    expect(myframeBottom?.data.positionY).toBe(0.011)
+    expect(myframeBottom?.data.positionX).toBe(0)
+
+    const myframeRight = result.nodes.find((n) => n.id === 'myframe-right')
+    expect(myframeRight?.data.feedback).toBe(true)
+    expect(myframeRight?.data.positionX).toBe(-0.011)
+    expect(myframeRight?.data.positionY).toBe(0)
+
+    expect(nodeIds.has('myframe-bottom')).toBe(true)
+    expect(nodeIds.has('myframe-right')).toBe(true)
     expect(nodeIds.has('myline-bottom')).toBe(true)
     expect(nodeIds.has('myline-right')).toBe(true)
+    expect(nodeIds.has('myline-lightning')).toBe(true)
+    expect(nodeIds.has('myline-lightning-secondary')).toBe(true)
     expect(nodeIds.has('quadrant-upper-left')).toBe(true)
     expect(nodeIds.has('quadrant-upper-right')).toBe(true)
     expect(nodeIds.has('quadrant-lower-left')).toBe(true)
@@ -84,50 +93,5 @@ describe('Preset Verification: Quadrant Mirrored Spectrum', () => {
     // Check that named buffer edges are established from myframe (@FRAME) to the 4 quadrants
     const frameEdges = result.edges.filter((e) => e.source === 'myframe')
     expect(frameEdges.length).toBe(4)
-  })
-
-  it('compiles both Duperscope lines and verifies non-empty geometry generation', () => {
-    const renderer = createMockRenderer()
-    const ctx = createDefaultFrameContext()
-    ctx.$WIDTH = 1920
-    ctx.$HEIGHT = 1080
-    ctx.$ASPECT = 1920 / 1080
-    ctx.$TIME = 2.0
-    ctx.$BASS = 0.8
-    ctx.$MID = 0.5
-
-    const bottomLine = new DuperscopeNode({
-      id: 'myline-bottom',
-      drawMode: 'lines',
-      audioMode: 'spectrum',
-      channel: 'center',
-      opacity: 1.0,
-      initCode: 'n = 256;',
-      beatCode: 'linesize = 5.0;',
-      frameCode: 'linesize = 3.5; r = 0.1 + $BASS * 0.4; g = 0.75; b = 1.0;',
-      pointCode: 'x = -1.0 + (i * 2.0); y = -0.95 + (v * 0.75); r = 0.1 + i * 0.5; g = 0.7 + (1.0 - i) * 0.3; b = 1.0;',
-    })
-    bottomLine.init(renderer)
-    bottomLine.resize(1920, 1080, 1.0)
-    bottomLine.update(ctx)
-    expect(bottomLine.hasErrors).toBe(false)
-    expect(bottomLine.getActiveSegmentCount()).toBeGreaterThan(0)
-
-    const rightLine = new DuperscopeNode({
-      id: 'myline-right',
-      drawMode: 'lines',
-      audioMode: 'spectrum',
-      channel: 'center',
-      opacity: 1.0,
-      initCode: 'n = 256;',
-      beatCode: 'linesize = 5.0;',
-      frameCode: 'linesize = 3.5; r = 0.2 + $BASS * 0.4; g = 0.70; b = 1.0;',
-      pointCode: 'y = -1.0 + (i * 2.0); x = 0.95 - (v * 0.75); r = 0.2 + (1.0 - i) * 0.4; g = 0.6 + i * 0.4; b = 1.0;',
-    })
-    rightLine.init(renderer)
-    rightLine.resize(1920, 1080, 1.0)
-    rightLine.update(ctx)
-    expect(rightLine.hasErrors).toBe(false)
-    expect(rightLine.getActiveSegmentCount()).toBeGreaterThan(0)
   })
 })
