@@ -24,3 +24,5 @@ This directory houses the execution tracks and task plans for Visualització mil
   Track 13: Responsive Toolbar Overflow & Wrapping (Completed).
 - [**`track_14_engine_perf_bottlenecks/`**](file:///C:/Users/andyj/Documents/visualitzacio/conductor/tracks/track_14_engine_perf_bottlenecks/index.md):
   Track 14: Engine Performance — Render Pass, VRAM & Bandwidth Optimizations (#14) (Completed).
+- [**`track_15_editor_performance_settings/`**](file:///C:/Users/andyj/Documents/visualitzacio/conductor/tracks/track_15_editor_performance_settings/index.md):
+  Track 15: Editor & Performance Settings Section in Toolbar Menu (#15) (In Progress).

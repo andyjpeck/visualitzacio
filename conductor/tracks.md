@@ -72,3 +72,7 @@ This registry tracks the planned, active, and completed workstreams across Visua
 - [x] **Track 14: Engine Performance — Render Pass, VRAM & Bandwidth Optimizations (#14)**
   *Goal: Disable main canvas MSAA/depth, default `FrameBufferNode` to `depthBuffer: false` and skip direct pass-through FBO allocations, fix high-refresh display frame pacing with accumulator remainder carry-over, and optimize Duperscope dynamic buffer upload ranges and dormant point loop execution.*  
   *Link: [./tracks/track_14_engine_perf_bottlenecks/index.md](./tracks/track_14_engine_perf_bottlenecks/index.md)* (Completed)
+
+- [~] **Track 15: Editor & Performance Settings Section in Toolbar Menu (#15)**
+  *Goal: Add a localStorage-backed Editor & Performance Settings section (Layer Complexity Cost Estimates toggle & Debug Telemetry Overlay toggle) to the toolbar Settings modal, isolated from preset JSON serialization.*  
+  *Link: [./tracks/track_15_editor_performance_settings/index.md](./tracks/track_15_editor_performance_settings/index.md)* (In Progress)

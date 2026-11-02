@@ -1,0 +1,16 @@
+{
+  "track_id": "track_15_editor_performance_settings",
+  "type": "feature",
+  "status": "in_progress",
+  "agent": "Antigravity",
+  "worktree": {
+    "branch": "issue-15-editor-performance-settings",
+    "directory": ".worktrees/issue-15-editor-settings"
+  },
+  "github_issue": {
+    "number": 15
+  },
+  "created_at": "2026-11-02T04:42:00Z",
+  "updated_at": "2026-11-02T04:42:00Z",
+  "description": "Add an Editor & Performance Settings section to the toolbar Settings modal backed by localStorage without polluting exported preset JSON (#15)"
+}
