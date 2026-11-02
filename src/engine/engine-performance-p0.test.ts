@@ -312,9 +312,10 @@ describe('Track 14 — Engine Performance: Render Pass, VRAM & Bandwidth Optimiz
       expect(node.getActiveSegmentCount()).toBe(0)
       expect(mockRenderer.render).not.toHaveBeenCalled()
 
-      // When n > 0 but node opacity is 0, frame state still advances while point loop & render are skipped
-      node.setScripts({ frameCode: 'counter = counter + 1; n = 100;' })
+      // When n > 0 but node opacity is 0, frame state still advances across frames while point loop & render are skipped
+      node.setScripts({ frame: 'counter = counter + 1; n = 100;' })
       node.setOpacity(0)
+      node.update(createDefaultFrameContext())
       node.update(createDefaultFrameContext())
 
       expect(node.getScope().counter).toBe(2)

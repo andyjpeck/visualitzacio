@@ -12,6 +12,7 @@ export interface DuperscopeRunFrameOptions {
   positions: Float32Array
   colors: Float32Array
   sizes: Float32Array
+  skipPoints?: boolean
 }
 
 export interface DuperscopeRunFrameResult {
@@ -137,6 +138,8 @@ export class DuperscopeRunner {
   /**
    * Evaluates `beat` (if beat frame), `frame`, and the $N$-point `point` loop,
    * populating the pre-allocated WebGL vertex, color, and size buffers.
+   * Automatically short-circuits the `point` loop when `n <= 0`, `options.skipPoints` is set,
+   * or when frame-end `a <= 0.001` or `linesize <= 0.0` without per-point reassignment.
    *
    * @param compiledBeat - Compiled beat phase statements.
    * @param compiledFrame - Compiled frame phase statements.
@@ -177,14 +180,36 @@ export class DuperscopeRunner {
       }
     }
 
-    // 4. Calculate clamped point count n in [1, 4096]
+    // 4. Calculate clamped point count n in [0, 4096]
     const rawN = this.scope.n
-    const pointCount = Number.isFinite(rawN) ? Math.max(1, Math.min(4096, Math.floor(rawN))) : 200
+    const pointCount = Number.isFinite(rawN) ? Math.max(0, Math.min(4096, Math.floor(rawN))) : 200
 
-    // 5. Evaluate point loop
+    if (pointCount === 0 || options.skipPoints) {
+      return { pointCount: 0 }
+    }
+
     const pointStmts = compiledPoint.isValid ? compiledPoint.statements : []
     const stmtsLen = pointStmts.length
 
+    // Short-circuit dormant point loops when frame-end alpha or linesize is non-positive
+    // and not reassigned inside the point phase
+    if (this.scope.a <= 0.001 || this.scope.linesize <= 0.0) {
+      let assignsAlpha = false
+      let assignsLinesize = false
+      for (let s = 0; s < stmtsLen; s++) {
+        const target = pointStmts[s].target
+        if (target === 'a') assignsAlpha = true
+        else if (target === 'linesize') assignsLinesize = true
+      }
+      if (
+        (this.scope.a <= 0.001 && !assignsAlpha) ||
+        (this.scope.linesize <= 0.0 && !assignsLinesize)
+      ) {
+        return { pointCount: 0 }
+      }
+    }
+
+    // 5. Evaluate point loop
     for (let k = 0; k < pointCount; k++) {
       const i = pointCount > 1 ? k / (pointCount - 1) : 0.0
       const v = sampleDuperscopeAudio(i, options.audioMode, options.channel, context)

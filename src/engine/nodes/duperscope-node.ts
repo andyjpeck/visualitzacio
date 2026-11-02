@@ -47,7 +47,7 @@ const MAX_SEGMENTS = 4096
  * Visual generative synthesizer node inspired by Winamp AVS Superscope.
  * Renders parametric curves and audio-reactive particle geometries via
  * a 4-phase procedural execution lifecycle (`init`, `beat`, `frame`, `point`)
- * with 1:1 aspect-ratio projection and instanced screen-space quad ribbons.
+ * with instanced screen-space quad ribbons and dynamic buffer upload ranges.
  */
 export class DuperscopeNode implements VisualNode {
   readonly id: string
@@ -116,20 +116,18 @@ export class DuperscopeNode implements VisualNode {
     this.ribbonMesh.frustumCulled = false
     this.scene.add(this.ribbonMesh)
 
-    // Setup Points Mesh
+    // Setup Points Mesh with DynamicDrawUsage
     this.pointsGeometry = new THREE.BufferGeometry()
-    this.pointsGeometry.setAttribute(
-      'position',
-      new THREE.BufferAttribute(this.pointPositions, 3),
-    )
-    this.pointsGeometry.setAttribute(
-      'color',
-      new THREE.BufferAttribute(this.pointColors, 4),
-    )
-    this.pointsGeometry.setAttribute(
-      'aSize',
-      new THREE.BufferAttribute(this.pointSizes, 1),
-    )
+    const posAttr = new THREE.BufferAttribute(this.pointPositions, 3)
+    posAttr.setUsage(THREE.DynamicDrawUsage)
+    const colAttr = new THREE.BufferAttribute(this.pointColors, 4)
+    colAttr.setUsage(THREE.DynamicDrawUsage)
+    const sizeAttr = new THREE.BufferAttribute(this.pointSizes, 1)
+    sizeAttr.setUsage(THREE.DynamicDrawUsage)
+
+    this.pointsGeometry.setAttribute('position', posAttr)
+    this.pointsGeometry.setAttribute('color', colAttr)
+    this.pointsGeometry.setAttribute('aSize', sizeAttr)
     this.pointsGeometry.setDrawRange(0, 0)
     this.pointsMaterial = createDuperscopePointsMaterial()
     this.pointsMesh = new THREE.Points(this.pointsGeometry, this.pointsMaterial)
@@ -242,6 +240,8 @@ export class DuperscopeNode implements VisualNode {
       currentOpacity = this.opacityParam.evaluate(context)
     }
 
+    const isTransparent = currentOpacity <= 0.001
+
     // Update shader uniforms
     this.ribbonMaterial.uniforms.uResolution.value.set(context.$WIDTH, context.$HEIGHT)
     this.ribbonMaterial.uniforms.uAspect.value = context.$ASPECT
@@ -252,7 +252,7 @@ export class DuperscopeNode implements VisualNode {
     this.pointsMaterial.uniforms.uPixelRatio.value = context.$PIXEL_RATIO
     this.pointsMaterial.uniforms.uOpacity.value = currentOpacity
 
-    // Run execution phases (beat -> frame -> point loop)
+    // Run execution phases (beat -> frame -> point loop, short-circuiting point loop if transparent/dormant)
     const { pointCount } = this.runner.runFrame(
       this.compilationResult.beat,
       this.compilationResult.frame,
@@ -264,10 +264,18 @@ export class DuperscopeNode implements VisualNode {
         positions: this.pointPositions,
         colors: this.pointColors,
         sizes: this.pointSizes,
+        skipPoints: isTransparent,
       },
     )
 
     this.activePointCount = pointCount
+
+    if (pointCount === 0) {
+      this.activeSegmentCount = 0
+      this.ribbonGeometry.instanceCount = 0
+      this.pointsGeometry.setDrawRange(0, 0)
+      return
+    }
 
     if (this.drawMode === 'points') {
       this.ribbonMesh.visible = false
@@ -275,13 +283,22 @@ export class DuperscopeNode implements VisualNode {
       this.activeSegmentCount = 0
       this.ribbonGeometry.instanceCount = 0
 
-      const posAttr = this.pointsGeometry.attributes.position
-      const colAttr = this.pointsGeometry.attributes.color
-      const sizeAttr = this.pointsGeometry.attributes.aSize
+      const posAttr = this.pointsGeometry.attributes.position as THREE.BufferAttribute
+      const colAttr = this.pointsGeometry.attributes.color as THREE.BufferAttribute
+      const sizeAttr = this.pointsGeometry.attributes.aSize as THREE.BufferAttribute
 
+      posAttr.clearUpdateRanges()
+      posAttr.addUpdateRange(0, pointCount * 3)
       posAttr.needsUpdate = true
+
+      colAttr.clearUpdateRanges()
+      colAttr.addUpdateRange(0, pointCount * 4)
       colAttr.needsUpdate = true
+
+      sizeAttr.clearUpdateRanges()
+      sizeAttr.addUpdateRange(0, pointCount * 1)
       sizeAttr.needsUpdate = true
+
       this.pointsGeometry.setDrawRange(0, pointCount)
     } else {
       // 'lines' or 'lineLoop' mode
@@ -292,6 +309,11 @@ export class DuperscopeNode implements VisualNode {
       const isLoop = this.drawMode === 'lineLoop'
       const segmentCount = isLoop ? (pointCount >= 2 ? pointCount : 0) : Math.max(0, pointCount - 1)
       this.activeSegmentCount = segmentCount
+
+      if (segmentCount === 0) {
+        this.ribbonGeometry.instanceCount = 0
+        return
+      }
 
       const startAttr = this.ribbonGeometry.attributes.instanceStart as THREE.InstancedBufferAttribute
       const endAttr = this.ribbonGeometry.attributes.instanceEnd as THREE.InstancedBufferAttribute
@@ -341,11 +363,28 @@ export class DuperscopeNode implements VisualNode {
         endSizeArray[s] = this.pointSizes[p2]
       }
 
+      startAttr.clearUpdateRanges()
+      startAttr.addUpdateRange(0, segmentCount * 3)
       startAttr.needsUpdate = true
+
+      endAttr.clearUpdateRanges()
+      endAttr.addUpdateRange(0, segmentCount * 3)
       endAttr.needsUpdate = true
+
+      startColAttr.clearUpdateRanges()
+      startColAttr.addUpdateRange(0, segmentCount * 4)
       startColAttr.needsUpdate = true
+
+      endColAttr.clearUpdateRanges()
+      endColAttr.addUpdateRange(0, segmentCount * 4)
       endColAttr.needsUpdate = true
+
+      startSizeAttr.clearUpdateRanges()
+      startSizeAttr.addUpdateRange(0, segmentCount * 1)
       startSizeAttr.needsUpdate = true
+
+      endSizeAttr.clearUpdateRanges()
+      endSizeAttr.addUpdateRange(0, segmentCount * 1)
       endSizeAttr.needsUpdate = true
 
       this.ribbonGeometry.instanceCount = segmentCount

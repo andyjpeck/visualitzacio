@@ -2,7 +2,7 @@ import * as THREE from 'three'
 
 /**
  * GLSL Vertex shader for rendering variable-thickness line segments via Instanced Screen-Space Quad Ribbons.
- * Bypasses the 1.0px WebGL gl.lineWidth limitation, supporting linesize from 1px to 128px with 1:1 aspect correction.
+ * Bypasses the 1.0px WebGL gl.lineWidth limitation, supporting linesize from 1px to 128px.
  */
 export const DUPERSCOPE_RIBBON_VERTEX_SHADER = `
 attribute vec2 aCorner; // x: 0 (start) to 1 (end), y: -1 (left) to 1 (right)
@@ -73,7 +73,7 @@ void main() {
 `
 
 /**
- * GLSL Vertex shader for rendering points mode with per-point size and 1:1 aspect correction.
+ * GLSL Vertex shader for rendering points mode with per-point size.
  */
 export const DUPERSCOPE_POINTS_VERTEX_SHADER = `
 attribute vec4 color;
@@ -132,6 +132,7 @@ export function createDuperscopeRibbonMaterial(): THREE.ShaderMaterial {
 
 /**
  * Creates a pre-allocated THREE.InstancedBufferGeometry for drawing up to maxSegments quad ribbons.
+ * Configures all per-instance segment attributes with THREE.DynamicDrawUsage for efficient streaming uploads.
  *
  * @param maxSegments - Maximum number of polyline segments (default 4096).
  */
@@ -148,13 +149,26 @@ export function createRibbonQuadGeometry(maxSegments = 4096): THREE.InstancedBuf
   geometry.setAttribute('aCorner', new THREE.BufferAttribute(corners, 2))
   geometry.setIndex([0, 1, 2, 2, 1, 3])
 
-  // Instanced segment attributes
-  geometry.setAttribute('instanceStart', new THREE.InstancedBufferAttribute(new Float32Array(maxSegments * 3), 3))
-  geometry.setAttribute('instanceEnd', new THREE.InstancedBufferAttribute(new Float32Array(maxSegments * 3), 3))
-  geometry.setAttribute('instanceStartColor', new THREE.InstancedBufferAttribute(new Float32Array(maxSegments * 4), 4))
-  geometry.setAttribute('instanceEndColor', new THREE.InstancedBufferAttribute(new Float32Array(maxSegments * 4), 4))
-  geometry.setAttribute('instanceStartSize', new THREE.InstancedBufferAttribute(new Float32Array(maxSegments), 1))
-  geometry.setAttribute('instanceEndSize', new THREE.InstancedBufferAttribute(new Float32Array(maxSegments), 1))
+  // Instanced segment attributes configured with DynamicDrawUsage
+  const instanceStart = new THREE.InstancedBufferAttribute(new Float32Array(maxSegments * 3), 3)
+  instanceStart.setUsage(THREE.DynamicDrawUsage)
+  const instanceEnd = new THREE.InstancedBufferAttribute(new Float32Array(maxSegments * 3), 3)
+  instanceEnd.setUsage(THREE.DynamicDrawUsage)
+  const instanceStartColor = new THREE.InstancedBufferAttribute(new Float32Array(maxSegments * 4), 4)
+  instanceStartColor.setUsage(THREE.DynamicDrawUsage)
+  const instanceEndColor = new THREE.InstancedBufferAttribute(new Float32Array(maxSegments * 4), 4)
+  instanceEndColor.setUsage(THREE.DynamicDrawUsage)
+  const instanceStartSize = new THREE.InstancedBufferAttribute(new Float32Array(maxSegments), 1)
+  instanceStartSize.setUsage(THREE.DynamicDrawUsage)
+  const instanceEndSize = new THREE.InstancedBufferAttribute(new Float32Array(maxSegments), 1)
+  instanceEndSize.setUsage(THREE.DynamicDrawUsage)
+
+  geometry.setAttribute('instanceStart', instanceStart)
+  geometry.setAttribute('instanceEnd', instanceEnd)
+  geometry.setAttribute('instanceStartColor', instanceStartColor)
+  geometry.setAttribute('instanceEndColor', instanceEndColor)
+  geometry.setAttribute('instanceStartSize', instanceStartSize)
+  geometry.setAttribute('instanceEndSize', instanceEndSize)
 
   geometry.instanceCount = 0
   return geometry
