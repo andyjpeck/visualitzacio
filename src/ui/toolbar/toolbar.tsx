@@ -80,21 +80,23 @@ export function Toolbar({ audioManager, className = '' }: ToolbarProps): React.R
       const isNarrowWithDebug = showDebugData && parentWidth < 480
       setIsNarrow(isNarrowWithDebug)
 
-      const leftReserved = isNarrowWithDebug ? 16 : showDebugData ? 135 : 16
+      const leftReserved = isNarrowWithDebug ? 16 : showDebugData ? 152 : 16
       const rightReserved = 16
       const availableWidth = Math.max(100, parentWidth - leftReserved - rightReserved)
 
-      // Calculate the widest single cluster or total layout width
-      let widestContent = Math.max(el.scrollWidth || 0, el.offsetWidth || 0)
+      // Calculate the widest single child cluster to scale down only when an individual cluster overflows
+      let widestCluster = 0
       for (let i = 0; i < el.children.length; i++) {
         const child = el.children[i] as HTMLElement
         if (child) {
-          widestContent = Math.max(widestContent, child.scrollWidth || 0, child.offsetWidth || 0)
+          widestCluster = Math.max(widestCluster, child.offsetWidth || 0, child.scrollWidth || 0)
         }
       }
+      // Fall back to container layout width if individual children geometry is zero/mocked
+      const layoutWidth = widestCluster > 0 ? widestCluster : Math.max(el.offsetWidth || 0, el.scrollWidth || 0)
 
-      if (widestContent > availableWidth && widestContent > 0) {
-        const targetScale = Math.min(1, Math.max(0.35, availableWidth / widestContent))
+      if (layoutWidth > availableWidth && layoutWidth > 0) {
+        const targetScale = Math.min(1, Math.max(0.35, availableWidth / layoutWidth))
         setScale(targetScale)
       } else {
         setScale(1)
@@ -117,7 +119,7 @@ export function Toolbar({ audioManager, className = '' }: ToolbarProps): React.R
       resizeObserver.disconnect()
       window.removeEventListener('resize', updateScale)
     }
-  }, [showDebugData, sourceType, audioFileName, isPlaying])
+  }, [showDebugData, sourceType, audioFileName])
 
   const handlePlayPause = async () => {
     if (!audioManager || isMicActive) return
@@ -235,7 +237,7 @@ export function Toolbar({ audioManager, className = '' }: ToolbarProps): React.R
           transform: scale < 1 ? `scale(${scale})` : undefined,
           transformOrigin: 'top right',
         }}
-        className={`absolute ${isNarrow ? 'top-14' : 'top-4'} right-4 z-40 flex flex-wrap items-center justify-end gap-2 p-1.5 rounded-xl backdrop-blur-md bg-cyber-void/85 border border-white/10 shadow-2xl select-none transition-all duration-75 max-w-[calc(100%-2rem)] ${className}`}
+        className={`absolute ${isNarrow ? 'top-14' : 'top-4'} right-4 z-40 flex flex-wrap items-center justify-end gap-2 p-1.5 rounded-xl backdrop-blur-md bg-cyber-void/85 border border-white/10 shadow-2xl select-none transition-all duration-75 ${showDebugData && !isNarrow ? "max-w-[calc(100%-9.5rem)]" : "max-w-[calc(100%-2rem)]"} ${className}`}
       >
         {/* Playback & Audio Source Cluster */}
         <div
@@ -327,16 +329,20 @@ export function Toolbar({ audioManager, className = '' }: ToolbarProps): React.R
           </div>
         </div>
 
-        {/* Audio Progress / Scrubber / Loading Bar */}
-        <AudioProgressScrubber
-          audioManager={audioManager}
-          sourceType={sourceType}
-          audioFileName={audioFileName}
-          isPlaying={isPlaying}
-          isAudioLoading={isAudioLoading}
-          audioLoadingProgress={audioLoadingProgress}
-          audioLoadingStage={audioLoadingStage}
-        />
+        {/* Audio Progress / Scrubber / Loading Bar Cluster */}
+        {(sourceType === 'file' || isAudioLoading) && (
+          <div data-testid="audio-scrubber-cluster" className="shrink-0">
+            <AudioProgressScrubber
+              audioManager={audioManager}
+              sourceType={sourceType}
+              audioFileName={audioFileName}
+              isPlaying={isPlaying}
+              isAudioLoading={isAudioLoading}
+              audioLoadingProgress={audioLoadingProgress}
+              audioLoadingStage={audioLoadingStage}
+            />
+          </div>
+        )}
 
         {/* Action Tools Cluster */}
         <div

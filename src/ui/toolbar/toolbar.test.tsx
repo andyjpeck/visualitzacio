@@ -312,33 +312,27 @@ describe('Toolbar Component', () => {
     expect(actionsCluster).toContainElement(screen.getByRole('button', { name: /open preset settings/i }))
   })
 
-  it('keeps all right-side buttons accessible and within preview bounds down to 320px', () => {
+  it('scales down proportionally when a child cluster exceeds available width at 320px', () => {
     const parentDiv = document.createElement('div')
+    // 320px width with FPS overlay moves toolbar to row 2 (top-14), reserving 32px margins -> availableWidth = 288px
     Object.defineProperty(parentDiv, 'clientWidth', { value: 320, configurable: true })
     document.body.appendChild(parentDiv)
 
     render(<Toolbar audioManager={mockAudioManager} />, { container: parentDiv })
     const toolbarHeader = screen.getByTestId('playback-toolbar')
-    expect(toolbarHeader).toBeInTheDocument()
+    const playbackCluster = screen.getByTestId('playback-source-cluster')
 
-    // Trigger responsive update
+    // When child cluster is wider than 288px (e.g. 360px), scale down: 288 / 360 = 0.8
+    Object.defineProperty(playbackCluster, 'offsetWidth', { value: 360, configurable: true })
     fireEvent(window, new Event('resize'))
 
-    // All right-side buttons must remain rendered and reachable
-    const undoBtn = screen.getByTestId('toolbar-undo-btn')
-    const redoBtn = screen.getByTestId('toolbar-redo-btn')
-    const debugBtn = screen.getByTestId('toolbar-debug-data-btn')
-    const settingsBtn = screen.getByRole('button', { name: /open preset settings/i })
-    const studioBtn = screen.getByRole('button', { name: /(enter|exit) live performance mode/i })
+    expect(toolbarHeader.style.transform).toBe('scale(0.8)')
 
-    expect(undoBtn).toBeInTheDocument()
-    expect(redoBtn).toBeInTheDocument()
-    expect(debugBtn).toBeInTheDocument()
-    expect(settingsBtn).toBeInTheDocument()
-    expect(studioBtn).toBeInTheDocument()
+    // When child cluster fits within 288px (e.g. 240px), no scaling needed
+    Object.defineProperty(playbackCluster, 'offsetWidth', { value: 240, configurable: true })
+    fireEvent(window, new Event('resize'))
 
-    // Container wraps and scales appropriately
-    expect(toolbarHeader.className).toContain('flex-wrap')
+    expect(toolbarHeader.style.transform).toBe('')
 
     document.body.removeChild(parentDiv)
   })
