@@ -22,10 +22,10 @@
 
 - [x] Task 2.1: Write Failing Unit Tests for Duperscope DynamicDrawUsage, Update Ranges & Dormant Loop Bypass (Red Phase) `dc8b07e`
   - [x] Extend `src/engine/engine-performance-p0.test.ts` and `src/engine/nodes/duperscope-runner.test.ts` with tests for `THREE.DynamicDrawUsage`, `BufferAttribute.updateRanges`, `n` clamping in `[0, 4096]`, dormant point loop auto-bypass (when `linesize <= 0` or `a <= 0.001` without `point` phase override, or `opacity <= 0.001`), and `quadrant-mirrored-spectrum` dormant lightning node short-circuiting
-- [~] Task 2.2: Implement DuperscopeRunner Dormant Point Loop Bypass & DuperscopeNode Partial Buffer Uploads (Green Phase)
-  - [~] Clamp `n` to `[0, 4096]` and implement zero-allocation dormant point loop bypass in `DuperscopeRunner.runFrame()` while preserving `beat` and `frame` phase state updates
-  - [~] Configure `THREE.DynamicDrawUsage` on all dynamic ribbon and point attributes, apply `clearUpdateRanges()` and `addUpdateRange(0, activeCount * itemSize)`, and skip upload/render when `activeCount === 0` or `currentOpacity <= 0.001` in `DuperscopeNode`
-  - [~] Synchronize JSDoc and architecture documentation in `conductor/tech-stack.md`
-- [ ] Task 2.3: Three-Tier Verification Gate & Stateless Track Review (Refer to workflow.md)
-  - [ ] Execute Tier 1 (`npm run lint`, `npm run build`, `npm test`), Tier 2 (`preset-render-smoke.test.ts`), and Tier 3 (`npm run test:e2e`)
-  - [ ] Perform stateless code and documentation review
+- [x] Task 2.2: Implement DuperscopeRunner Dormant Point Loop Bypass & DuperscopeNode Partial Buffer Uploads (Green Phase) `ba2cbf5`
+  - [x] Clamp `n` to `[0, 4096]` and implement zero-allocation dormant point loop bypass in `DuperscopeRunner.runFrame()` while preserving `beat` and `frame` phase state updates
+  - [x] Configure `THREE.DynamicDrawUsage` on all dynamic ribbon and point attributes, apply `clearUpdateRanges()` and `addUpdateRange(0, activeCount * itemSize)`, and skip upload/render when `activeCount === 0` or `currentOpacity <= 0.001` in `DuperscopeNode`
+  - [x] Synchronize JSDoc and architecture documentation in `conductor/tech-stack.md`
+- [~] Task 2.3: Three-Tier Verification Gate & Stateless Track Review (Refer to workflow.md)
+  - [~] Execute Tier 1 (`npm run lint`, `npm run build`, `npm test`), Tier 2 (`preset-render-smoke.test.ts`), and Tier 3 (`npm run test:e2e`)
+  - [~] Perform stateless code and documentation review
