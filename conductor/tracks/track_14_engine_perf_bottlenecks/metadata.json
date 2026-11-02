@@ -1,0 +1,10 @@
+{
+  "track_id": "track_14_engine_perf_bottlenecks",
+  "type": "bug",
+  "status": "in_progress",
+  "created_at": "2026-11-01T20:06:00-08:00",
+  "updated_at": "2026-11-01T20:06:00-08:00",
+  "description": "Engine Performance: Render Pass, VRAM & Bandwidth Optimizations (#14) — Disable canvas MSAA/depth, strip unused FBO depth buffers and skip pass-through FBO allocations, fix high-refresh display frame pacing, and optimize Duperscope buffer upload ranges and dormant point loop execution.",
+  "branch": "issue-14-engine-perf-and-layer-telemetry",
+  "tasks": []
+}
