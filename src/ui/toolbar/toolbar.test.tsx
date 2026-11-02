@@ -279,4 +279,66 @@ describe('Toolbar Component', () => {
     const presetSelector = screen.getByTestId('toolbar-preset-selector')
     expect(presetSelector).toBeInTheDocument()
   })
+
+  it('organizes controls into cohesive semantic clusters with flex-wrap and right justification', () => {
+    render(<Toolbar audioManager={mockAudioManager} />)
+    const toolbarHeader = screen.getByTestId('playback-toolbar')
+
+    // Container must support multi-row flex-wrapping and right alignment
+    expect(toolbarHeader.className).toContain('flex-wrap')
+    expect(toolbarHeader.className).toContain('justify-end')
+
+    // Verify cohesive semantic clusters exist to prevent individual control fracturing
+    const playbackCluster = screen.getByTestId('playback-source-cluster')
+    const presetCluster = screen.getByTestId('preset-scrubber-cluster')
+    const actionsCluster = screen.getByTestId('action-tools-cluster')
+
+    expect(playbackCluster).toBeInTheDocument()
+    expect(presetCluster).toBeInTheDocument()
+    expect(actionsCluster).toBeInTheDocument()
+
+    // Playback cluster must contain Play button and Source buttons
+    expect(playbackCluster).toContainElement(screen.getByRole('button', { name: /^play$/i }))
+    expect(playbackCluster).toContainElement(screen.getByRole('button', { name: /use sample player/i }))
+
+    // Preset cluster must contain PresetSelector
+    expect(presetCluster).toContainElement(screen.getByTestId('toolbar-preset-selector'))
+
+    // Actions cluster must contain right-side action buttons
+    expect(actionsCluster).toContainElement(screen.getByTestId('toolbar-undo-btn'))
+    expect(actionsCluster).toContainElement(screen.getByTestId('toolbar-redo-btn'))
+    expect(actionsCluster).toContainElement(screen.getByTestId('toolbar-debug-data-btn'))
+    expect(actionsCluster).toContainElement(screen.getByRole('button', { name: /open preset settings/i }))
+  })
+
+  it('keeps all right-side buttons accessible and within preview bounds down to 320px', () => {
+    const parentDiv = document.createElement('div')
+    Object.defineProperty(parentDiv, 'clientWidth', { value: 320, configurable: true })
+    document.body.appendChild(parentDiv)
+
+    render(<Toolbar audioManager={mockAudioManager} />, { container: parentDiv })
+    const toolbarHeader = screen.getByTestId('playback-toolbar')
+    expect(toolbarHeader).toBeInTheDocument()
+
+    // Trigger responsive update
+    fireEvent(window, new Event('resize'))
+
+    // All right-side buttons must remain rendered and reachable
+    const undoBtn = screen.getByTestId('toolbar-undo-btn')
+    const redoBtn = screen.getByTestId('toolbar-redo-btn')
+    const debugBtn = screen.getByTestId('toolbar-debug-data-btn')
+    const settingsBtn = screen.getByRole('button', { name: /open preset settings/i })
+    const studioBtn = screen.getByRole('button', { name: /(enter|exit) live performance mode/i })
+
+    expect(undoBtn).toBeInTheDocument()
+    expect(redoBtn).toBeInTheDocument()
+    expect(debugBtn).toBeInTheDocument()
+    expect(settingsBtn).toBeInTheDocument()
+    expect(studioBtn).toBeInTheDocument()
+
+    // Container wraps and scales appropriately
+    expect(toolbarHeader.className).toContain('flex-wrap')
+
+    document.body.removeChild(parentDiv)
+  })
 })
