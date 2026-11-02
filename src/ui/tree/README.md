@@ -10,6 +10,7 @@ This directory contains the hierarchical outliner tree view representing the exe
    - Inline layer renaming on double-click (commits on Enter/blur, cancels on Escape).
    - Real-time execution order badges reflecting spatial DAG execution sequence.
    - Interactive semantic buffer tag highlighting (`@NAME` producer and consumer glow).
+   - Color-graded percentage computational complexity cost badges (`{sharePercent}%`) with portaled hover breakdown tooltips (full-screen passes, estimated VRAM, AST/point operations, and anti-pattern optimization tips), toggleable via Editor & Performance Settings (`showLayerComplexity`).
    - Contextual add-child layer dialog menu with outside-click and Escape key dismissal.
    - Per-layer actions: bypass toggle, reorder up/down, and layer removal.
 

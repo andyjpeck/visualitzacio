@@ -69,11 +69,18 @@ This registry tracks the planned, active, and completed workstreams across Visua
   *Goal: Semantic control clustering, multi-row flexbox wrapping, right-aligned stacking, and adaptive scaling down to 320px to ensure all toolbar buttons and dialog triggers remain within preview canvas boundaries and fully interactive.*  
   *Link: [./tracks/track_13_responsive_toolbar_overflow_wrapping/index.md](./tracks/track_13_responsive_toolbar_overflow_wrapping/index.md)* (Completed)
 
-- [~] **Track 14: Engine Performance — Render Pass, VRAM & Bandwidth Optimizations (#14)**
+- [x] **Track 14: Engine Performance — Render Pass, VRAM & Bandwidth Optimizations (#14)**
   *Goal: Disable main canvas MSAA/depth, default `FrameBufferNode` to `depthBuffer: false` and skip direct pass-through FBO allocations, fix high-refresh display frame pacing with accumulator remainder carry-over, and optimize Duperscope dynamic buffer upload ranges and dormant point loop execution.*  
-  *Link: [./tracks/track_14_engine_perf_bottlenecks/index.md](./tracks/track_14_engine_perf_bottlenecks/index.md)* (In Progress)
-
+  *Link: [./tracks/track_14_engine_perf_bottlenecks/index.md](./tracks/track_14_engine_perf_bottlenecks/index.md)* (Completed)
 
 - [x] **Track 15: Mask Compositor Node (3-Way Buffer Reveal) (#18)**
   *Goal: Lean 3-input GPU compositing pass that samples foreground, background, and mask textures in 1 pass without overdraw, full Layer Tree and Parameter Inspector integration, and rainy ocean sunset reveal preset authoring.*  
   *Link: [./tracks/track_15_mask_compositor_node/index.md](./tracks/track_15_mask_compositor_node/index.md)* (Completed)
+
+- [x] **Track 15 (Alt): Editor & Performance Settings Section in Toolbar Menu (#15)**
+  *Goal: Add a localStorage-backed Editor & Performance Settings section (Layer Complexity Cost Estimates toggle & Debug Telemetry Overlay toggle) to the toolbar Settings modal, isolated from preset JSON serialization.*  
+  *Link: [./tracks/track_15_editor_performance_settings/index.md](./tracks/track_15_editor_performance_settings/index.md)* (Completed)
+
+- [x] **Track 16: Computational Complexity Cost Indicators in Layers Tree (#16)**
+  *Goal: Implement Tier 0 static computational complexity model, color-graded percentage share badges (`{sharePercent}%`), and portaled hover breakdown tooltips with anti-pattern lint tips in `LayerTreeView`.*  
+  *Link: [./tracks/track_16_layer_complexity_telemetry/index.md](./tracks/track_16_layer_complexity_telemetry/index.md)* (Completed)

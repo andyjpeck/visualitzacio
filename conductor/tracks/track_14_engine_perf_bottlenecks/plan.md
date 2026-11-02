@@ -26,6 +26,6 @@
   - [x] Clamp `n` to `[0, 4096]` and implement zero-allocation dormant point loop bypass in `DuperscopeRunner.runFrame()` while preserving `beat` and `frame` phase state updates
   - [x] Configure `THREE.DynamicDrawUsage` on all dynamic ribbon and point attributes, apply `clearUpdateRanges()` and `addUpdateRange(0, activeCount * itemSize)`, and skip upload/render when `activeCount === 0` or `currentOpacity <= 0.001` in `DuperscopeNode`
   - [x] Synchronize JSDoc and architecture documentation in `conductor/tech-stack.md`
-- [~] Task 2.3: Three-Tier Verification Gate & Stateless Track Review (Refer to workflow.md)
-  - [~] Execute Tier 1 (`npm run lint`, `npm run build`, `npm test`), Tier 2 (`preset-render-smoke.test.ts`), and Tier 3 (`npm run test:e2e`)
-  - [~] Perform stateless code and documentation review
+- [x] Task 2.3: Three-Tier Verification Gate & Stateless Track Review (Refer to workflow.md) `6978b4c`
+  - [x] Execute Tier 1 (`npm run lint`, `npm run build`, `npm test`), Tier 2 (`preset-render-smoke.test.ts`), and Tier 3 (`npm run test:e2e`)
+  - [x] Perform stateless code and documentation review

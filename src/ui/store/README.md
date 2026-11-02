@@ -7,7 +7,8 @@ This directory provides centralized state management for low-frequency UI states
 - [**`app-store.ts`**](file:///C:/Users/andyj/Documents/visualitzacio/src/ui/store/app-store.ts):
   - **Audio & Transport State:** `isPlaying`, `sourceType` (`'sample' | 'file' | 'mic'`), `volume`, `audioFileName`, `audioError`, `isAudioLoading`, `audioLoadingProgress`, `audioLoadingStage`.
   - **Dialog Navigation Stack:** `dialogStack: DialogId[]` enforcing single active dialog invariant, history walk-back, and derived flags (`isPresetSettingsOpen`, `isFormulaTestbedOpen`, `isTemplateSelectorOpen`).
-  - **Performance & DSP Presets:** `currentFps`, `targetFps`, `resolutionScale`, `showFpsOverlay`, `audioBands` (`bassMin`, `bassMax`, `midMin`, `midMax`, `trebleMin`, `trebleMax`).
+  - **Performance & DSP Presets:** `currentFps`, `targetFps`, `resolutionScale`, `audioBands` (`bassMin`, `bassMax`, `midMin`, `midMax`, `trebleMin`, `trebleMax`).
+  - **Persistent Editor & HUD Preferences (`localStorage`):** `showLayerComplexity` (`STORAGE_KEY_SHOW_LAYER_COMPLEXITY`), `showDebugData` / `showFpsOverlay` (`STORAGE_KEY_SHOW_DEBUG_DATA`), `studioMode`, `studioSplitRatio`, `inspectorVerticalRatio`. Isolated from exported preset JSON.
   - **Dynamic Formula State:** `activeFormula`, `bindFormulaToScene`, `isFormulaPresetsOpen`, `isFormulaReferenceOpen`.
   - **Frame Buffer & Feedback:** `selectedTemplateId`, `feedbackEnabled`, `feedbackBlendMode`, `feedbackOpacity`, `feedbackScale`, `feedbackRotation`, `feedbackPositionX`, `feedbackPositionY`, `isCustomFeedbackConfig`.
   - **Actions:** Unified stack actions (`openDialog`, `closeDialog`, `toggleDialog`, `closeAllDialogs`), template applicators, audio progress setters, and DSP tuning reducers.

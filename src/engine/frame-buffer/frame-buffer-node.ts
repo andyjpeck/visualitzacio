@@ -140,13 +140,13 @@ export class FrameBufferNode implements VisualNode {
     this.name = options.name ?? 'Frame Buffer'
     this.isMaster = options.isMaster ?? false
     this.outputBlendMode = options.outputBlendMode ?? options.blendMode ?? 'replace'
-    this.inputBlendMode = options.inputBlendMode ?? (options.loadFrom ? 'replace' : 'none')
+    this.saveTo = FrameBufferNode.formatBufferTag(options.saveTo)
+    this.loadFrom = FrameBufferNode.formatBufferTag(options.loadFrom)
+    this.inputBlendMode = options.inputBlendMode ?? (this.loadFrom ? 'replace' : 'none')
     this.clearColor = options.clearColor ?? '#000000'
     this.clearColorInstance = new THREE.Color(this.clearColor)
     this.feedback = options.feedback ?? false
     this.depthBuffer = options.depthBuffer ?? false
-    this.saveTo = options.saveTo ?? null
-    this.loadFrom = options.loadFrom ?? null
 
     const posX = options.offsetX !== undefined ? options.offsetX : options.positionX
     const posY = options.offsetY !== undefined ? options.offsetY : options.positionY
@@ -211,6 +211,18 @@ export class FrameBufferNode implements VisualNode {
     this.feedbackScene.add(this.feedbackQuad)
   }
 
+  private static formatBufferTag(name: string | null | undefined): string | null {
+    if (!name || name.trim() === '') return null
+    const trimmed = name.trim()
+    return trimmed.startsWith('@') ? trimmed : `@${trimmed}`
+  }
+
+  private reallocateTargetsAtCurrentSize(): void {
+    const targetW = Math.max(1, Math.floor(this.width * this.pixelRatio * this.resolutionScale))
+    const targetH = Math.max(1, Math.floor(this.height * this.pixelRatio * this.resolutionScale))
+    this.allocateRenderTargets(targetW, targetH)
+  }
+
   /**
    * Returns true when this FrameBufferNode acts purely as a direct texture replicator/pass-through
    * (sampling a BufferPool tag without children, feedback, or saving a new tag), allowing offscreen
@@ -234,16 +246,12 @@ export class FrameBufferNode implements VisualNode {
     if (!this.hasResized) return
     if (this.isPassThroughState()) {
       if (this.fboA || this.fboB || this.childTarget) {
-        const targetW = Math.max(1, Math.floor(this.width * this.pixelRatio * this.resolutionScale))
-        const targetH = Math.max(1, Math.floor(this.height * this.pixelRatio * this.resolutionScale))
-        this.allocateRenderTargets(targetW, targetH)
+        this.reallocateTargetsAtCurrentSize()
       }
       return
     }
     if (!this.fboA || (this.feedback && (!this.fboB || !this.childTarget))) {
-      const targetW = Math.max(1, Math.floor(this.width * this.pixelRatio * this.resolutionScale))
-      const targetH = Math.max(1, Math.floor(this.height * this.pixelRatio * this.resolutionScale))
-      this.allocateRenderTargets(targetW, targetH)
+      this.reallocateTargetsAtCurrentSize()
     }
   }
 
@@ -322,9 +330,9 @@ export class FrameBufferNode implements VisualNode {
     if (this.feedback && !this.feedbackQuad) {
       this.initFeedbackQuad()
     }
-    const targetW = Math.max(1, Math.floor(this.width * this.pixelRatio * this.resolutionScale))
-    const targetH = Math.max(1, Math.floor(this.height * this.pixelRatio * this.resolutionScale))
-    this.allocateRenderTargets(targetW, targetH)
+    if (this.hasResized) {
+      this.reallocateTargetsAtCurrentSize()
+    }
   }
 
   /**
@@ -372,12 +380,7 @@ export class FrameBufferNode implements VisualNode {
    * Configures or clears the destination buffer pool tag (@NAME).
    */
   setSaveTo(name: string | null): void {
-    const formatted =
-      name && name.trim() !== ''
-        ? name.trim().startsWith('@')
-          ? name.trim()
-          : `@${name.trim()}`
-        : null
+    const formatted = FrameBufferNode.formatBufferTag(name)
     const changed = this.saveTo !== formatted
     this.saveTo = formatted
     if (this.bufferPool) {
@@ -392,12 +395,7 @@ export class FrameBufferNode implements VisualNode {
    * Configures or clears the source buffer pool tag (@NAME) to sample from.
    */
   setLoadFrom(name: string | null): void {
-    const formatted =
-      name && name.trim() !== ''
-        ? name.trim().startsWith('@')
-          ? name.trim()
-          : `@${name.trim()}`
-        : null
+    const formatted = FrameBufferNode.formatBufferTag(name)
     const changed = this.loadFrom !== formatted
     this.loadFrom = formatted
     if (this.bufferPool) {
@@ -418,10 +416,7 @@ export class FrameBufferNode implements VisualNode {
     this.resolutionScale = resolutionScale
     this.hasResized = true
 
-    const targetW = Math.max(1, Math.floor(width * this.pixelRatio * resolutionScale))
-    const targetH = Math.max(1, Math.floor(height * this.pixelRatio * resolutionScale))
-
-    this.allocateRenderTargets(targetW, targetH)
+    this.reallocateTargetsAtCurrentSize()
 
     for (const child of this.children) {
       if (child.resize) {

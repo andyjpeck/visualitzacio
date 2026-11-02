@@ -1,8 +1,13 @@
 import { beforeEach, describe, expect, it } from 'vitest'
-import { useAppStore } from './app-store'
+import {
+  STORAGE_KEY_SHOW_DEBUG_DATA,
+  STORAGE_KEY_SHOW_LAYER_COMPLEXITY,
+  useAppStore,
+} from './app-store'
 
 describe('useAppStore (Zustand State Plane)', () => {
   beforeEach(() => {
+    window.localStorage.clear()
     // Reset to defaults before each test
     useAppStore.getState().clearHistory()
     useAppStore.setState({
@@ -12,6 +17,7 @@ describe('useAppStore (Zustand State Plane)', () => {
       audioError: null,
       showFpsOverlay: true,
       showDebugData: true,
+      showLayerComplexity: true,
       isPresetSettingsOpen: false,
       currentFps: 60,
       targetFps: 60,
@@ -430,5 +436,45 @@ describe('useAppStore (Zustand State Plane)', () => {
     const nodeRedone = useAppStore.getState().graphNodes.find((n) => n.id === newId)
     expect(nodeRedone?.data.appliedTemplateId).toBe('oscilloscope-tunnel')
     expect(nodeRedone?.data.drawMode).toBe('lineLoop')
+  })
+
+  it('persists showLayerComplexity and showDebugData to localStorage and isolates them from preset JSON export/import', () => {
+    const store = useAppStore.getState()
+    expect(store.showLayerComplexity).toBe(true)
+    expect(store.showDebugData).toBe(true)
+
+    // Toggle layer complexity off and verify localStorage persistence
+    store.toggleLayerComplexity()
+    expect(useAppStore.getState().showLayerComplexity).toBe(false)
+    expect(window.localStorage.getItem(STORAGE_KEY_SHOW_LAYER_COMPLEXITY)).toBe('false')
+
+    store.setShowLayerComplexity(true)
+    expect(useAppStore.getState().showLayerComplexity).toBe(true)
+    expect(window.localStorage.getItem(STORAGE_KEY_SHOW_LAYER_COMPLEXITY)).toBe('true')
+
+    // Toggle debug data off and verify localStorage persistence
+    store.toggleDebugData()
+    expect(useAppStore.getState().showDebugData).toBe(false)
+    expect(window.localStorage.getItem(STORAGE_KEY_SHOW_DEBUG_DATA)).toBe('false')
+
+    store.setShowDebugData(true)
+    expect(useAppStore.getState().showDebugData).toBe(true)
+    expect(window.localStorage.getItem(STORAGE_KEY_SHOW_DEBUG_DATA)).toBe('true')
+
+    // Set both to false and export preset JSON: neither preference may appear in serialized preset JSON
+    store.setShowLayerComplexity(false)
+    store.setShowDebugData(false)
+    const json = store.exportPresetJson('Test Export')
+    const parsed = JSON.parse(json)
+    expect(parsed.settings.showLayerComplexity).toBeUndefined()
+    expect(parsed.settings.showDebugData).toBeUndefined()
+    expect(json).not.toContain('showLayerComplexity')
+    expect(json).not.toContain('showDebugData')
+
+    // Loading a preset must preserve the user's editor preferences
+    const loadResult = store.loadPreset(json)
+    expect(loadResult.success).toBe(true)
+    expect(useAppStore.getState().showLayerComplexity).toBe(false)
+    expect(useAppStore.getState().showDebugData).toBe(false)
   })
 })

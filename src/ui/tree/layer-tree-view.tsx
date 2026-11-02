@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import {
   Activity,
@@ -21,12 +21,24 @@ import type { Node } from '@xyflow/react'
 import { useAppStore } from '../store/app-store'
 import { BaseModalDialog } from '../dialogs/base-modal-dialog'
 import {
+  computeSceneLayerComplexity,
+  type ComplexityTier,
+} from '../telemetry/layer-complexity'
+import {
   calculateNodeDimensions,
   CONTAINER_HEADER_HEIGHT,
   CONTAINER_PADDING,
   CHILD_GAP,
   reflowGraphStacks,
 } from '../graph/layout/container-bounds'
+
+const COST_BADGE_CLASSES: Record<ComplexityTier, string> = {
+  bypassed: 'bg-slate-900/60 text-slate-500 border-slate-700/50',
+  low: 'bg-emerald-950/50 text-emerald-300 border-emerald-500/30 hover:border-emerald-400',
+  medium: 'bg-cyan-950/50 text-cyan-300 border-cyan-500/30 hover:border-cyan-400',
+  high: 'bg-amber-950/50 text-amber-300 border-amber-500/40 hover:border-amber-400',
+  heavy: 'bg-rose-950/60 text-rose-300 border-rose-500/50 hover:border-rose-400',
+}
 
 export interface LayerTreeViewProps {
   collapsedIds?: Set<string>
@@ -57,6 +69,19 @@ export function LayerTreeView({
   const addLayerNode = useAppStore((state) => state.addLayerNode)
   const hoveredBufferTag = useAppStore((state) => state.hoveredBufferTag)
   const setHoveredBufferTag = useAppStore((state) => state.setHoveredBufferTag)
+  const showLayerComplexity = useAppStore((state) => state.showLayerComplexity ?? true)
+  const resolutionScale = useAppStore((state) => state.resolutionScale)
+
+  const complexityMap = useMemo(
+    () => (showLayerComplexity ? computeSceneLayerComplexity(graphNodes, resolutionScale) : null),
+    [showLayerComplexity, graphNodes, resolutionScale],
+  )
+
+  const [hoveredCostBadge, setHoveredCostBadge] = useState<{
+    nodeId: string
+    top: number
+    right: number
+  } | null>(null)
 
   // Internal collapsed state if uncontrolled
   const [internalCollapsedIds, setInternalCollapsedIds] = useState<Set<string>>(new Set())
@@ -553,8 +578,108 @@ export function LayerTreeView({
             )}
           </div>
 
-          {/* Right: Semantic Buffer Tags & Action Controls */}
+          {/* Right: Complexity Badge, Semantic Buffer Tags & Action Controls */}
           <div className="flex items-center gap-1.5 flex-shrink-0">
+            {/* Computational Complexity Share Badge */}
+            {showLayerComplexity && complexityMap?.has(node.id) && (() => {
+              const metrics = complexityMap.get(node.id)!
+              const isTooltipOpen = hoveredCostBadge?.nodeId === node.id
+              return (
+                <>
+                  <span
+                    data-testid={`tree-cost-badge-${node.id}`}
+                    data-cost-tier={metrics.tier}
+                    tabIndex={0}
+                    role="button"
+                    aria-label={`Complexity: ${metrics.sharePercent}%, tier ${metrics.tier}`}
+                    onMouseEnter={(e) => {
+                      const rect = e.currentTarget.getBoundingClientRect()
+                      setHoveredCostBadge({
+                        nodeId: node.id,
+                        top: rect.bottom + 6,
+                        right: Math.max(8, window.innerWidth - rect.right),
+                      })
+                    }}
+                    onMouseLeave={() => {
+                      setHoveredCostBadge((prev) => (prev?.nodeId === node.id ? null : prev))
+                    }}
+                    onFocus={(e) => {
+                      const rect = e.currentTarget.getBoundingClientRect()
+                      setHoveredCostBadge({
+                        nodeId: node.id,
+                        top: rect.bottom + 6,
+                        right: Math.max(8, window.innerWidth - rect.right),
+                      })
+                    }}
+                    onBlur={() => {
+                      setHoveredCostBadge((prev) => (prev?.nodeId === node.id ? null : prev))
+                    }}
+                    className={`inline-flex items-center gap-1 text-[9px] font-mono px-1.5 py-0.5 rounded border transition-colors select-none ${COST_BADGE_CLASSES[metrics.tier]}`}
+                  >
+                    <span>{metrics.sharePercent}%</span>
+                    {metrics.lintWarnings.length > 0 && (
+                      <AlertTriangle
+                        data-testid={`tree-cost-warning-${node.id}`}
+                        className="w-2.5 h-2.5 text-amber-400 shrink-0"
+                      />
+                    )}
+                  </span>
+                  {isTooltipOpen &&
+                    typeof document !== 'undefined' &&
+                    document.body &&
+                    createPortal(
+                      <div
+                        data-testid={`tree-cost-tooltip-${node.id}`}
+                        style={{
+                          position: 'fixed',
+                          top: `${hoveredCostBadge.top}px`,
+                          right: `${hoveredCostBadge.right}px`,
+                        }}
+                        className="fixed w-64 rounded-xl bg-[#0e0b1a]/98 border border-cyan-500/40 shadow-[0_12px_40px_rgba(0,0,0,0.85)] backdrop-blur-2xl p-2.5 flex flex-col gap-1.5 text-[10px] font-mono text-slate-200 z-[9999] pointer-events-none"
+                      >
+                        <div className="flex items-center justify-between border-b border-white/10 pb-1">
+                          <span className="font-bold text-cyber-cyan truncate">
+                            {String(node.data?.label || node.id)}
+                          </span>
+                          <span className="uppercase text-[9px] text-slate-400">
+                            {metrics.tier} cost
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-slate-300">
+                          <span>Direct Share:</span>
+                          <span className="text-right font-bold text-white">{metrics.sharePercent}%</span>
+                          {hasChildren && (
+                            <>
+                              <span>Subtree Share:</span>
+                              <span className="text-right font-bold text-purple-300">
+                                {metrics.subtreeSharePercent}%
+                              </span>
+                            </>
+                          )}
+                          <span>FS Passes:</span>
+                          <span className="text-right font-semibold">{metrics.fullScreenPasses}</span>
+                          <span>Est. VRAM:</span>
+                          <span className="text-right font-semibold">{metrics.estimatedVramMb} MB</span>
+                          <span>Point / AST Ops:</span>
+                          <span className="text-right font-semibold">{metrics.estimatedPointOps}</span>
+                        </div>
+                        {metrics.lintWarnings.length > 0 && (
+                          <div className="mt-1 pt-1.5 border-t border-amber-500/30 flex flex-col gap-1 text-amber-200/95 leading-snug">
+                            {metrics.lintWarnings.map((tip, idx) => (
+                              <div key={idx} className="flex items-start gap-1">
+                                <AlertTriangle className="w-3 h-3 text-amber-400 shrink-0 mt-0.5" />
+                                <span>{tip}</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>,
+                      document.body,
+                    )}
+                </>
+              )
+            })()}
+
             {/* Published Buffer Tag (saveTo) */}
             {saveToTag && (
               <button

@@ -287,17 +287,9 @@ export class DuperscopeNode implements VisualNode {
       const colAttr = this.pointsGeometry.attributes.color as THREE.BufferAttribute
       const sizeAttr = this.pointsGeometry.attributes.aSize as THREE.BufferAttribute
 
-      posAttr.clearUpdateRanges()
-      posAttr.addUpdateRange(0, pointCount * 3)
-      posAttr.needsUpdate = true
-
-      colAttr.clearUpdateRanges()
-      colAttr.addUpdateRange(0, pointCount * 4)
-      colAttr.needsUpdate = true
-
-      sizeAttr.clearUpdateRanges()
-      sizeAttr.addUpdateRange(0, pointCount * 1)
-      sizeAttr.needsUpdate = true
+      this.updateAttributeRange(posAttr, pointCount)
+      this.updateAttributeRange(colAttr, pointCount)
+      this.updateAttributeRange(sizeAttr, pointCount)
 
       this.pointsGeometry.setDrawRange(0, pointCount)
     } else {
@@ -363,29 +355,12 @@ export class DuperscopeNode implements VisualNode {
         endSizeArray[s] = this.pointSizes[p2]
       }
 
-      startAttr.clearUpdateRanges()
-      startAttr.addUpdateRange(0, segmentCount * 3)
-      startAttr.needsUpdate = true
-
-      endAttr.clearUpdateRanges()
-      endAttr.addUpdateRange(0, segmentCount * 3)
-      endAttr.needsUpdate = true
-
-      startColAttr.clearUpdateRanges()
-      startColAttr.addUpdateRange(0, segmentCount * 4)
-      startColAttr.needsUpdate = true
-
-      endColAttr.clearUpdateRanges()
-      endColAttr.addUpdateRange(0, segmentCount * 4)
-      endColAttr.needsUpdate = true
-
-      startSizeAttr.clearUpdateRanges()
-      startSizeAttr.addUpdateRange(0, segmentCount * 1)
-      startSizeAttr.needsUpdate = true
-
-      endSizeAttr.clearUpdateRanges()
-      endSizeAttr.addUpdateRange(0, segmentCount * 1)
-      endSizeAttr.needsUpdate = true
+      this.updateAttributeRange(startAttr, segmentCount)
+      this.updateAttributeRange(endAttr, segmentCount)
+      this.updateAttributeRange(startColAttr, segmentCount)
+      this.updateAttributeRange(endColAttr, segmentCount)
+      this.updateAttributeRange(startSizeAttr, segmentCount)
+      this.updateAttributeRange(endSizeAttr, segmentCount)
 
       this.ribbonGeometry.instanceCount = segmentCount
     }
@@ -393,6 +368,12 @@ export class DuperscopeNode implements VisualNode {
     if (this.renderer) {
       this.renderer.render(this.scene, this.camera)
     }
+  }
+
+  private updateAttributeRange(attr: THREE.BufferAttribute, activeCount: number): void {
+    attr.clearUpdateRanges()
+    attr.addUpdateRange(0, activeCount * attr.itemSize)
+    attr.needsUpdate = true
   }
 
   render(renderer?: RendererLike): void {

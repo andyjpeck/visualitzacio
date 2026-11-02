@@ -44,12 +44,12 @@ Visualització experiences frame drops (<60 FPS) when fullscreened on multi-cont
 - **Backwards Compatibility:** Existing presets and built-in templates must render with identical visual output and zero WebGL errors.
 
 ## 4. Acceptance Criteria
-- [ ] `RenderEngine` initializes `THREE.WebGLRenderer` with `antialias: false, depth: false, stencil: false`.
-- [ ] `FrameBufferNode` defaults to `depthBuffer: false`, skips `clearDepth()` unless `depthBuffer: true`, and avoids allocating FBOs for direct pass-through nodes.
-- [ ] `RenderEngine` paces 60 FPS accurately across simulated 60 Hz, 120 Hz, and 144 Hz `requestAnimationFrame` streams without stalling.
-- [ ] `DuperscopeNode` uses `THREE.DynamicDrawUsage` and `addUpdateRange(0, activeCount * itemSize)` for all dynamic attributes, and skips `renderer.render()` when active count is 0.
-- [ ] `DuperscopeRunner` supports `n = 0` and automatically bypasses the `point` loop when dormant (including `myline-lightning` and `myline-lightning-secondary` in `quadrant-mirrored-spectrum` when `strike <= 0.001`), while preserving `beat` and `frame` state progression.
-- [ ] All unit, smoke, and E2E tests pass (Three-Tier Verification Gate).
+- [x] `RenderEngine` initializes `THREE.WebGLRenderer` with `antialias: false, depth: false, stencil: false`.
+- [x] `FrameBufferNode` defaults to `depthBuffer: false`, skips `clearDepth()` unless `depthBuffer: true`, and avoids allocating FBOs for direct pass-through nodes.
+- [x] `RenderEngine` paces 60 FPS accurately across simulated 60 Hz, 120 Hz, and 144 Hz `requestAnimationFrame` streams without stalling.
+- [x] `DuperscopeNode` uses `THREE.DynamicDrawUsage` and `addUpdateRange(0, activeCount * itemSize)` for all dynamic attributes, and skips `renderer.render()` when active count is 0.
+- [x] `DuperscopeRunner` supports `n = 0` and automatically bypasses the `point` loop when dormant (including `myline-lightning` and `myline-lightning-secondary` in `quadrant-mirrored-spectrum` when `strike <= 0.001`), while preserving `beat` and `frame` state progression.
+- [x] All unit, smoke, and E2E tests pass (Three-Tier Verification Gate).
 
 ## 5. Out of Scope
 - Toolbar Editor & Performance Settings UI menu (tracked separately in Issue #15).

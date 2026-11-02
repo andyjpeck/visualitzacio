@@ -31,6 +31,7 @@ The platform is designed to serve two complementary environments:
   - Declarative JSON-based preset schema enabling seamless import, export, and sharing of modular visualization setups and preset libraries.
   - **100-Step Undo / Redo History:** Because the entire preset hierarchy and parameters are represented as lightweight JSON (~2–15 KB per snapshot), the editor maintains an in-memory ring buffer of up to **100 history states** (<5 MB RAM total), enabling instant undo/redo across parameter tweaks, component preset loads, and node graph edits.
   - **Preset-Wide Performance Settings:** Each preset stores its own configurable **Target FPS** (`target_fps`, default `60`) and **Render Resolution Scale** (`resolution_scale`, default `1.0`), allowing users to trade off resolution or frame rate for heavy visualizations.
+  - **Local Editor & Performance Preferences:** The toolbar Settings modal also includes a dedicated **Editor & Performance Settings** section backed by `localStorage` (`showLayerComplexity` for Layer Complexity Cost Estimates and `showDebugData` for the FPS & Audio HUD), cleanly separated from portable preset JSON serialization.
 - **User Experience & Presentation:**
   - **MVP:** Sleek, responsive single-window interface with a collapsible floating HUD for parameter tweaking, preset switching, and full-screen canvas mode.
   - **Roadmap / Future:** Multi-window / Detached display output (Operator Control Console on screen 1, clean borderless projector window on screen 2 synced via BroadcastChannel).

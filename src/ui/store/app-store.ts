@@ -34,6 +34,8 @@ export type { AudioSourceType }
 
 export const STORAGE_KEY_FORMULA_PRESETS_OPEN = 'visualitzacio_formula_presets_open'
 export const STORAGE_KEY_FORMULA_REFERENCE_OPEN = 'visualitzacio_formula_reference_open'
+export const STORAGE_KEY_SHOW_LAYER_COMPLEXITY = 'visualitzacio_show_layer_complexity'
+export const STORAGE_KEY_SHOW_DEBUG_DATA = 'visualitzacio_show_debug_data'
 
 function loadBoolFromStorage(key: string, defaultValue: boolean): boolean {
   try {
@@ -349,6 +351,7 @@ export interface AppState {
   // HUD & UI overlay state
   showFpsOverlay: boolean
   showDebugData: boolean
+  showLayerComplexity: boolean
   dialogStack: DialogId[]
   isPresetSettingsOpen: boolean
   currentFps: number
@@ -403,6 +406,8 @@ export interface AppState {
   toggleFpsOverlay: () => void
   setShowDebugData: (show: boolean) => void
   toggleDebugData: () => void
+  setShowLayerComplexity: (show: boolean) => void
+  toggleLayerComplexity: () => void
 
   // Studio Mode & Split-View Actions (Track 4)
   setStudioMode: (mode: StudioMode) => void
@@ -544,8 +549,9 @@ export const useAppStore = create<AppState>((set, get) => ({
   audioLoadingProgress: 0,
   audioLoadingStage: '',
 
-  showFpsOverlay: true,
-  showDebugData: true,
+  showFpsOverlay: loadBoolFromStorage(STORAGE_KEY_SHOW_DEBUG_DATA, true),
+  showDebugData: loadBoolFromStorage(STORAGE_KEY_SHOW_DEBUG_DATA, true),
+  showLayerComplexity: loadBoolFromStorage(STORAGE_KEY_SHOW_LAYER_COMPLEXITY, true),
   dialogStack: [],
   isPresetSettingsOpen: false,
   currentFps: 60,
@@ -598,19 +604,35 @@ export const useAppStore = create<AppState>((set, get) => ({
       audioLoadingStage: stage !== undefined ? stage : state.audioLoadingStage,
     })),
 
-  setShowFpsOverlay: (showFpsOverlay) =>
-    set({ showFpsOverlay, showDebugData: showFpsOverlay }),
+  setShowFpsOverlay: (showFpsOverlay) => {
+    saveBoolToStorage(STORAGE_KEY_SHOW_DEBUG_DATA, showFpsOverlay)
+    set({ showFpsOverlay, showDebugData: showFpsOverlay })
+  },
   toggleFpsOverlay: () =>
     set((state) => {
       const next = !(state.showDebugData ?? state.showFpsOverlay)
+      saveBoolToStorage(STORAGE_KEY_SHOW_DEBUG_DATA, next)
       return { showFpsOverlay: next, showDebugData: next }
     }),
-  setShowDebugData: (showDebugData) =>
-    set({ showDebugData, showFpsOverlay: showDebugData }),
+  setShowDebugData: (showDebugData) => {
+    saveBoolToStorage(STORAGE_KEY_SHOW_DEBUG_DATA, showDebugData)
+    set({ showDebugData, showFpsOverlay: showDebugData })
+  },
   toggleDebugData: () =>
     set((state) => {
       const next = !(state.showDebugData ?? state.showFpsOverlay)
+      saveBoolToStorage(STORAGE_KEY_SHOW_DEBUG_DATA, next)
       return { showDebugData: next, showFpsOverlay: next }
+    }),
+  setShowLayerComplexity: (showLayerComplexity) => {
+    saveBoolToStorage(STORAGE_KEY_SHOW_LAYER_COMPLEXITY, showLayerComplexity)
+    set({ showLayerComplexity })
+  },
+  toggleLayerComplexity: () =>
+    set((state) => {
+      const next = !state.showLayerComplexity
+      saveBoolToStorage(STORAGE_KEY_SHOW_LAYER_COMPLEXITY, next)
+      return { showLayerComplexity: next }
     }),
 
   setStudioMode: (studioMode) => {

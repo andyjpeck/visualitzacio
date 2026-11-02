@@ -1,14 +1,22 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it } from 'vitest'
-import { useAppStore } from '../store/app-store'
+import {
+  STORAGE_KEY_SHOW_DEBUG_DATA,
+  STORAGE_KEY_SHOW_LAYER_COMPLEXITY,
+  useAppStore,
+} from '../store/app-store'
 import { PresetSettingsModal } from './preset-settings-modal'
 
 describe('PresetSettingsModal', () => {
   beforeEach(() => {
+    window.localStorage.clear()
     useAppStore.setState({
       isPresetSettingsOpen: true,
       targetFps: 60,
       resolutionScale: 1.0,
+      showLayerComplexity: true,
+      showDebugData: true,
+      showFpsOverlay: true,
     })
   })
 
@@ -92,5 +100,35 @@ describe('PresetSettingsModal', () => {
 
     expect(newLeft).toBe(initialLeft + 80)
     expect(newTop).toBe(initialTop + 50)
+  })
+
+  it('renders the Editor & Performance Settings section and toggles showLayerComplexity and showDebugData in localStorage', () => {
+    render(<PresetSettingsModal />)
+
+    expect(screen.getByText(/Editor & Performance Settings/i)).toBeInTheDocument()
+
+    const complexityOnBtn = screen.getByTestId('setting-layer-complexity-on')
+    const complexityOffBtn = screen.getByTestId('setting-layer-complexity-off')
+    expect(complexityOnBtn).toHaveAttribute('aria-pressed', 'true')
+    expect(complexityOffBtn).toHaveAttribute('aria-pressed', 'false')
+
+    fireEvent.click(complexityOffBtn)
+    expect(useAppStore.getState().showLayerComplexity).toBe(false)
+    expect(window.localStorage.getItem(STORAGE_KEY_SHOW_LAYER_COMPLEXITY)).toBe('false')
+    expect(complexityOffBtn).toHaveAttribute('aria-pressed', 'true')
+
+    fireEvent.click(complexityOnBtn)
+    expect(useAppStore.getState().showLayerComplexity).toBe(true)
+    expect(window.localStorage.getItem(STORAGE_KEY_SHOW_LAYER_COMPLEXITY)).toBe('true')
+
+    const debugOnBtn = screen.getByTestId('setting-debug-overlay-on')
+    const debugOffBtn = screen.getByTestId('setting-debug-overlay-off')
+    expect(debugOnBtn).toHaveAttribute('aria-pressed', 'true')
+    expect(debugOffBtn).toHaveAttribute('aria-pressed', 'false')
+
+    fireEvent.click(debugOffBtn)
+    expect(useAppStore.getState().showDebugData).toBe(false)
+    expect(window.localStorage.getItem(STORAGE_KEY_SHOW_DEBUG_DATA)).toBe('false')
+    expect(debugOffBtn).toHaveAttribute('aria-pressed', 'true')
   })
 })

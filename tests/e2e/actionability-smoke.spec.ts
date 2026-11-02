@@ -39,9 +39,11 @@ test.describe('Real-Browser Actionability & Smoke Verification', () => {
     await expect(addDuperscopeBtn).toBeVisible()
     await addDuperscopeBtn.click()
 
-    // 5. Verify Duperscope layer was added and rendered with icon badge
+    // 5. Verify Duperscope layer was added and rendered with icon badge and complexity percentage badge
     const scopeBadge = page.locator('[data-testid="duperscope-icon-badge"]')
     await expect(scopeBadge).toBeVisible()
+    const masterCostBadge = page.locator('[data-testid="tree-cost-badge-master-frame-buffer"]')
+    await expect(masterCostBadge).toBeVisible()
 
     // 6. Click FPS badge to open Preset Settings modal dialog
     await fpsBadge.click()
@@ -49,7 +51,18 @@ test.describe('Real-Browser Actionability & Smoke Verification', () => {
     const modalDialog = page.locator('[role="dialog"]')
     await expect(modalDialog).toBeVisible()
 
-    // 7. Verify modal buttons are actionable (not obscured by canvas)
+    // 7. Verify Editor & Performance Settings controls inside modal toggle the LayerTreeView complexity badges
+    const complexityOffBtn = modalDialog.locator('[data-testid="setting-layer-complexity-off"]')
+    const complexityOnBtn = modalDialog.locator('[data-testid="setting-layer-complexity-on"]')
+    await expect(complexityOffBtn).toBeVisible()
+    await complexityOffBtn.click()
+    await expect(complexityOffBtn).toHaveAttribute('aria-pressed', 'true')
+    await expect(masterCostBadge).not.toBeVisible()
+    await complexityOnBtn.click()
+    await expect(complexityOnBtn).toHaveAttribute('aria-pressed', 'true')
+    await expect(masterCostBadge).toBeVisible()
+
+    // 8. Verify modal close button is actionable (not obscured by canvas)
     const closeBtn = modalDialog.getByRole('button', { name: /close|done/i }).first()
     await expect(closeBtn).toBeVisible()
     await closeBtn.click()
