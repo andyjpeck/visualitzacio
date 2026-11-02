@@ -555,7 +555,7 @@ export class FrameBufferNode implements VisualNode {
    */
   bindExpression(
     param: 'opacity' | 'scale' | 'scaleX' | 'scaleY' | 'flipX' | 'flipY' | 'rotation' | 'positionX' | 'positionY' | 'offsetX' | 'offsetY',
-    expr: string | number | boolean | null,
+    expr?: string | number | boolean | null,
     engine?: ExpressionEngine,
   ): void {
     const canonical = param === 'offsetX' ? 'positionX' : param === 'offsetY' ? 'positionY' : param
@@ -579,15 +579,15 @@ export class FrameBufferNode implements VisualNode {
     }
 
     if (expr === null || expr === undefined || expr === '') {
-      if (canonical === 'opacity') this.opacityParam = null
-      if (canonical === 'scale') this.scaleParam = null
-      if (canonical === 'scaleX') this.scaleXParam = null
-      if (canonical === 'scaleY') this.scaleYParam = null
-      if (canonical === 'flipX') this.flipXParam = null
-      if (canonical === 'flipY') this.flipYParam = null
-      if (canonical === 'rotation') this.rotationParam = null
-      if (canonical === 'positionX') this.positionXParam = null
-      if (canonical === 'positionY') this.positionYParam = null
+      if (canonical === 'opacity') { this.opacityVal = 1.0; this.opacityParam = null }
+      if (canonical === 'scale') { this.scaleVal = 1.0; this.scaleParam = null }
+      if (canonical === 'scaleX') { this.scaleXVal = null; this.scaleXParam = null }
+      if (canonical === 'scaleY') { this.scaleYVal = null; this.scaleYParam = null }
+      if (canonical === 'flipX') { this.flipXVal = false; this.flipXParam = null }
+      if (canonical === 'flipY') { this.flipYVal = false; this.flipYParam = null }
+      if (canonical === 'rotation') { this.rotationVal = 0.0; this.rotationParam = null }
+      if (canonical === 'positionX') { this.positionXVal = 0.0; this.positionXParam = null }
+      if (canonical === 'positionY') { this.positionYVal = 0.0; this.positionYParam = null }
     } else if (engine) {
       const dynamic = createDynamicParam(expr, engine)
       if (canonical === 'opacity') this.opacityParam = dynamic

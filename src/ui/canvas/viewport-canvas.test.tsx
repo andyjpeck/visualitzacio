@@ -1,3 +1,5 @@
+import fs from 'node:fs'
+import path from 'node:path'
 import { act, render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { ViewportCanvas } from './viewport-canvas'
@@ -170,6 +172,64 @@ describe('ViewportCanvas', () => {
 
     expect(scopeNode.drawMode).toBe('lineLoop')
     expect(scopeNode.getScripts().init).toBe('n = 360;')
+
+    unmount()
+  })
+
+  it('does not leak rotation twist or parameter expressions when loading sunset preset after mirrored spectrum', () => {
+    const mirroredPath = path.resolve(__dirname, '../../../presets/quadrant-mirrored-spectrum.json')
+    const sunsetPath = path.resolve(__dirname, '../../../presets/rainy-ocean-sunset.json')
+    const mirroredPreset = JSON.parse(fs.readFileSync(mirroredPath, 'utf-8'))
+    const sunsetPreset = JSON.parse(fs.readFileSync(sunsetPath, 'utf-8'))
+
+    let capturedEngine: RenderEngine | null = null
+    const { unmount } = render(
+      <ViewportCanvas
+        onEngineReady={(engine) => {
+          capturedEngine = engine
+        }}
+      />,
+    )
+
+    expect(capturedEngine).not.toBeNull()
+    const engine = capturedEngine!
+    const masterNode = engine.getAllNodes().find(
+      (n) => n instanceof FrameBufferNode && (n as FrameBufferNode).id === 'master-frame-buffer',
+    ) as FrameBufferNode
+    expect(masterNode).toBeDefined()
+
+    // 1. Load Mirrored Spectrum Preset (which specifies beat-reactive angular twist on rotation)
+    act(() => {
+      const res = useAppStore.getState().loadPreset(mirroredPreset)
+      expect(res.success).toBe(true)
+    })
+
+    // Trigger update with audio energies and elapsed beat decay
+    const ctx = engine.getFrameContext()
+    ctx.$BASS = 0.9
+    ctx.$RMS = 0.8
+    ctx.$TIME = 2.0
+    ctx.secondsSinceLastBeat = 0.1
+    masterNode.update(ctx)
+
+    // Master should have non-zero rotation angle reacting to beat
+    expect(Math.abs(masterNode.rotation)).toBeGreaterThan(0)
+
+    // 2. Load Rainy Ocean Sunset Preset (which has no rotation expression in root params)
+    act(() => {
+      const res = useAppStore.getState().loadPreset(sunsetPreset)
+      expect(res.success).toBe(true)
+    })
+
+    // Update again with heavy bass and elapsed beat decay
+    ctx.$BASS = 1.0
+    ctx.$RMS = 1.0
+    ctx.$TIME = 3.0
+    ctx.secondsSinceLastBeat = 0.1
+    masterNode.update(ctx)
+
+    // Sunset preset MUST NOT twist to the beat or leak rotation from previous preset!
+    expect(masterNode.rotation).toBe(0.0)
 
     unmount()
   })

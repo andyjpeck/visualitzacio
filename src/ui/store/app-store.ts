@@ -1344,6 +1344,30 @@ export const useAppStore = create<AppState>((set, get) => ({
 
     const state = get()
     const fb = result.feedbackConfig
+    const resolvedFb = fb
+      ? {
+          selectedTemplateId: fb.selectedTemplateId ?? 'clean-slate',
+          feedbackEnabled: fb.feedbackEnabled,
+          feedbackBlendMode: fb.feedbackBlendMode,
+          feedbackOpacity: fb.feedbackOpacity,
+          feedbackScale: fb.feedbackScale,
+          feedbackRotation: fb.feedbackRotation,
+          feedbackPositionX: fb.feedbackPositionX,
+          feedbackPositionY: fb.feedbackPositionY,
+          isCustomFeedbackConfig: fb.isCustomFeedbackConfig ?? false,
+        }
+      : {
+          selectedTemplateId: 'clean-slate',
+          feedbackEnabled: false,
+          feedbackBlendMode: 'replace',
+          feedbackOpacity: 1.0,
+          feedbackScale: 1.0,
+          feedbackRotation: 0.0,
+          feedbackPositionX: 0.0,
+          feedbackPositionY: 0.0,
+          isCustomFeedbackConfig: false,
+        }
+
     const beforeSnapshot = getHistorySnapshotFromState(state)
     const afterSnapshot: HistorySnapshot = {
       graphNodes: result.nodes,
@@ -1352,19 +1376,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       resolutionScale: result.resolutionScale ?? state.resolutionScale,
       audioBands: result.audioBands ?? state.audioBands,
       selectedNodeId: 'master-frame-buffer',
-      feedbackConfig: fb
-        ? {
-            selectedTemplateId: fb.selectedTemplateId ?? state.selectedTemplateId,
-            feedbackEnabled: fb.feedbackEnabled,
-            feedbackBlendMode: fb.feedbackBlendMode,
-            feedbackOpacity: fb.feedbackOpacity,
-            feedbackScale: fb.feedbackScale,
-            feedbackRotation: fb.feedbackRotation,
-            feedbackPositionX: fb.feedbackPositionX,
-            feedbackPositionY: fb.feedbackPositionY,
-            isCustomFeedbackConfig: fb.isCustomFeedbackConfig ?? false,
-          }
-        : beforeSnapshot.feedbackConfig,
+      feedbackConfig: resolvedFb,
     }
     undoRedoManager.recordDelta({
       type: 'preset-load',
@@ -1382,19 +1394,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       resolutionScale: result.resolutionScale ?? state.resolutionScale,
       audioBands: result.audioBands ?? state.audioBands,
       selectedNodeId: 'master-frame-buffer',
-      ...(fb
-        ? {
-            selectedTemplateId: fb.selectedTemplateId ?? state.selectedTemplateId,
-            feedbackEnabled: fb.feedbackEnabled,
-            feedbackBlendMode: fb.feedbackBlendMode,
-            feedbackOpacity: fb.feedbackOpacity,
-            feedbackScale: fb.feedbackScale,
-            feedbackRotation: fb.feedbackRotation,
-            feedbackPositionX: fb.feedbackPositionX,
-            feedbackPositionY: fb.feedbackPositionY,
-            isCustomFeedbackConfig: fb.isCustomFeedbackConfig ?? false,
-          }
-        : {}),
+      ...resolvedFb,
       canUndo: undoRedoManager.canUndo(),
       canRedo: undoRedoManager.canRedo(),
     })

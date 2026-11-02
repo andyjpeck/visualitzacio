@@ -84,3 +84,7 @@ This registry tracks the planned, active, and completed workstreams across Visua
 - [x] **Track 16: Computational Complexity Cost Indicators in Layers Tree (#16)**
   *Goal: Implement Tier 0 static computational complexity model, color-graded percentage share badges (`{sharePercent}%`), and portaled hover breakdown tooltips with anti-pattern lint tips in `LayerTreeView`.*  
   *Link: [./tracks/track_16_layer_complexity_telemetry/index.md](./tracks/track_16_layer_complexity_telemetry/index.md)* (Completed)
+
+- [x] **Track 17: Preset State Isolation & Master Buffer Parameter Reset on Preset Switch**
+  *Goal: Prevent parameter and transform leakage across preset loads by enforcing schema defaults for omitted properties on Master Output, resetting numeric *Val cache on dynamic expression unbinding, and clearing ping-pong render targets.*  
+  *Link: [./tracks/track_17_preset_state_isolation/index.md](./tracks/track_17_preset_state_isolation/index.md)* (Completed)

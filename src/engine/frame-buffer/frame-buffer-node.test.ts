@@ -381,4 +381,48 @@ describe('FrameBufferNode', () => {
     // scaleX = 2.0, flipX = true -> effectiveScaleX = -2.0
     expect(quad?.scale.x).toBeCloseTo(-2.0)
   })
+
+  it('resets numeric values and clears dynamic params to canonical defaults when unbinding expressions', async () => {
+    const { ExpressionEngine } = await import('../expressions/expression-engine')
+    const engine = new ExpressionEngine()
+    const node = new FrameBufferNode({
+      id: 'fb-reset-test',
+      isMaster: true,
+      expressionEngine: engine,
+    })
+    node.init(mockRenderer)
+    node.resize(800, 600, 1.0, 1.0)
+
+    node.bindExpression('rotation', '$BASS * 45', engine)
+    node.bindExpression('scale', '$BASS * 2', engine)
+    node.bindExpression('opacity', '0.5', engine)
+    node.bindExpression('positionX', '100', engine)
+
+    const ctx = createDefaultFrameContext()
+    ctx.$BASS = 1.0
+    node.update(ctx)
+
+    expect(node.rotation).toBeCloseTo(45)
+    expect(node.scale).toBeCloseTo(2)
+    expect(node.opacity).toBeCloseTo(0.5)
+    expect(node.positionX).toBeCloseTo(100)
+
+    // Unbind expressions via null / undefined / empty string
+    node.bindExpression('rotation', null)
+    node.bindExpression('scale', undefined)
+    node.bindExpression('opacity', '')
+    node.bindExpression('positionX', null)
+
+    // Values must reset to schema defaults, not remain stuck on old frame evaluations
+    expect(node.rotation).toBe(0.0)
+    expect(node.scale).toBe(1.0)
+    expect(node.opacity).toBe(1.0)
+    expect(node.positionX).toBe(0.0)
+
+    // Subsequent updates without bound expression must maintain default values
+    ctx.$BASS = 2.0
+    node.update(ctx)
+    expect(node.rotation).toBe(0.0)
+    expect(node.scale).toBe(1.0)
+  })
 })

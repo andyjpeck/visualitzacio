@@ -256,50 +256,36 @@ export function ViewportCanvas({
       } else if (vNode instanceof FrameBufferNode) {
         if (gNode.data.inputBlendMode !== undefined) {
           vNode.setInputBlendMode(String(gNode.data.inputBlendMode))
+        } else {
+          vNode.setInputBlendMode('none')
         }
+
         if (gNode.data.outputBlendMode !== undefined) {
           vNode.setOutputBlendMode(String(gNode.data.outputBlendMode))
         } else if (gNode.data.blendMode !== undefined) {
           vNode.setBlendMode(String(gNode.data.blendMode))
+        } else {
+          vNode.setOutputBlendMode(vNode.isMaster ? 'replace' : 'none')
         }
-        if (gNode.data.feedback !== undefined) {
-          vNode.setFeedback(Boolean(gNode.data.feedback))
-        }
-        if (gNode.data.opacity !== undefined) {
-          vNode.bindExpression('opacity', gNode.data.opacity as string | number, exprEngine)
-        }
-        if (gNode.data.scale !== undefined) {
-          vNode.bindExpression('scale', gNode.data.scale as string | number, exprEngine)
-        }
-        if (gNode.data.scaleX !== undefined) {
-          vNode.bindExpression('scaleX', gNode.data.scaleX as string | number, exprEngine)
-        }
-        if (gNode.data.scaleY !== undefined) {
-          vNode.bindExpression('scaleY', gNode.data.scaleY as string | number, exprEngine)
-        }
-        if (gNode.data.flipX !== undefined) {
-          vNode.bindExpression('flipX', gNode.data.flipX as boolean | number | string, exprEngine)
-        }
-        if (gNode.data.flipY !== undefined) {
-          vNode.bindExpression('flipY', gNode.data.flipY as boolean | number | string, exprEngine)
-        }
-        if (gNode.data.rotation !== undefined) {
-          vNode.bindExpression('rotation', gNode.data.rotation as string | number, exprEngine)
-        }
+
+        vNode.setFeedback(gNode.data.feedback !== undefined ? Boolean(gNode.data.feedback) : false)
+
+        vNode.bindExpression('opacity', (gNode.data.opacity as string | number | undefined) ?? 1.0, exprEngine)
+        vNode.bindExpression('scale', (gNode.data.scale as string | number | undefined) ?? 1.0, exprEngine)
+        vNode.bindExpression('scaleX', (gNode.data.scaleX as string | number | undefined) ?? null, exprEngine)
+        vNode.bindExpression('scaleY', (gNode.data.scaleY as string | number | undefined) ?? null, exprEngine)
+        vNode.bindExpression('flipX', (gNode.data.flipX as boolean | number | string | undefined) ?? false, exprEngine)
+        vNode.bindExpression('flipY', (gNode.data.flipY as boolean | number | string | undefined) ?? false, exprEngine)
+        vNode.bindExpression('rotation', (gNode.data.rotation as string | number | undefined) ?? 0, exprEngine)
+
         const posX = gNode.data.offsetX !== undefined ? gNode.data.offsetX : gNode.data.positionX
-        if (posX !== undefined) {
-          vNode.bindExpression('positionX', posX as string | number, exprEngine)
-        }
+        vNode.bindExpression('positionX', (posX as string | number | undefined) ?? 0, exprEngine)
+
         const posY = gNode.data.offsetY !== undefined ? gNode.data.offsetY : gNode.data.positionY
-        if (posY !== undefined) {
-          vNode.bindExpression('positionY', posY as string | number, exprEngine)
-        }
-        if (gNode.data.saveTo !== undefined) {
-          vNode.setSaveTo((gNode.data.saveTo as string) || null)
-        }
-        if (gNode.data.loadFrom !== undefined) {
-          vNode.setLoadFrom((gNode.data.loadFrom as string) || null)
-        }
+        vNode.bindExpression('positionY', (posY as string | number | undefined) ?? 0, exprEngine)
+
+        vNode.setSaveTo((gNode.data.saveTo as string) || null)
+        vNode.setLoadFrom((gNode.data.loadFrom as string) || null)
       } else if (vNode instanceof StaticImageNode) {
         if (gNode.data.imageUrl !== undefined) {
           vNode.setUrl(String(gNode.data.imageUrl))
@@ -364,13 +350,18 @@ export function ViewportCanvas({
     // Pass 2.5: Clean up removed nodes BEFORE hierarchy reconciliation
     // (excluding permanent master root)
     const activeIds = new Set(graphNodes.map((n) => n.id))
+    let hasRemovedNodes = false
     for (const [id, node] of nodeMap.entries()) {
       if (id !== 'master-frame-buffer' && !activeIds.has(id)) {
         const parent = parentMap.get(id) || masterBuffer
         parent.removeChild(node, true)
         nodeMap.delete(id)
         parentMap.delete(id)
+        hasRemovedNodes = true
       }
+    }
+    if (hasRemovedNodes) {
+      masterBuffer.clearBuffer()
     }
 
     // Pass 3: Reconcile parent-child attachments based on gNode.parentId

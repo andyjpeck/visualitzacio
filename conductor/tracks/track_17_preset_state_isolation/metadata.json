@@ -1,0 +1,10 @@
+{
+  "track_id": "track_17_preset_state_isolation",
+  "type": "bugfix",
+  "status": "completed",
+  "agent": "Antigravity",
+  "branch": "bugfix/preset-state-isolation",
+  "created_at": "2026-11-02T06:34:00Z",
+  "updated_at": "2026-11-02T06:49:00Z",
+  "description": "Fix preset state leakage on preset switch (master buffer transform/rotation parameters, cached values, and buffer pool cleanup when loading presets like Sunset after Mirrored Spectrum)"
+}
