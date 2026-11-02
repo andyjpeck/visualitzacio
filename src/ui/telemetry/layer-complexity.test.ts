@@ -155,4 +155,53 @@ describe('computeSceneLayerComplexity (Tier 0 Static Complexity & Lint Model)', 
     expect(scope.lintWarnings.some((w) => /opacity|bypass/i.test(w))).toBe(true)
     expect(scope.lintWarnings.some((w) => /point|frame/i.test(w))).toBe(true)
   })
+
+  it('scales VRAM according to resolutionScale and safely handles non-finite scale input', () => {
+    const nodes: Node[] = [
+      {
+        id: 'master-frame-buffer',
+        type: 'masterFrameBuffer',
+        position: { x: 0, y: 0 },
+        data: { label: 'Master' },
+      },
+    ]
+
+    const fullMap = computeSceneLayerComplexity(nodes, 1.0)
+    const halfMap = computeSceneLayerComplexity(nodes, 0.5)
+    const nanMap = computeSceneLayerComplexity(nodes, Number.NaN)
+
+    const fullMaster = fullMap.get('master-frame-buffer')!
+    const halfMaster = halfMap.get('master-frame-buffer')!
+    const nanMaster = nanMap.get('master-frame-buffer')!
+
+    expect(fullMaster.estimatedVramMb).toBeGreaterThan(halfMaster.estimatedVramMb)
+    expect(Number.isFinite(nanMaster.estimatedVramMb)).toBe(true)
+    expect(nanMaster.estimatedVramMb).toBe(fullMaster.estimatedVramMb)
+  })
+
+  it('handles scenes where all layers are bypassed without dividing by zero or producing NaN', () => {
+    const nodes: Node[] = [
+      {
+        id: 'master-frame-buffer',
+        type: 'masterFrameBuffer',
+        position: { x: 0, y: 0 },
+        data: { label: 'Master', bypassed: true },
+      },
+      {
+        id: 'child-scope',
+        type: 'duperscopeNode',
+        parentId: 'master-frame-buffer',
+        position: { x: 20, y: 40 },
+        data: { label: 'Scope', bypassed: true },
+      },
+    ]
+
+    const map = computeSceneLayerComplexity(nodes, 1.0)
+    for (const metrics of map.values()) {
+      expect(metrics.sharePercent).toBe(0)
+      expect(metrics.subtreeSharePercent).toBe(0)
+      expect(metrics.tier).toBe('bypassed')
+      expect(Number.isNaN(metrics.sharePercent)).toBe(false)
+    }
+  })
 })

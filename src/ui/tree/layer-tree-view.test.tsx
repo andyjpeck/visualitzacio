@@ -597,6 +597,12 @@ describe('WorkspacePane Component', () => {
     fireEvent.mouseLeave(sourceBadge)
     expect(screen.queryByTestId('tree-cost-tooltip-source-buffer')).not.toBeInTheDocument()
 
+    // Focusing a badge via keyboard displays the tooltip, blur hides it
+    fireEvent.focus(sourceBadge)
+    expect(screen.getByTestId('tree-cost-tooltip-source-buffer')).toBeInTheDocument()
+    fireEvent.blur(sourceBadge)
+    expect(screen.queryByTestId('tree-cost-tooltip-source-buffer')).not.toBeInTheDocument()
+
     // Toggling showLayerComplexity to false hides all cost badges
     act(() => {
       useAppStore.getState().setShowLayerComplexity(false)

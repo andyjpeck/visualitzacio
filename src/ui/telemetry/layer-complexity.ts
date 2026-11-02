@@ -106,7 +106,8 @@ export function computeSceneLayerComplexity(
     }
   }
 
-  const vramScaleFactor = Math.max(0.0625, resolutionScale * resolutionScale)
+  const safeScale = Number.isFinite(resolutionScale) && resolutionScale > 0 ? resolutionScale : 1.0
+  const vramScaleFactor = Math.max(0.0625, safeScale * safeScale)
   const singleFboMb = Number((BASE_1080P_HALF_FLOAT_FBO_MB * vramScaleFactor).toFixed(1))
 
   // 1. Compute selfScore, pass counts, VRAM, point ops, and lint warnings per node
@@ -262,7 +263,11 @@ export function computeSceneLayerComplexity(
     totalSceneScore += metrics.selfScore
   }
 
+  const subtreeCache = new Map<string, number>()
   const computeSubtree = (nodeId: string, visited = new Set<string>()): number => {
+    if (subtreeCache.has(nodeId)) {
+      return subtreeCache.get(nodeId)!
+    }
     if (visited.has(nodeId)) return 0
     visited.add(nodeId)
     const m = result.get(nodeId)
@@ -273,6 +278,7 @@ export function computeSceneLayerComplexity(
       sum += computeSubtree(child.id, visited)
     }
     m.subtreeScore = sum
+    subtreeCache.set(nodeId, sum)
     return sum
   }
 

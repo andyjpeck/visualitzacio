@@ -587,6 +587,9 @@ export function LayerTreeView({
                   <span
                     data-testid={`tree-cost-badge-${node.id}`}
                     data-cost-tier={metrics.tier}
+                    tabIndex={0}
+                    role="button"
+                    aria-label={`Complexity: ${metrics.sharePercent}%, tier ${metrics.tier}`}
                     onMouseEnter={(e) => {
                       const rect = e.currentTarget.getBoundingClientRect()
                       setHoveredCostBadge({
@@ -596,6 +599,17 @@ export function LayerTreeView({
                       })
                     }}
                     onMouseLeave={() => {
+                      setHoveredCostBadge((prev) => (prev?.nodeId === node.id ? null : prev))
+                    }}
+                    onFocus={(e) => {
+                      const rect = e.currentTarget.getBoundingClientRect()
+                      setHoveredCostBadge({
+                        nodeId: node.id,
+                        top: rect.bottom + 6,
+                        right: Math.max(8, window.innerWidth - rect.right),
+                      })
+                    }}
+                    onBlur={() => {
                       setHoveredCostBadge((prev) => (prev?.nodeId === node.id ? null : prev))
                     }}
                     className={`inline-flex items-center gap-1 text-[9px] font-mono px-1.5 py-0.5 rounded border transition-colors select-none ${COST_BADGE_CLASSES[metrics.tier]}`}
