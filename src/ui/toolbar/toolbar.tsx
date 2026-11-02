@@ -87,7 +87,7 @@ export function Toolbar({ audioManager, className = '' }: ToolbarProps): React.R
       // Calculate the widest single cluster or total layout width
       let widestContent = Math.max(el.scrollWidth || 0, el.offsetWidth || 0)
       for (let i = 0; i < el.children.length; i++) {
-        const child = el.children[i]
+        const child = el.children[i] as HTMLElement
         if (child) {
           widestContent = Math.max(widestContent, child.scrollWidth || 0, child.offsetWidth || 0)
         }
