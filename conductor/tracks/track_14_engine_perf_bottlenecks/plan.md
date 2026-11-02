@@ -5,14 +5,14 @@
 - [x] Task 1.1: Write Failing Unit Tests for Canvas Initialization, FBO Depth/Pass-Through Optimization & High-Refresh Pacing (Red Phase) `b89626c`
   - [x] Create `src/engine/engine-performance-p0.test.ts` testing `RenderEngine` WebGLRenderer parameters (`antialias: false`, `depth: false`, `stencil: false`), `FrameBufferNode` default `depthBuffer: false` and conditional `clearDepth()`, direct pass-through FBO skipping with on-demand allocation on mutation, and 120Hz/144Hz accumulator frame pacing
   - [x] Update `src/engine/frame-buffer/frame-buffer-node.test.ts` to test both default `depthBuffer: false` (no `clearDepth`) and explicit `depthBuffer: true` (`clearDepth` invoked between siblings)
-- [~] Task 1.2: Implement WebGLRenderer Flags & Accumulator-Based Frame Pacing in RenderEngine (Green Phase)
-  - [~] Add `rendererFactory` option to `RenderEngineOptions` and configure default `THREE.WebGLRenderer` with `antialias: false, depth: false, stencil: false, alpha: false, powerPreference: 'high-performance'`
-  - [~] Implement accumulator-based remainder carry-over frame pacing in `RenderEngine.renderFrame()` so high-refresh displays pace smoothly without stalling
-  - [~] Update JSDoc comments in `src/engine/render-engine.ts`
-- [ ] Task 1.3: Implement FrameBufferNode Depth Buffer Stripping & Conditional Pass-Through Allocation (Green Phase)
-  - [ ] Add `depthBuffer?: boolean` (default `false`) to `FrameBufferNodeOptions`, pass to `THREE.WebGLRenderTarget`, and guard `clearDepth()` in `update()`
-  - [ ] Skip allocating FBOs in `allocateRenderTargets()` when the node is in direct pass-through mode (`loadFrom` set, no children, no `feedback`, no `saveTo`, `inputBlendMode !== 'none'`), and allocate on-demand if mutated out of pass-through mode
-  - [ ] Update JSDoc comments in `src/engine/frame-buffer/frame-buffer-node.ts`
+- [x] Task 1.2: Implement WebGLRenderer Flags & Accumulator-Based Frame Pacing in RenderEngine (Green Phase) `afc2ad0`
+  - [x] Add `rendererFactory` option to `RenderEngineOptions` and configure default `THREE.WebGLRenderer` with `antialias: false, depth: false, stencil: false, alpha: false, powerPreference: 'high-performance'`
+  - [x] Implement accumulator-based remainder carry-over frame pacing in `RenderEngine.renderFrame()` so high-refresh displays pace smoothly without stalling
+  - [x] Update JSDoc comments in `src/engine/render-engine.ts`
+- [~] Task 1.3: Implement FrameBufferNode Depth Buffer Stripping & Conditional Pass-Through Allocation (Green Phase)
+  - [~] Add `depthBuffer?: boolean` (default `false`) to `FrameBufferNodeOptions`, pass to `THREE.WebGLRenderTarget`, and guard `clearDepth()` in `update()`
+  - [~] Skip allocating FBOs in `allocateRenderTargets()` when the node is in direct pass-through mode (`loadFrom` set, no children, no `feedback`, no `saveTo`, `inputBlendMode !== 'none'`), and allocate on-demand if mutated out of pass-through mode
+  - [~] Update JSDoc comments in `src/engine/frame-buffer/frame-buffer-node.ts`
 - [ ] Task 1.4: Phase 1 Verification & Checkpoint (Refer to workflow.md)
   - [ ] Run unit tests for `RenderEngine` and `FrameBufferNode` and confirm green status
 
