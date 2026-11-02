@@ -36,6 +36,8 @@ To guarantee uncompromised 60+ FPS rendering while providing rich interactive UI
 - **Master Frame Buffer & Dual-FBO Ping-Pong Feedback Loop:**
   - Every preset pipeline is rooted in a single **Master Frame Buffer** that manages dual `THREE.WebGLRenderTarget` instances (ping-pong FBOs) supporting both Clean Slate (`replace`, opacity `1.0`) and Frame Feedback modes (see [Frame Buffer Component Proposal](../component_proposals/frame_buffer.md)).
 - **Shaders:** Custom GLSL fragment and vertex passes.
+- **3-Way Mask Compositing (`MaskCompositorNode` — Track 15):**
+  - Dedicated 1-pass 3-way shader pass (`mix(Foreground, Background, Mask)`) that samples foreground (`foregroundFrom`), background (`backgroundFrom`), and dynamic mask (`maskFrom`) textures from the `BufferPool` with optional inversion (`maskInvert`), evaluating without overdraw in $< 0.1\text{ ms}$ GPU execution time at 1080p 60 FPS.
 - **Runtime Shader Error Boundary:** Intercepts shader compilation logs (`gl.getShaderInfoLog`) and surfaces diagnostics to the in-app Diagnostics Console without crashing WebGL context.
 - **Context Loss & Asset Recovery:** Listens to `webglcontextlost` and `webglcontextrestored` to rebuild render targets and materials seamlessly. Raw asset references/URLs are retained in the State Plane memory so textures re-instantiate automatically.
 - **Screen Coordinate System (Winamp AVS / WebGL NDC) & Angular Units:**

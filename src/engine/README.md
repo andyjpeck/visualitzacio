@@ -36,7 +36,7 @@ The `engine` directory contains the high-frequency WebGL rendering orchestrator 
   - Curated catalog of built-in frame buffer templates (`FRAME_BUFFER_TEMPLATES`).
 
 - [**`nodes/`**](file:///C:/Users/andyj/Documents/visualitzacio/src/engine/nodes/README.md):
-  - Reusable 2D/3D visual scene components implementing `VisualNode` (`StaticImageNode`, `DuperscopeNode`).
+  - Reusable 2D/3D visual scene components implementing `VisualNode` (`StaticImageNode`, `DuperscopeNode`, `MaskCompositorNode`).
 
 - [**`presets/`**](file:///C:/Users/andyj/Documents/visualitzacio/src/engine/presets/README.md):
   - Schema-validated preset serialization and deserialization engine.

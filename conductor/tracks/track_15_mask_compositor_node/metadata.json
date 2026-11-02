@@ -1,7 +1,7 @@
 {
   "track_id": "track_15_mask_compositor_node",
   "type": "feature",
-  "status": "in_progress",
+  "status": "completed",
   "created_at": "2026-11-01T20:33:00-08:00",
   "updated_at": "2026-11-01T20:33:00-08:00",
   "description": "Mask Compositor Node (3-Way Buffer Reveal) (#18) — Lean 3-input GPU compositing pass that samples foreground, background, and mask textures in 1 pass, enabling audio-reactive raindrop sunset reveal presets.",
