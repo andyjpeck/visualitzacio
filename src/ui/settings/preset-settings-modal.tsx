@@ -16,8 +16,9 @@ const RESOLUTION_OPTIONS: Array<{ label: string; value: ResolutionScale }> = [
 const FPS_OPTIONS: number[] = [30, 60, 120]
 
 /**
- * Modal dialog for configuring preset performance (FPS target, resolution scale)
- * and audio DSP frequency band boundaries ($BASS, $MID, $TREBLE).
+ * Modal dialog for configuring preset-scoped performance (FPS target, resolution scale),
+ * audio DSP frequency band boundaries ($BASS, $MID, $TREBLE), and persistent global
+ * Editor & Performance preferences (saved to localStorage).
  */
 export function PresetSettingsModal(): React.ReactElement | null {
   const closeDialog = useAppStore((state) => state.closeDialog)
@@ -28,6 +29,10 @@ export function PresetSettingsModal(): React.ReactElement | null {
   const audioBands = useAppStore((state) => state.audioBands)
   const setAudioBands = useAppStore((state) => state.setAudioBands)
   const resetAudioBands = useAppStore((state) => state.resetAudioBands)
+  const showLayerComplexity = useAppStore((state) => state.showLayerComplexity ?? true)
+  const setShowLayerComplexity = useAppStore((state) => state.setShowLayerComplexity)
+  const showDebugData = useAppStore((state) => state.showDebugData ?? state.showFpsOverlay)
+  const setShowDebugData = useAppStore((state) => state.setShowDebugData)
 
   return (
     <BaseModalDialog
@@ -166,6 +171,91 @@ export function PresetSettingsModal(): React.ReactElement | null {
                 onMinChange={(val) => setAudioBands({ trebleMin: val, midMax: val })}
                 onMaxChange={(val) => setAudioBands({ trebleMax: val })}
               />
+            </div>
+          </div>
+
+          {/* Editor & Performance Settings (Local Browser Preferences) */}
+          <div className="pt-4 border-t border-white/10 space-y-4">
+            <div className="flex items-center justify-between">
+              <span className="block text-xs font-mono font-bold text-cyber-cyan uppercase tracking-wider">
+                Editor &amp; Performance Settings
+              </span>
+              <span className="text-[10px] font-mono text-slate-400 uppercase px-2 py-0.5 rounded bg-white/5 border border-white/10">
+                Local Browser Prefs
+              </span>
+            </div>
+
+            {/* Layer Complexity Cost Estimates Toggle */}
+            <div data-testid="setting-layer-complexity-toggle">
+              <label className="block text-xs font-mono font-medium text-slate-300 mb-2">
+                Layer Complexity Indicators (Layers Panel)
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  data-testid="setting-layer-complexity-on"
+                  aria-pressed={showLayerComplexity}
+                  onClick={() => setShowLayerComplexity(true)}
+                  className={`py-2 px-3 rounded-lg text-xs font-mono font-semibold transition-all border cursor-pointer ${
+                    showLayerComplexity
+                      ? 'bg-cyber-cyan/20 border-cyber-cyan text-cyber-cyan shadow-md shadow-cyber-cyan/20'
+                      : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10 hover:border-white/20'
+                  }`}
+                >
+                  Cost Estimates (On)
+                </button>
+                <button
+                  type="button"
+                  data-testid="setting-layer-complexity-off"
+                  aria-pressed={!showLayerComplexity}
+                  onClick={() => setShowLayerComplexity(false)}
+                  className={`py-2 px-3 rounded-lg text-xs font-mono font-semibold transition-all border cursor-pointer ${
+                    !showLayerComplexity
+                      ? 'bg-cyber-cyan/20 border-cyber-cyan text-cyber-cyan shadow-md shadow-cyber-cyan/20'
+                      : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10 hover:border-white/20'
+                  }`}
+                >
+                  Off
+                </button>
+              </div>
+              <p className="mt-1.5 text-[11px] text-slate-400">
+                Displays zero-overhead static computational complexity badges on nodes in the Layers panel. Saved locally and never exported in preset JSON.
+              </p>
+            </div>
+
+            {/* Debug Telemetry Overlay Toggle */}
+            <div data-testid="setting-debug-overlay-toggle">
+              <label className="block text-xs font-mono font-medium text-slate-300 mb-2">
+                Debug Telemetry Overlay (FPS &amp; Audio HUD)
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  data-testid="setting-debug-overlay-on"
+                  aria-pressed={showDebugData}
+                  onClick={() => setShowDebugData(true)}
+                  className={`py-2 px-3 rounded-lg text-xs font-mono font-semibold transition-all border cursor-pointer ${
+                    showDebugData
+                      ? 'bg-cyber-cyan/20 border-cyber-cyan text-cyber-cyan shadow-md shadow-cyber-cyan/20'
+                      : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10 hover:border-white/20'
+                  }`}
+                >
+                  Visible
+                </button>
+                <button
+                  type="button"
+                  data-testid="setting-debug-overlay-off"
+                  aria-pressed={!showDebugData}
+                  onClick={() => setShowDebugData(false)}
+                  className={`py-2 px-3 rounded-lg text-xs font-mono font-semibold transition-all border cursor-pointer ${
+                    !showDebugData
+                      ? 'bg-cyber-cyan/20 border-cyber-cyan text-cyber-cyan shadow-md shadow-cyber-cyan/20'
+                      : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10 hover:border-white/20'
+                  }`}
+                >
+                  Hidden
+                </button>
+              </div>
             </div>
           </div>
         </div>
