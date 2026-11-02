@@ -33,10 +33,10 @@ This track adds a dedicated **Editor & Performance Settings** section to the too
 ---
 
 ## 4. Acceptance Criteria
-- [ ] Users can open the Settings modal from the toolbar and access the **Editor & Performance Settings** section alongside Preset Performance & DSP settings.
-- [ ] Toggling **Layer Complexity Cost Estimates** (`showLayerComplexity`) and **Debug Telemetry Overlay** (`showDebugData`) updates `useAppStore` and persists across page reloads via `localStorage`.
-- [ ] Exporting a preset to JSON or loading a new preset leaves editor preferences (`showLayerComplexity`, `showDebugData`) untouched and absent from the serialized JSON.
-- [ ] Unit tests, preset serialization tests, and Playwright E2E actionability tests pass cleanly.
+- [x] Users can open the Settings modal from the toolbar and access the **Editor & Performance Settings** section alongside Preset Performance & DSP settings.
+- [x] Toggling **Layer Complexity Cost Estimates** (`showLayerComplexity`) and **Debug Telemetry Overlay** (`showDebugData`) updates `useAppStore` and persists across page reloads via `localStorage`.
+- [x] Exporting a preset to JSON or loading a new preset leaves editor preferences (`showLayerComplexity`, `showDebugData`) untouched and absent from the serialized JSON.
+- [x] Unit tests, preset serialization tests, and Playwright E2E actionability tests pass cleanly.
 
 ---
 
