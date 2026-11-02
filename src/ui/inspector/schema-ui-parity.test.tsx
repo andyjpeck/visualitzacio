@@ -165,6 +165,19 @@ describe('Schema-to-UI Parity Guard Suite (Issue #11)', () => {
           position: { x: 80, y: 80 },
           data: { label: 'Test Visual Synth' },
         },
+        {
+          id: 'test-mask-compositor',
+          type: 'maskCompositor',
+          parentId: 'master-frame-buffer',
+          position: { x: 100, y: 100 },
+          data: {
+            label: 'Test Mask Compositor',
+            foregroundFrom: '@WATER',
+            backgroundFrom: '@SUNSET',
+            maskFrom: '@RAIN',
+            maskInvert: false,
+          },
+        },
       ],
       targetFps: 60,
       resolutionScale: 1.0,
@@ -290,4 +303,41 @@ describe('Schema-to-UI Parity Guard Suite (Issue #11)', () => {
       .graphNodes.find((n) => n.id === 'test-visual')
     expect(visualNode?.data.reactive).toBe(true)
   })
-})
+
+  it('renders all MaskCompositor parameters including buffer tag pickers and invert toggle in ParameterInspector', () => {
+    useAppStore.setState({ selectedNodeId: 'test-mask-compositor' })
+    render(<ParameterInspector />)
+
+    const map = SCHEMA_PARAM_MAPPINGS.maskCompositor
+    for (const [paramKey, uiLabel] of Object.entries(map)) {
+      if (uiLabel !== null) {
+        const el = screen.queryByLabelText(uiLabel) || screen.queryByText(uiLabel)
+        expect(
+          el,
+          `Expected UI control for maskCompositor parameter "${paramKey}" with label "${uiLabel}"`,
+        ).not.toBeNull()
+      }
+    }
+
+    // Verify buffer inputs render with current values
+    const fgInput = screen.getByDisplayValue('@WATER')
+    expect(fgInput).toBeInTheDocument()
+
+    // Verify auto-formatting of buffer tags when typing without @
+    fireEvent.change(fgInput, { target: { value: 'NEW_WATER' } })
+    const updatedFg = useAppStore
+      .getState()
+      .graphNodes.find((n) => n.id === 'test-mask-compositor')
+    expect(updatedFg?.data.foregroundFrom).toBe('@NEW_WATER')
+
+    // Verify Invert Mask toggle updates store
+    const invertToggle = screen.getByLabelText('Invert Mask')
+    expect(invertToggle).toBeInTheDocument()
+    fireEvent.click(invertToggle)
+
+    const compositorNode = useAppStore
+      .getState()
+      .graphNodes.find((n) => n.id === 'test-mask-compositor')
+    expect(compositorNode?.data.maskInvert).toBe(true)
+  })
+});

@@ -114,10 +114,37 @@ describe('MaskCompositorNode (Task 1.3, #18)', () => {
     expect(mockRenderer.render).not.toHaveBeenCalled()
   })
 
+  it('normalizes buffer tags with @ and supports setParams convenience API', () => {
+    const node = new MaskCompositorNode({ id: 'mask-comp-7' })
+    node.setParams({
+      foregroundFrom: 'WATER',
+      backgroundFrom: 'SUNSET',
+      maskFrom: 'RAIN',
+      maskInvert: true,
+    })
+    expect(node.foregroundFrom).toBe('@WATER')
+    expect(node.backgroundFrom).toBe('@SUNSET')
+    expect(node.maskFrom).toBe('@RAIN')
+    expect(node.maskInvert).toBe(true)
+
+    node.init(mockRenderer, bufferPool)
+    node.update(frameContext)
+    expect(node.getMaterial().uniforms.uMaskInvert.value).toBe(1)
+  })
+
   it('cleans up resources cleanly on dispose', () => {
     const node = new MaskCompositorNode({ id: 'mask-comp-6' })
     node.init(mockRenderer, bufferPool)
 
-    expect(() => node.dispose()).not.toThrow()
+    const geomSpy = vi.spyOn((node as any).geometry, 'dispose')
+    const matSpy = vi.spyOn((node as any).material, 'dispose')
+    const texSpy = vi.spyOn((node as any).defaultTexture, 'dispose')
+
+    node.dispose()
+
+    expect(geomSpy).toHaveBeenCalledTimes(1)
+    expect(matSpy).toHaveBeenCalledTimes(1)
+    expect(texSpy).toHaveBeenCalledTimes(1)
+    expect((node as any).scene.children).toHaveLength(0)
   })
 })

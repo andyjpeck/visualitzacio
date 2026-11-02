@@ -22,6 +22,11 @@ describe('Mask Compositor Shader & Material (Task 1.2, #18)', () => {
     expect(mat.uniforms.uMaskInvert.value).toBe(0)
 
     expect(mat.vertexShader).toContain('void main()')
+    expect(mat.fragmentShader).toContain('uniform sampler2D uForegroundTexture;')
+    expect(mat.fragmentShader).toContain('uniform sampler2D uBackgroundTexture;')
+    expect(mat.fragmentShader).toContain('uniform sampler2D uMaskTexture;')
+    expect(mat.fragmentShader).toContain('if (uMaskInvert == 1) {')
+    expect(mat.fragmentShader).toContain('maskVal = 1.0 - maskVal;')
     expect(mat.fragmentShader).toContain('mix(fg, bg, clamp(maskVal, 0.0, 1.0))')
   })
 

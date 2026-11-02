@@ -251,6 +251,14 @@ export function ParameterInspector({
           const str = String(value).trim()
           patch[paramKey] = str === '' ? '' : str.startsWith('@') ? str : `@${str}`
         }
+        if (
+          paramKey === 'foregroundFrom' ||
+          paramKey === 'backgroundFrom' ||
+          paramKey === 'maskFrom'
+        ) {
+          const str = String(value).trim()
+          patch[paramKey] = str === '' ? '' : str.startsWith('@') ? str : `@${str}`
+        }
         if (paramKey === 'loadFrom') {
           const str = String(value).trim()
           const formatted = str === '' ? '' : str.startsWith('@') ? str : `@${str}`

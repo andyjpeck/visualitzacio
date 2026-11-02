@@ -183,7 +183,7 @@ export function ViewportCanvas({
             expressionEngine: exprEngine,
           })
           if (vNode.init && engine.getRenderer()) {
-            vNode.init(engine.getRenderer())
+            vNode.init(engine.getRenderer(), engine.getBufferPool())
           }
           nodeMap.set(gNode.id, vNode)
         } else if (gNode.type === 'staticImage') {

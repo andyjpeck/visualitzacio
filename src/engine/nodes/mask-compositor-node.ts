@@ -36,9 +36,9 @@ export class MaskCompositorNode implements VisualNode {
 
   constructor(options: MaskCompositorNodeOptions) {
     this.id = options.id
-    this.foregroundFrom = options.foregroundFrom ?? null
-    this.backgroundFrom = options.backgroundFrom ?? null
-    this.maskFrom = options.maskFrom ?? null
+    this.foregroundFrom = this.formatTag(options.foregroundFrom)
+    this.backgroundFrom = this.formatTag(options.backgroundFrom)
+    this.maskFrom = this.formatTag(options.maskFrom)
     this.maskInvert = Boolean(options.maskInvert)
 
     this.scene = new THREE.Scene()
@@ -51,6 +51,12 @@ export class MaskCompositorNode implements VisualNode {
     this.scene.add(this.mesh)
 
     this.defaultTexture = this.createDefaultTexture()
+  }
+
+  private formatTag(tag?: string | null): string | null {
+    if (!tag || tag.trim() === '') return null
+    const trimmed = tag.trim()
+    return trimmed.startsWith('@') ? trimmed : `@${trimmed}`
   }
 
   private createDefaultTexture(): THREE.Texture {
@@ -68,19 +74,26 @@ export class MaskCompositorNode implements VisualNode {
   }
 
   setForegroundFrom(tag: string | null): void {
-    this.foregroundFrom = tag
+    this.foregroundFrom = this.formatTag(tag)
   }
 
   setBackgroundFrom(tag: string | null): void {
-    this.backgroundFrom = tag
+    this.backgroundFrom = this.formatTag(tag)
   }
 
   setMaskFrom(tag: string | null): void {
-    this.maskFrom = tag
+    this.maskFrom = this.formatTag(tag)
   }
 
   setMaskInvert(invert: boolean): void {
     this.maskInvert = invert
+  }
+
+  setParams(params: Partial<MaskCompositorNodeOptions>): void {
+    if (params.foregroundFrom !== undefined) this.setForegroundFrom(params.foregroundFrom)
+    if (params.backgroundFrom !== undefined) this.setBackgroundFrom(params.backgroundFrom)
+    if (params.maskFrom !== undefined) this.setMaskFrom(params.maskFrom)
+    if (params.maskInvert !== undefined) this.setMaskInvert(Boolean(params.maskInvert))
   }
 
   getMaterial(): THREE.ShaderMaterial {
