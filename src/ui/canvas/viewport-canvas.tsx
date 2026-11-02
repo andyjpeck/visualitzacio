@@ -3,6 +3,7 @@ import { RenderEngine } from '../../engine/render-engine'
 import { TestVisualNode } from '../../engine/visual-node'
 import { FrameBufferNode } from '../../engine/frame-buffer/frame-buffer-node'
 import { StaticImageNode, type ImageFitMode } from '../../engine/nodes/static-image-node'
+import { MaskCompositorNode } from '../../engine/nodes/mask-compositor-node'
 import {
   DuperscopeNode,
   type DuperscopeDrawMode,
@@ -195,6 +196,18 @@ export function ViewportCanvas({
             expressionEngine: exprEngine,
           })
           nodeMap.set(gNode.id, vNode)
+        } else if (gNode.type === 'maskCompositor') {
+          vNode = new MaskCompositorNode({
+            id: gNode.id,
+            foregroundFrom: (gNode.data.foregroundFrom as string) ?? null,
+            backgroundFrom: (gNode.data.backgroundFrom as string) ?? null,
+            maskFrom: (gNode.data.maskFrom as string) ?? null,
+            maskInvert: Boolean(gNode.data.maskInvert),
+          })
+          if (vNode.init && engine.getRenderer()) {
+            vNode.init(engine.getRenderer())
+          }
+          nodeMap.set(gNode.id, vNode)
         } else if (gNode.type === 'duperscopeNode') {
           vNode = new DuperscopeNode({
             id: gNode.id,
@@ -299,6 +312,19 @@ export function ViewportCanvas({
         }
         if (gNode.data.saveTo !== undefined) {
           vNode.setSaveTo((gNode.data.saveTo as string) || null)
+        }
+      } else if (vNode instanceof MaskCompositorNode) {
+        if (gNode.data.foregroundFrom !== undefined) {
+          vNode.setForegroundFrom((gNode.data.foregroundFrom as string) || null)
+        }
+        if (gNode.data.backgroundFrom !== undefined) {
+          vNode.setBackgroundFrom((gNode.data.backgroundFrom as string) || null)
+        }
+        if (gNode.data.maskFrom !== undefined) {
+          vNode.setMaskFrom((gNode.data.maskFrom as string) || null)
+        }
+        if (gNode.data.maskInvert !== undefined) {
+          vNode.setMaskInvert(Boolean(gNode.data.maskInvert))
         }
       } else if (vNode instanceof DuperscopeNode) {
         if (gNode.data.drawMode) {

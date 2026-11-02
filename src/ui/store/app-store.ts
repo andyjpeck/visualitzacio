@@ -891,6 +891,21 @@ export const useAppStore = create<AppState>((set, get) => ({
           scale: 1.0,
         },
       }
+    } else if (type === 'maskCompositor') {
+      childNode = {
+        id: newId,
+        type: 'maskCompositor',
+        parentId: targetParentId,
+        extent: 'parent',
+        position: childPos,
+        data: {
+          label: `Mask Compositor ${childCount + 1}`,
+          foregroundFrom: null,
+          backgroundFrom: null,
+          maskFrom: null,
+          maskInvert: false,
+        },
+      }
     } else if (type === 'staticImage') {
       childNode = {
         id: newId,

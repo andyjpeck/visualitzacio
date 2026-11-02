@@ -9,6 +9,7 @@ import {
   EyeOff,
   ImageIcon,
   Layers,
+  Scissors,
   Settings,
   Sparkles,
   Upload,
@@ -477,6 +478,7 @@ export function ParameterInspector({
   const isMaster = type === 'masterFrameBuffer'
   const isFrameBuffer = type === 'frameBuffer'
   const isImage = type === 'staticImage'
+  const isMaskCompositor = type === 'maskCompositor'
   const isVisual = type === 'testVisual'
   const isDuperscope = type === 'duperscopeNode'
   const isBypassed = Boolean(data.bypassed)
@@ -499,6 +501,7 @@ export function ParameterInspector({
           {isMaster && <Crown className="w-4 h-4 text-amber-400" />}
           {isFrameBuffer && <Layers className="w-4 h-4 text-purple-400" />}
           {isImage && <ImageIcon className="w-4 h-4 text-emerald-400" />}
+          {isMaskCompositor && <Scissors className="w-4 h-4 text-pink-400" />}
           {isVisual && <Sparkles className="w-4 h-4 text-cyber-cyan" />}
           {isDuperscope && <Activity className="w-4 h-4 text-cyan-400" />}
 
@@ -818,6 +821,51 @@ export function ParameterInspector({
               allowExpression={false}
               isFocused={focusedParamKey === 'saveTo'}
               onChange={(val) => handleUpdate('saveTo', val)}
+            />
+          </>
+        )}
+
+        {/* Mask Compositor Parameters */}
+        {isMaskCompositor && (
+          <>
+            <ParameterRow
+              label="Foreground Buffer"
+              value={String(data.foregroundFrom || '')}
+              tooltip="Named buffer tag for the foreground / base surface (e.g. @WATER)"
+              type="text"
+              allowExpression={false}
+              isFocused={focusedParamKey === 'foregroundFrom'}
+              onChange={(val) => handleUpdate('foregroundFrom', val)}
+            />
+
+            <ParameterRow
+              label="Background Buffer"
+              value={String(data.backgroundFrom || '')}
+              tooltip="Named buffer tag for the background / revealed layer (e.g. @SUNSET)"
+              type="text"
+              allowExpression={false}
+              isFocused={focusedParamKey === 'backgroundFrom'}
+              onChange={(val) => handleUpdate('backgroundFrom', val)}
+            />
+
+            <ParameterRow
+              label="Mask Buffer"
+              value={String(data.maskFrom || '')}
+              tooltip="Named buffer tag for the mask texture (e.g. @RAIN)"
+              type="text"
+              allowExpression={false}
+              isFocused={focusedParamKey === 'maskFrom'}
+              onChange={(val) => handleUpdate('maskFrom', val)}
+            />
+
+            <ParameterRow
+              label="Invert Mask"
+              value={Boolean(data.maskInvert)}
+              tooltip="Invert the mask calculation (1.0 - mask)"
+              type="toggle"
+              allowExpression={false}
+              isFocused={focusedParamKey === 'maskInvert'}
+              onChange={(val) => handleUpdate('maskInvert', val)}
             />
           </>
         )}
