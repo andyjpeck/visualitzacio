@@ -572,4 +572,34 @@ describe('WorkspacePane Component', () => {
 
     expect(useAppStore.getState().graphNodes.some((n) => n.id === createdScope!.id)).toBe(false)
   })
+
+  it('renders percentage complexity cost badges when showLayerComplexity is true, shows breakdown tooltip on hover, and hides badges when showLayerComplexity is false', () => {
+    useAppStore.setState({ showLayerComplexity: true })
+    render(<LayerTreeView />)
+
+    const masterBadge = screen.getByTestId('tree-cost-badge-master-frame-buffer')
+    const sourceBadge = screen.getByTestId('tree-cost-badge-source-buffer')
+    const synthBadge = screen.getByTestId('tree-cost-badge-synth-child')
+
+    expect(masterBadge).toBeInTheDocument()
+    expect(sourceBadge).toBeInTheDocument()
+    expect(synthBadge).toBeInTheDocument()
+    expect(masterBadge.textContent).toMatch(/^\d+%$/)
+    expect(sourceBadge.textContent).toMatch(/^\d+%$/)
+
+    // Hovering a badge displays the portaled breakdown tooltip in document.body
+    fireEvent.mouseEnter(sourceBadge)
+    const tooltip = screen.getByTestId('tree-cost-tooltip-source-buffer')
+    expect(tooltip).toBeInTheDocument()
+    expect(tooltip.textContent).toMatch(/Passes/i)
+    expect(tooltip.textContent).toMatch(/VRAM/i)
+
+    fireEvent.mouseLeave(sourceBadge)
+    expect(screen.queryByTestId('tree-cost-tooltip-source-buffer')).not.toBeInTheDocument()
+
+    // Toggling showLayerComplexity to false hides all cost badges
+    useAppStore.getState().setShowLayerComplexity(false)
+    expect(screen.queryByTestId('tree-cost-badge-master-frame-buffer')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('tree-cost-badge-source-buffer')).not.toBeInTheDocument()
+  })
 })
