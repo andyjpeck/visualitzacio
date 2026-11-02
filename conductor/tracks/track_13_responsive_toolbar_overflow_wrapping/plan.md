@@ -20,9 +20,9 @@
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 3: E2E Actionability, Documentation & Quality Gates
-- [~] Task: High-Fidelity Verification with Playwright
-  - [ ] Add E2E tests validating that all buttons are clickable and interactable in narrow split-view viewports (e.g. 360px and 400px preview width)
-  - [ ] Run full test suite to guarantee zero regressions
-- [ ] Task: Documentation & Directory README updates
-  - [ ] Update `src/ui/toolbar/README.md` documenting responsive cluster layout and wrapping behavior
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: High-Fidelity Verification with Playwright
+  - [x] Add E2E tests validating that all buttons are clickable and interactable in narrow split-view viewports (e.g. 360px and 400px preview width)
+  - [x] Run full test suite to guarantee zero regressions
+- [x] Task: Documentation & Directory README updates
+  - [x] Update `src/ui/toolbar/README.md` documenting responsive cluster layout and wrapping behavior
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md)
