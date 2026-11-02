@@ -7,6 +7,7 @@ import type {
   MasterFrameBufferNodeData,
   FrameBufferNodeData,
   StaticImageNodeData,
+  MaskCompositorNodeData,
   DuperscopeNodeData,
   TestVisualNodeData,
 } from '../graph/node-data'
@@ -100,11 +101,19 @@ const TEST_VISUAL_PARAM_MAP: ParamUIMap<TestVisualNodeData> = {
   offsetY: null, // Alias for positionY
 }
 
+const MASK_COMPOSITOR_PARAM_MAP: ParamUIMap<MaskCompositorNodeData> = {
+  foregroundFrom: 'Foreground Buffer',
+  backgroundFrom: 'Background Buffer',
+  maskFrom: 'Mask Buffer',
+  maskInvert: 'Invert Mask',
+}
+
 const SCHEMA_PARAM_MAPPINGS: Record<AllNodeType, Record<string, string | null>> = {
   masterFrameBuffer: MASTER_FRAME_BUFFER_PARAM_MAP,
   frameBuffer: FRAME_BUFFER_PARAM_MAP,
   staticImage: STATIC_IMAGE_PARAM_MAP,
   duperscopeNode: DUPERSCOPE_PARAM_MAP,
+  maskCompositor: MASK_COMPOSITOR_PARAM_MAP,
   testVisual: TEST_VISUAL_PARAM_MAP,
 }
 
@@ -155,6 +164,19 @@ describe('Schema-to-UI Parity Guard Suite (Issue #11)', () => {
           parentId: 'master-frame-buffer',
           position: { x: 80, y: 80 },
           data: { label: 'Test Visual Synth' },
+        },
+        {
+          id: 'test-mask-compositor',
+          type: 'maskCompositor',
+          parentId: 'master-frame-buffer',
+          position: { x: 100, y: 100 },
+          data: {
+            label: 'Test Mask Compositor',
+            foregroundFrom: '@WATER',
+            backgroundFrom: '@SUNSET',
+            maskFrom: '@RAIN',
+            maskInvert: false,
+          },
         },
       ],
       targetFps: 60,
@@ -281,4 +303,41 @@ describe('Schema-to-UI Parity Guard Suite (Issue #11)', () => {
       .graphNodes.find((n) => n.id === 'test-visual')
     expect(visualNode?.data.reactive).toBe(true)
   })
-})
+
+  it('renders all MaskCompositor parameters including buffer tag pickers and invert toggle in ParameterInspector', () => {
+    useAppStore.setState({ selectedNodeId: 'test-mask-compositor' })
+    render(<ParameterInspector />)
+
+    const map = SCHEMA_PARAM_MAPPINGS.maskCompositor
+    for (const [paramKey, uiLabel] of Object.entries(map)) {
+      if (uiLabel !== null) {
+        const el = screen.queryByLabelText(uiLabel) || screen.queryByText(uiLabel)
+        expect(
+          el,
+          `Expected UI control for maskCompositor parameter "${paramKey}" with label "${uiLabel}"`,
+        ).not.toBeNull()
+      }
+    }
+
+    // Verify buffer inputs render with current values
+    const fgInput = screen.getByDisplayValue('@WATER')
+    expect(fgInput).toBeInTheDocument()
+
+    // Verify auto-formatting of buffer tags when typing without @
+    fireEvent.change(fgInput, { target: { value: 'NEW_WATER' } })
+    const updatedFg = useAppStore
+      .getState()
+      .graphNodes.find((n) => n.id === 'test-mask-compositor')
+    expect(updatedFg?.data.foregroundFrom).toBe('@NEW_WATER')
+
+    // Verify Invert Mask toggle updates store
+    const invertToggle = screen.getByLabelText('Invert Mask')
+    expect(invertToggle).toBeInTheDocument()
+    fireEvent.click(invertToggle)
+
+    const compositorNode = useAppStore
+      .getState()
+      .graphNodes.find((n) => n.id === 'test-mask-compositor')
+    expect(compositorNode?.data.maskInvert).toBe(true)
+  })
+});

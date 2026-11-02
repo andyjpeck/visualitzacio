@@ -93,21 +93,33 @@ describe('FrameBufferNode', () => {
     expect(childMock.update).toHaveBeenCalledWith(ctx)
   })
 
-  it('clears depth between multiple sibling children during update pass', () => {
-    const node = new FrameBufferNode({ id: 'fb-multi-child' })
-    node.init(mockRenderer)
-    node.resize(800, 600, 1.0, 1.0)
+  it('skips clearDepth by default (depthBuffer: false) and clears depth between siblings when depthBuffer: true', () => {
+    const nodeDefault = new FrameBufferNode({ id: 'fb-multi-child-default' })
+    nodeDefault.init(mockRenderer)
+    nodeDefault.resize(800, 600, 1.0, 1.0)
 
     const child1: VisualNode = { update: vi.fn() }
     const child2: VisualNode = { update: vi.fn() }
-    node.addChild(child1)
-    node.addChild(child2)
+    nodeDefault.addChild(child1)
+    nodeDefault.addChild(child2)
 
     const ctx = createDefaultFrameContext()
-    node.update(ctx)
+    nodeDefault.update(ctx)
 
     expect(child1.update).toHaveBeenCalledWith(ctx)
     expect(child2.update).toHaveBeenCalledWith(ctx)
+    expect(mockRenderer.clearDepth).not.toHaveBeenCalled()
+
+    const nodeWithDepth = new FrameBufferNode({
+      id: 'fb-multi-child-depth',
+      depthBuffer: true,
+    } as ConstructorParameters<typeof FrameBufferNode>[0])
+    nodeWithDepth.init(mockRenderer)
+    nodeWithDepth.resize(800, 600, 1.0, 1.0)
+    nodeWithDepth.addChild(child1)
+    nodeWithDepth.addChild(child2)
+
+    nodeWithDepth.update(ctx)
     expect(mockRenderer.clearDepth).toHaveBeenCalledTimes(1)
   })
 

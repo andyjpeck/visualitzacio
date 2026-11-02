@@ -27,20 +27,24 @@ To guarantee uncompromised 60+ FPS rendering while providing rich interactive UI
 
 ## 4. Graphics, Shaders & Feedback Rendering Pipeline
 - **3D / 2D Engine:** Three.js (WebGL 2.0 rendering context)
+  - Root display canvas initialized with `antialias: false, depth: false, stencil: false, alpha: false, powerPreference: 'high-performance'` since visual layers render into offscreen `FrameBufferNode` targets and composite onto the main canvas as a single 2D quad.
 - **Named Buffer Architecture (`save_to` & `load_from`):**
   - Managed via an offscreen `BufferPool` maintaining a registry of `THREE.WebGLRenderTarget` instances keyed by `@NAME`.
   - Topological sort guarantees upstream producer buffers render prior to downstream consumers. If a cyclic dependency or nonexistent buffer is detected, the affected buffer is disabled from rendering, flagged with an error state, and logged to the Diagnostics Console.
+  - Offscreen `FrameBufferNode` render targets default to `depthBuffer: false` (unless explicitly enabled for 3D children) and skip FBO allocation altogether on direct pass-through replicator nodes (`loadFrom` with no children, no feedback, and no `saveTo`), allocating on-demand if later mutated.
   - Full specification: [Frame Buffer Component Proposal](../component_proposals/frame_buffer.md).
 - **Master Frame Buffer & Dual-FBO Ping-Pong Feedback Loop:**
   - Every preset pipeline is rooted in a single **Master Frame Buffer** that manages dual `THREE.WebGLRenderTarget` instances (ping-pong FBOs) supporting both Clean Slate (`replace`, opacity `1.0`) and Frame Feedback modes (see [Frame Buffer Component Proposal](../component_proposals/frame_buffer.md)).
 - **Shaders:** Custom GLSL fragment and vertex passes.
+- **3-Way Mask Compositing (`MaskCompositorNode` — Track 15):**
+  - Dedicated 1-pass 3-way shader pass (`mix(Foreground, Background, Mask)`) that samples foreground (`foregroundFrom`), background (`backgroundFrom`), and dynamic mask (`maskFrom`) textures from the `BufferPool` with optional inversion (`maskInvert`), evaluating without overdraw in $< 0.1\text{ ms}$ GPU execution time at 1080p 60 FPS.
 - **Runtime Shader Error Boundary:** Intercepts shader compilation logs (`gl.getShaderInfoLog`) and surfaces diagnostics to the in-app Diagnostics Console without crashing WebGL context.
 - **Context Loss & Asset Recovery:** Listens to `webglcontextlost` and `webglcontextrestored` to rebuild render targets and materials seamlessly. Raw asset references/URLs are retained in the State Plane memory so textures re-instantiate automatically.
 - **Screen Coordinate System (Winamp AVS / WebGL NDC) & Angular Units:**
   - All 2D visual elements, quads, and container transformations (`position_x`, `position_y`) operate in normalized Cartesian coordinates $[-1.0, 1.0]$ with `(0.0, 0.0)` at screen center (see [Product Guidelines](./product-guidelines.md)).
   - All public signatures, user-facing parameter inspectors, expressions, and component schemas standardize on **degrees** for rotation (`-180°` to `+180°`), converted to radians internally (`(deg * Math.PI) / 180`) for WebGL shaders and Three.js 3D transforms.
 - **Viewport Resizing, DPR Clamping & Resolution Scale:** Window resize events debounce FBO reallocation by 150ms, clamp device pixel ratio (`Math.min(window.devicePixelRatio, 2)`), and multiply internal WebGL canvas and `BufferPool` render target dimensions by the preset's `settings.resolution_scale` (`1.0`, `0.75`, `0.5`, or `0.25`) to eliminate GC memory thrashing and allow users to trade off resolution for frame rate on heavy presets.
-- **Frame-Time Budget & Adaptive Pacing:** The render loop runs natively via `requestAnimationFrame` paced against the preset's `settings.target_fps` (default `60`). If a frame exceeds the frame budget, `requestAnimationFrame` naturally drops to the next display refresh without skipping passes or altering visual output, while clamping `$DT` (`Math.min(dt, 0.1)`) to prevent physics/time jumps and shifting the clickable FPS badge to amber as soon as measured FPS falls below `target_fps`.
+- **Frame-Time Budget & Adaptive Pacing:** The render loop runs natively via `requestAnimationFrame` paced against the preset's `settings.target_fps` (default `60`) using an accumulator with remainder carry-over (`pacingTimestamp += targetIntervalMs`) so high-refresh displays (120 Hz, 144 Hz, 240 Hz) pace 60 FPS evenly without stalling. If a frame exceeds the frame budget, `requestAnimationFrame` naturally drops to the next display refresh without skipping passes or altering visual output, while clamping `$DT` (`Math.min(dt, 0.1)`) to prevent physics/time jumps and shifting the clickable FPS badge to amber as soon as measured FPS falls below `target_fps`.
 
 ## 5. Audio Engine & Hardware Integration
 - **Audio Processing:** Native Web Audio API (`AudioContext`, `AnalyserNode` with `fftSize = 2048`, `smoothingTimeConstant = 0.8`).
@@ -59,7 +63,7 @@ To guarantee uncompromised 60+ FPS rendering while providing rich interactive UI
 ## 6. Dynamic Expression Engine
 - **Two-Tier Expression Architecture:**
   1. **Tier 1 (Universal Parameter Modulation — MVP):** `expr-eval` (lightweight, zero-`eval` safe AST evaluator compiling scalar formulas evaluated **once per frame** for uniform and parameter modulation). Pre-allocated variable scope object (`scope`) is mutated in-place each frame to eliminate garbage collection.
-  2. **Tier 2 (High-Throughput Procedural Loops — Track 5 Duperscope):** JIT-compiled sandboxed JavaScript functions executing multi-line imperative statements (`init`, `frame`, `beat`, `point`) capable of running up to 240,000 evaluations/sec in per-vertex point loops.
+  2. **Tier 2 (High-Throughput Procedural Loops — Track 5 Duperscope):** Sandboxed multi-statement evaluator (`init`, `frame`, `beat`, `point`) supporting up to 4,096 points (`[0, 4096]`), automatic dormant point loop short-circuiting when `n <= 0`, node `opacity <= 0`, or frame-end `a <= 0.001` / `linesize <= 0.0` (without point-phase override), and `THREE.DynamicDrawUsage` partial GPU attribute upload ranges (`BufferAttribute.addUpdateRange(0, activeCount * itemSize)`).
 - **Language & Symbol Reference:**
   - System reactive variables (`$VARIABLE`): See [System Variables Reference](./system_variables.md).
   - Built-in audio/DSP functions (`#FUNCTION`): See [System Functions Reference](./system_functions.md).

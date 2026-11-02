@@ -13,6 +13,14 @@ This directory houses the execution tracks and task plans for Visualització mil
 - [**`track_4_visual_studio_node_graph/`**](file:///C:/Users/andyj/Documents/visualitzacio/conductor/tracks/track_4_visual_studio_node_graph/index.md):
   Track 4: Visual Studio & Node Graph Pipeline implementing resizable StudioSplitView, Outliner Layer Tree with drag-and-drop hierarchy and reordering, universal f(x) parameter morphing with autocomplete, component preset selector with overwrite confirmation guards, Preset Schema v2, and 100-step Semantic Action Delta history (Completed).
 - [**`track_5_generative_visual_synthesis_duperscope/`**](file:///C:/Users/andyj/Documents/visualitzacio/conductor/tracks/track_5_generative_visual_synthesis_duperscope/index.md):
-  Track 5: Generative Visual Synthesis & Duperscope implementing the 4-phase (`init`, `beat`, `frame`, `point`) multi-statement script compiler, Instanced Screen-Space Quad Ribbon and circular particle WebGL renderer, built-in curve templates, and Studio Inspector / Outliner integration (In Progress).
+  Track 5: Generative Visual Synthesis & Duperscope implementing the 4-phase (`init`, `beat`, `frame`, `point`) multi-statement script compiler, Instanced Screen-Space Quad Ribbon and circular particle WebGL renderer, built-in curve templates, and Studio Inspector / Outliner integration (Completed).
 - [**`track_10_rust_wasm_evaluation/`**](file:///C:/Users/andyj/Documents/visualitzacio/conductor/tracks/track_10_rust_wasm_evaluation/index.md):
   Track 10: Rust + WASM Engine Architecture & Desktop Portability Evaluation implementing feasibility benchmarks for hybrid compute (Audio DSP & Duperscope point loop in WASM), zero-copy shared memory, and Tauri desktop feasibility (Planned).
+- [**`track_11_high_fidelity_verification/`**](file:///C:/Users/andyj/Documents/visualitzacio/conductor/tracks/track_11_high_fidelity_verification/index.md):
+  Track 11: High-Fidelity Verification Overhaul implementing Playwright E2E actionability checks, WebGL pipeline smoke tests, and 3-tier verification gates (Completed).
+- [**`track_12_toolbar_preset_selector/`**](file:///C:/Users/andyj/Documents/visualitzacio/conductor/tracks/track_12_toolbar_preset_selector/index.md):
+  Track 12: Toolbar Preset Selector & Overwrite Confirmation Guard (Completed).
+- [**`track_13_responsive_toolbar_overflow_wrapping/`**](file:///C:/Users/andyj/Documents/visualitzacio/conductor/tracks/track_13_responsive_toolbar_overflow_wrapping/index.md):
+  Track 13: Responsive Toolbar Overflow & Wrapping (Completed).
+- [**`track_14_engine_perf_bottlenecks/`**](file:///C:/Users/andyj/Documents/visualitzacio/conductor/tracks/track_14_engine_perf_bottlenecks/index.md):
+  Track 14: Engine Performance — Render Pass, VRAM & Bandwidth Optimizations (#14) (In Progress).

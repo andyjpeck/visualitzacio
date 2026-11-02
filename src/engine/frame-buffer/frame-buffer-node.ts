@@ -33,6 +33,7 @@ export interface FrameBufferNodeOptions {
   offsetX?: number | string
   offsetY?: number | string
   feedback?: boolean
+  depthBuffer?: boolean
   saveTo?: string | null
   loadFrom?: string | null
   children?: VisualNode[]
@@ -71,6 +72,7 @@ export class FrameBufferNode implements VisualNode {
   outputBlendMode: string
   clearColor: string
   feedback: boolean
+  readonly depthBuffer: boolean
   saveTo: string | null
   loadFrom: string | null
   bypassed = false
@@ -116,6 +118,7 @@ export class FrameBufferNode implements VisualNode {
   private height = 1080
   private pixelRatio = 1.0
   private resolutionScale = 1.0
+  private hasResized = false
 
   // Fullscreen quad for compositing rendered FBO to parent or display
   private compositeScene: THREE.Scene | null = null
@@ -141,6 +144,7 @@ export class FrameBufferNode implements VisualNode {
     this.clearColor = options.clearColor ?? '#000000'
     this.clearColorInstance = new THREE.Color(this.clearColor)
     this.feedback = options.feedback ?? false
+    this.depthBuffer = options.depthBuffer ?? false
     this.saveTo = options.saveTo ?? null
     this.loadFrom = options.loadFrom ?? null
 
@@ -190,6 +194,8 @@ export class FrameBufferNode implements VisualNode {
     this.compositeMaterial = new THREE.MeshBasicMaterial({
       transparent: true,
       opacity: this.opacityVal,
+      depthTest: false,
+      depthWrite: false,
       side: THREE.DoubleSide,
     })
     this.compositeQuad = new THREE.Mesh(geometry, this.compositeMaterial)
@@ -203,6 +209,42 @@ export class FrameBufferNode implements VisualNode {
     this.feedbackMaterial = createCompositingMaterial()
     this.feedbackQuad = new THREE.Mesh(geometry, this.feedbackMaterial)
     this.feedbackScene.add(this.feedbackQuad)
+  }
+
+  /**
+   * Returns true when this FrameBufferNode acts purely as a direct texture replicator/pass-through
+   * (sampling a BufferPool tag without children, feedback, or saving a new tag), allowing offscreen
+   * FBO allocation to be skipped entirely.
+   */
+  private isPassThroughState(): boolean {
+    return (
+      !this.feedback &&
+      this.children.length === 0 &&
+      Boolean(this.loadFrom) &&
+      this.inputBlendMode !== 'none' &&
+      !this.saveTo
+    )
+  }
+
+  /**
+   * Ensures offscreen render targets are allocated on-demand if the node transitions out of
+   * pass-through mode after an initial resize, or released if it transitions into pass-through mode.
+   */
+  private ensureRenderTargetsAllocated(): void {
+    if (!this.hasResized) return
+    if (this.isPassThroughState()) {
+      if (this.fboA || this.fboB || this.childTarget) {
+        const targetW = Math.max(1, Math.floor(this.width * this.pixelRatio * this.resolutionScale))
+        const targetH = Math.max(1, Math.floor(this.height * this.pixelRatio * this.resolutionScale))
+        this.allocateRenderTargets(targetW, targetH)
+      }
+      return
+    }
+    if (!this.fboA || (this.feedback && (!this.fboB || !this.childTarget))) {
+      const targetW = Math.max(1, Math.floor(this.width * this.pixelRatio * this.resolutionScale))
+      const targetH = Math.max(1, Math.floor(this.height * this.pixelRatio * this.resolutionScale))
+      this.allocateRenderTargets(targetW, targetH)
+    }
   }
 
   get opacity(): number {
@@ -289,7 +331,9 @@ export class FrameBufferNode implements VisualNode {
    * Sets the input compositing blend mode for sampled source textures (@NAME).
    */
   setInputBlendMode(blendMode: string): void {
+    if (this.inputBlendMode === blendMode) return
     this.inputBlendMode = blendMode
+    this.ensureRenderTargetsAllocated()
   }
 
   /**
@@ -334,9 +378,13 @@ export class FrameBufferNode implements VisualNode {
           ? name.trim()
           : `@${name.trim()}`
         : null
+    const changed = this.saveTo !== formatted
     this.saveTo = formatted
     if (this.bufferPool) {
       this.bufferPool.recordNodeMapping(this.id, formatted)
+    }
+    if (changed) {
+      this.ensureRenderTargetsAllocated()
     }
   }
 
@@ -350,9 +398,13 @@ export class FrameBufferNode implements VisualNode {
           ? name.trim()
           : `@${name.trim()}`
         : null
+    const changed = this.loadFrom !== formatted
     this.loadFrom = formatted
     if (this.bufferPool) {
       this.bufferPool.recordDependency(this.id, formatted)
+    }
+    if (changed) {
+      this.ensureRenderTargetsAllocated()
     }
   }
 
@@ -364,6 +416,7 @@ export class FrameBufferNode implements VisualNode {
     this.height = height
     this.pixelRatio = Math.min(pixelRatio, 2.0)
     this.resolutionScale = resolutionScale
+    this.hasResized = true
 
     const targetW = Math.max(1, Math.floor(width * this.pixelRatio * resolutionScale))
     const targetH = Math.max(1, Math.floor(height * this.pixelRatio * resolutionScale))
@@ -380,12 +433,22 @@ export class FrameBufferNode implements VisualNode {
   private allocateRenderTargets(targetW: number, targetH: number): void {
     if (this.fboA) {
       this.fboA.dispose()
+      this.fboA = null
     }
     if (this.fboB) {
       this.fboB.dispose()
+      this.fboB = null
     }
     if (this.childTarget) {
       this.childTarget.dispose()
+      this.childTarget = null
+    }
+
+    this.pingPongIndex = 0
+
+    // Skip allocating offscreen FBOs for direct pass-through replicator nodes
+    if (this.isPassThroughState()) {
+      return
     }
 
     const options: THREE.RenderTargetOptions = {
@@ -393,7 +456,7 @@ export class FrameBufferNode implements VisualNode {
       type: THREE.HalfFloatType,
       minFilter: THREE.LinearFilter,
       magFilter: THREE.LinearFilter,
-      depthBuffer: true,
+      depthBuffer: this.depthBuffer,
       stencilBuffer: false,
     }
 
@@ -402,12 +465,7 @@ export class FrameBufferNode implements VisualNode {
     if (this.feedback) {
       this.fboB = new THREE.WebGLRenderTarget(targetW, targetH, options)
       this.childTarget = new THREE.WebGLRenderTarget(targetW, targetH, options)
-    } else {
-      this.fboB = null
-      this.childTarget = null
     }
-
-    this.pingPongIndex = 0
   }
 
   /**
@@ -444,6 +502,7 @@ export class FrameBufferNode implements VisualNode {
    */
   addChild(node: VisualNode): void {
     this.children.push(node)
+    this.ensureRenderTargetsAllocated()
     if (this.renderer && node.init) {
       if (this.bufferPool) {
         node.init(this.renderer, this.bufferPool)
@@ -466,6 +525,7 @@ export class FrameBufferNode implements VisualNode {
       if (autoDispose && node.dispose) {
         node.dispose()
       }
+      this.ensureRenderTargetsAllocated()
     }
   }
 
@@ -606,14 +666,7 @@ export class FrameBufferNode implements VisualNode {
 
     // Fast-path: When a buffer has no feedback, no children, and only routes an input texture (without publishing a new tag),
     // it can composite directly from the input texture onto the parent target, bypassing an intermediate full-screen FBO copy.
-    const isDirectPassThrough =
-      !this.feedback &&
-      this.children.length === 0 &&
-      Boolean(this.loadFrom) &&
-      this.inputBlendMode !== 'none' &&
-      !this.saveTo
-
-    if (isDirectPassThrough) {
+    if (this.isPassThroughState()) {
       if (this.outputBlendMode !== 'none' && this.bufferPool && this.compositeScene && this.compositeCamera && this.compositeMaterial) {
         const loadedTex = this.bufferPool.resolve(this.loadFrom!, this.id)
         if (loadedTex && (this.isMaster || prevTarget)) {
@@ -630,6 +683,8 @@ export class FrameBufferNode implements VisualNode {
       }
       return
     }
+
+    this.ensureRenderTargetsAllocated()
 
     const writeTarget = this.getWriteTarget()
     const readTarget = this.getReadTarget()
@@ -667,7 +722,7 @@ export class FrameBufferNode implements VisualNode {
       let isFirstChild = true
       for (const child of this.children) {
         if (!child.bypassed) {
-          if (!isFirstChild && this.renderer.clearDepth) {
+          if (!isFirstChild && this.depthBuffer && this.renderer.clearDepth) {
             this.renderer.clearDepth()
           }
           child.update(ctx)
@@ -727,7 +782,7 @@ export class FrameBufferNode implements VisualNode {
       let isFirstChild = true
       for (const child of this.children) {
         if (!child.bypassed) {
-          if (!isFirstChild && this.renderer.clearDepth) {
+          if (!isFirstChild && this.depthBuffer && this.renderer.clearDepth) {
             this.renderer.clearDepth()
           }
           child.update(ctx)
