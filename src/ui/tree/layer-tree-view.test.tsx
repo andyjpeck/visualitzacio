@@ -1,4 +1,4 @@
-import { createEvent, fireEvent, render, screen } from '@testing-library/react'
+import { act, createEvent, fireEvent, render, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { LayerTreeView } from './layer-tree-view'
 import { WorkspacePane } from '../studio/workspace-pane'
@@ -598,7 +598,9 @@ describe('WorkspacePane Component', () => {
     expect(screen.queryByTestId('tree-cost-tooltip-source-buffer')).not.toBeInTheDocument()
 
     // Toggling showLayerComplexity to false hides all cost badges
-    useAppStore.getState().setShowLayerComplexity(false)
+    act(() => {
+      useAppStore.getState().setShowLayerComplexity(false)
+    })
     expect(screen.queryByTestId('tree-cost-badge-master-frame-buffer')).not.toBeInTheDocument()
     expect(screen.queryByTestId('tree-cost-badge-source-buffer')).not.toBeInTheDocument()
   })
