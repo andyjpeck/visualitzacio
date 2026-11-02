@@ -244,7 +244,7 @@ describe('DuperscopeRunner (Task 1.2)', () => {
       expect(colors[7]).toBeCloseTo(0.0, 4)
     })
 
-    it('clamps point count n between 1 and 4096', () => {
+    it('clamps point count n between 0 and 4096', () => {
       const runner = new DuperscopeRunner()
       const compiledBeat = compiler.compilePhase('', 'beat')
       const compiledPoint = compiler.compilePhase('', 'point')
@@ -254,8 +254,8 @@ describe('DuperscopeRunner (Task 1.2)', () => {
       const sizes = new Float32Array(4096)
       const ctx = createTestContext(0.0)
 
-      // Test lower clamp (n = 0 -> 1)
-      const compiledFrameLow = compiler.compilePhase('n = 0;', 'frame')
+      // Test lower clamp (n = -5 -> 0)
+      const compiledFrameLow = compiler.compilePhase('n = -5;', 'frame')
       const { pointCount: lowCount } = runner.runFrame(
         compiledBeat,
         compiledFrameLow,
@@ -269,7 +269,7 @@ describe('DuperscopeRunner (Task 1.2)', () => {
           sizes,
         },
       )
-      expect(lowCount).toBe(1)
+      expect(lowCount).toBe(0)
 
       // Test upper clamp (n = 9999 -> 4096)
       const compiledFrameHigh = compiler.compilePhase('n = 9999;', 'frame')
