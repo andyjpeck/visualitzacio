@@ -552,6 +552,8 @@ export class FrameBufferNode implements VisualNode {
 
   /**
    * Binds an optional dynamic expression to modulation parameters.
+   * Passing null, undefined, or empty string unbinds the dynamic parameter and resets
+   * internal cached numerical evaluation state (*Val) back to canonical schema defaults.
    */
   bindExpression(
     param: 'opacity' | 'scale' | 'scaleX' | 'scaleY' | 'flipX' | 'flipY' | 'rotation' | 'positionX' | 'positionY' | 'offsetX' | 'offsetY',

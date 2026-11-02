@@ -230,6 +230,7 @@ describe('ViewportCanvas', () => {
 
     // Sunset preset MUST NOT twist to the beat or leak rotation from previous preset!
     expect(masterNode.rotation).toBe(0.0)
+    expect(masterNode.scale).toBeCloseTo(1.0)
 
     unmount()
   })

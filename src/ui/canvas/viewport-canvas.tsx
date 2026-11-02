@@ -43,6 +43,24 @@ export function ViewportCanvas({
   const resolutionScale = useAppStore((state) => state.resolutionScale)
   const setCurrentFps = useAppStore((state) => state.setCurrentFps)
   const graphNodes = useAppStore((state) => state.graphNodes)
+  const presetLoadCount = useAppStore((state) => state.presetLoadCount)
+  const prevPresetLoadCountRef = useRef(presetLoadCount)
+
+  // Clear render target buffers unconditionally when an explicit preset load occurs
+  useEffect(() => {
+    if (prevPresetLoadCountRef.current !== presetLoadCount) {
+      prevPresetLoadCountRef.current = presetLoadCount
+      const masterBuffer = masterBufferRef.current
+      if (masterBuffer) {
+        masterBuffer.clearBuffer()
+      }
+      for (const node of nodeMapRef.current.values()) {
+        if (node instanceof FrameBufferNode) {
+          node.clearBuffer()
+        }
+      }
+    }
+  }, [presetLoadCount])
 
   const onEngineReadyRef = useRef(onEngineReady)
   useEffect(() => {
@@ -254,11 +272,13 @@ export function ViewportCanvas({
           vNode.setPositionYExpression(posY as string | number, exprEngine)
         }
       } else if (vNode instanceof FrameBufferNode) {
-        if (gNode.data.inputBlendMode !== undefined) {
-          vNode.setInputBlendMode(String(gNode.data.inputBlendMode))
-        } else {
-          vNode.setInputBlendMode('none')
-        }
+        const loadFrom = (gNode.data.loadFrom as string) || null
+        const defaultInputBlend = loadFrom ? 'replace' : 'none'
+        vNode.setInputBlendMode(
+          gNode.data.inputBlendMode !== undefined
+            ? String(gNode.data.inputBlendMode)
+            : defaultInputBlend,
+        )
 
         if (gNode.data.outputBlendMode !== undefined) {
           vNode.setOutputBlendMode(String(gNode.data.outputBlendMode))
@@ -268,7 +288,9 @@ export function ViewportCanvas({
           vNode.setOutputBlendMode(vNode.isMaster ? 'replace' : 'none')
         }
 
-        vNode.setFeedback(gNode.data.feedback !== undefined ? Boolean(gNode.data.feedback) : false)
+        const isMaster = vNode.isMaster || gNode.id === 'master-frame-buffer'
+        const defaultFeedback = isMaster ? useAppStore.getState().feedbackEnabled : false
+        vNode.setFeedback(gNode.data.feedback !== undefined ? Boolean(gNode.data.feedback) : defaultFeedback)
 
         vNode.bindExpression('opacity', (gNode.data.opacity as string | number | undefined) ?? 1.0, exprEngine)
         vNode.bindExpression('scale', (gNode.data.scale as string | number | undefined) ?? 1.0, exprEngine)
@@ -350,18 +372,13 @@ export function ViewportCanvas({
     // Pass 2.5: Clean up removed nodes BEFORE hierarchy reconciliation
     // (excluding permanent master root)
     const activeIds = new Set(graphNodes.map((n) => n.id))
-    let hasRemovedNodes = false
     for (const [id, node] of nodeMap.entries()) {
       if (id !== 'master-frame-buffer' && !activeIds.has(id)) {
         const parent = parentMap.get(id) || masterBuffer
         parent.removeChild(node, true)
         nodeMap.delete(id)
         parentMap.delete(id)
-        hasRemovedNodes = true
       }
-    }
-    if (hasRemovedNodes) {
-      masterBuffer.clearBuffer()
     }
 
     // Pass 3: Reconcile parent-child attachments based on gNode.parentId

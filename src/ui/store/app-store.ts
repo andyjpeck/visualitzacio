@@ -372,6 +372,7 @@ export interface AppState {
   targetFps: number
   resolutionScale: ResolutionScale
   audioBands: AudioBandsSettings
+  presetLoadCount: number
 
   // Formula Testbed HUD state
   isFormulaTestbedOpen: boolean
@@ -586,6 +587,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   feedbackPositionX: 0.0,
   feedbackPositionY: 0.0,
   isCustomFeedbackConfig: false,
+  presetLoadCount: 0,
 
   canUndo: false,
   canRedo: false,
@@ -1347,13 +1349,13 @@ export const useAppStore = create<AppState>((set, get) => ({
     const resolvedFb = fb
       ? {
           selectedTemplateId: fb.selectedTemplateId ?? 'clean-slate',
-          feedbackEnabled: fb.feedbackEnabled,
-          feedbackBlendMode: fb.feedbackBlendMode,
-          feedbackOpacity: fb.feedbackOpacity,
-          feedbackScale: fb.feedbackScale,
-          feedbackRotation: fb.feedbackRotation,
-          feedbackPositionX: fb.feedbackPositionX,
-          feedbackPositionY: fb.feedbackPositionY,
+          feedbackEnabled: fb.feedbackEnabled ?? false,
+          feedbackBlendMode: fb.feedbackBlendMode ?? 'replace',
+          feedbackOpacity: fb.feedbackOpacity ?? 1.0,
+          feedbackScale: fb.feedbackScale ?? 1.0,
+          feedbackRotation: fb.feedbackRotation ?? 0.0,
+          feedbackPositionX: fb.feedbackPositionX ?? 0.0,
+          feedbackPositionY: fb.feedbackPositionY ?? 0.0,
           isCustomFeedbackConfig: fb.isCustomFeedbackConfig ?? false,
         }
       : {
@@ -1394,6 +1396,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       resolutionScale: result.resolutionScale ?? state.resolutionScale,
       audioBands: result.audioBands ?? state.audioBands,
       selectedNodeId: 'master-frame-buffer',
+      presetLoadCount: state.presetLoadCount + 1,
       ...resolvedFb,
       canUndo: undoRedoManager.canUndo(),
       canRedo: undoRedoManager.canRedo(),
