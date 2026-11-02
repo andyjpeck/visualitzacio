@@ -162,6 +162,10 @@ export class DuperscopeNode implements VisualNode {
     return this.activeSegmentCount
   }
 
+  getScope(): Readonly<Record<string, number>> {
+    return this.runner.getScope()
+  }
+
   getScripts(): Readonly<DuperscopeScripts> {
     return this.scripts
   }
