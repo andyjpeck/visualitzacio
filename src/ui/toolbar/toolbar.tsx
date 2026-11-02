@@ -17,6 +17,7 @@ import { useAppStore } from '../store/app-store'
 import type { AudioManager } from '../../audio/audio-manager'
 import { AudioProgressScrubber } from './audio-progress-scrubber'
 import { AudioErrorToast } from './audio-error-toast'
+import { PresetSelector } from './preset-selector'
 
 export interface ToolbarProps {
   audioManager: AudioManager | null
@@ -324,6 +325,9 @@ export function Toolbar({ audioManager, className = '' }: ToolbarProps): React.R
           audioLoadingProgress={audioLoadingProgress}
           audioLoadingStage={audioLoadingStage}
         />
+
+        {/* Generative Preset Selector */}
+        <PresetSelector />
 
         {/* Undo Action */}
         <button
