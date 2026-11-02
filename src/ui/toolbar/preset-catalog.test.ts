@@ -109,18 +109,24 @@ describe('preset-catalog: dynamic preset discovery & emptiness detection', () =>
   describe('getAvailablePresets', () => {
     it('discovers the actual repository presets dynamically from root presets/*.json', () => {
       const presets = getAvailablePresets()
-      expect(presets.length).toBeGreaterThanOrEqual(3)
+      expect(presets.length).toBeGreaterThanOrEqual(2)
 
       const ids = presets.map((p) => p.id)
-      expect(ids).toContain('mirrored-t-spectrum')
+      expect(ids).toContain('rainy-ocean-sunset')
       expect(ids).toContain('quadrant-mirrored-spectrum')
-      expect(ids).toContain('quadrant-spectrum-frame')
+      expect(ids).not.toContain('mirrored-t-spectrum')
+      expect(ids).not.toContain('quadrant-spectrum-frame')
 
       // Verify each item has parsed preset object
       const quadrant = presets.find((p) => p.id === 'quadrant-mirrored-spectrum')
       expect(quadrant?.name).toBe('Quadrant Mirrored Spectrum')
       expect(quadrant?.preset.schemaVersion).toBe(2)
       expect(quadrant?.preset.root?.id).toBe('master-frame-buffer')
+
+      const sunset = presets.find((p) => p.id === 'rainy-ocean-sunset')
+      expect(sunset?.name).toBe('Rainy Ocean Sunset Reveal')
+      expect(sunset?.preset.schemaVersion).toBe(2)
+      expect(sunset?.preset.root?.id).toBe('master-frame-buffer')
     })
   })
 })
