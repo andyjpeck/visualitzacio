@@ -31,9 +31,9 @@ describe('Preset Verification: Quadrant Mirrored Spectrum', () => {
 
     // Check beat bounce and twist on master root
     const masterNode = result.nodes.find((n) => n.id === 'master-frame-buffer')
-    expect(masterNode?.data.scale).toBe('1.0 + #BEAT(0.8) * clamp(0.25 + $BASS * 0.45, 0.25, 0.70)')
+    expect(masterNode?.data.scale).toBe('1.0 + 1.65 * (#BEAT(0.8) - #BEAT(0.13)) * clamp(0.25 + $BASS * 0.45, 0.25, 0.70)')
     expect(masterNode?.data.rotation).toBe(
-      '#BEAT(0.8) * (sin($TIME * 1.7 + sin($TIME * 0.8) * 1.5) > 0 ? 1 : -1) * clamp(18.0 + $RMS * 36.0, 18.0, 54.0)',
+      '1.65 * (#BEAT(0.8) - #BEAT(0.13)) * (sin($TIME * 1.7 + sin($TIME * 0.8) * 1.5) > 0 ? 1 : -1) * clamp(18.0 + $RMS * 36.0, 18.0, 54.0)',
     )
 
     // Check directional feedback wind away from X and Y axes
