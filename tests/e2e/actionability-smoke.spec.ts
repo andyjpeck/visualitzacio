@@ -49,7 +49,16 @@ test.describe('Real-Browser Actionability & Smoke Verification', () => {
     const modalDialog = page.locator('[role="dialog"]')
     await expect(modalDialog).toBeVisible()
 
-    // 7. Verify modal buttons are actionable (not obscured by canvas)
+    // 7. Verify Editor & Performance Settings controls inside modal are actionable and persist to localStorage
+    const complexityOffBtn = modalDialog.locator('[data-testid="setting-layer-complexity-off"]')
+    const complexityOnBtn = modalDialog.locator('[data-testid="setting-layer-complexity-on"]')
+    await expect(complexityOffBtn).toBeVisible()
+    await complexityOffBtn.click()
+    await expect(complexityOffBtn).toHaveAttribute('aria-pressed', 'true')
+    await complexityOnBtn.click()
+    await expect(complexityOnBtn).toHaveAttribute('aria-pressed', 'true')
+
+    // 8. Verify modal close button is actionable (not obscured by canvas)
     const closeBtn = modalDialog.getByRole('button', { name: /close|done/i }).first()
     await expect(closeBtn).toBeVisible()
     await closeBtn.click()

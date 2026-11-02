@@ -1,7 +1,7 @@
 import { defineConfig, devices } from '@playwright/test'
 
-// Conductor worktree deterministic port allocation: 42000 + issue number (9)
-const PORT = 42009
+// Conductor worktree deterministic port allocation: 42000 + issue number
+const PORT = process.env.PLAYWRIGHT_PORT ? Number(process.env.PLAYWRIGHT_PORT) : 42015
 
 export default defineConfig({
   testDir: './tests/e2e',
