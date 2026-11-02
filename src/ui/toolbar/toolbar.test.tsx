@@ -290,19 +290,20 @@ describe('Toolbar Component', () => {
 
     // Verify cohesive semantic clusters exist to prevent individual control fracturing
     const playbackCluster = screen.getByTestId('playback-source-cluster')
-    const presetCluster = screen.getByTestId('preset-scrubber-cluster')
+    const presetCluster = screen.getByTestId('preset-selector-cluster')
     const actionsCluster = screen.getByTestId('action-tools-cluster')
 
     expect(playbackCluster).toBeInTheDocument()
-    expect(presetCluster).toBeInTheDocument()
     expect(actionsCluster).toBeInTheDocument()
+    expect(presetCluster).toBeInTheDocument()
 
     // Playback cluster must contain Play button and Source buttons
     expect(playbackCluster).toContainElement(screen.getByRole('button', { name: /^play$/i }))
     expect(playbackCluster).toContainElement(screen.getByRole('button', { name: /use sample player/i }))
 
-    // Preset cluster must contain PresetSelector
+    // Preset cluster must be positioned at the end of the toolbar and contain PresetSelector
     expect(presetCluster).toContainElement(screen.getByTestId('toolbar-preset-selector'))
+    expect(toolbarHeader.lastElementChild).toBe(presetCluster)
 
     // Actions cluster must contain right-side action buttons
     expect(actionsCluster).toContainElement(screen.getByTestId('toolbar-undo-btn'))

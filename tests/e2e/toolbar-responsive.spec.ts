@@ -14,12 +14,16 @@ test.describe('Toolbar Responsive Wrapping & Actionability', () => {
 
     // Verify all 3 semantic clusters are present
     const playbackCluster = page.locator('[data-testid="playback-source-cluster"]')
-    const presetCluster = page.locator('[data-testid="preset-scrubber-cluster"]')
     const actionCluster = page.locator('[data-testid="action-tools-cluster"]')
+    const presetCluster = page.locator('[data-testid="preset-selector-cluster"]')
 
     await expect(playbackCluster).toBeVisible()
-    await expect(presetCluster).toBeVisible()
     await expect(actionCluster).toBeVisible()
+    await expect(presetCluster).toBeVisible()
+
+    // Verify preset selector is at the end of the toolbar
+    const lastChild = page.locator('[data-testid="playback-toolbar"] > *:last-child')
+    await expect(lastChild).toHaveAttribute('data-testid', 'preset-selector-cluster')
 
     // Right-side action buttons must all be visible and within the viewport boundaries
     const undoBtn = page.locator('[data-testid="toolbar-undo-btn"]')

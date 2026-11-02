@@ -327,25 +327,16 @@ export function Toolbar({ audioManager, className = '' }: ToolbarProps): React.R
           </div>
         </div>
 
-        {/* Preset & Audio Scrubber Cluster */}
-        <div
-          data-testid="preset-scrubber-cluster"
-          className="flex items-center gap-2 shrink-0 flex-wrap sm:flex-nowrap"
-        >
-          {/* Audio Progress / Scrubber / Loading Bar */}
-          <AudioProgressScrubber
-            audioManager={audioManager}
-            sourceType={sourceType}
-            audioFileName={audioFileName}
-            isPlaying={isPlaying}
-            isAudioLoading={isAudioLoading}
-            audioLoadingProgress={audioLoadingProgress}
-            audioLoadingStage={audioLoadingStage}
-          />
-
-          {/* Generative Preset Selector */}
-          <PresetSelector />
-        </div>
+        {/* Audio Progress / Scrubber / Loading Bar */}
+        <AudioProgressScrubber
+          audioManager={audioManager}
+          sourceType={sourceType}
+          audioFileName={audioFileName}
+          isPlaying={isPlaying}
+          isAudioLoading={isAudioLoading}
+          audioLoadingProgress={audioLoadingProgress}
+          audioLoadingStage={audioLoadingStage}
+        />
 
         {/* Action Tools Cluster */}
         <div
@@ -431,6 +422,14 @@ export function Toolbar({ audioManager, className = '' }: ToolbarProps): React.R
               <Maximize2 className="w-4 h-4" />
             )}
           </button>
+        </div>
+
+        {/* Generative Preset Selector (positioned at the end of the toolbar) */}
+        <div
+          data-testid="preset-selector-cluster"
+          className="shrink-0"
+        >
+          <PresetSelector />
         </div>
       </header>
 
