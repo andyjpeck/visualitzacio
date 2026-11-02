@@ -84,11 +84,17 @@ export function Toolbar({ audioManager, className = '' }: ToolbarProps): React.R
       const rightReserved = 16
       const availableWidth = Math.max(100, parentWidth - leftReserved - rightReserved)
 
-      // Layout width before CSS transforms
-      const naturalWidth = el.offsetWidth || el.scrollWidth || 0
+      // Calculate the widest single cluster or total layout width
+      let widestContent = Math.max(el.scrollWidth || 0, el.offsetWidth || 0)
+      for (let i = 0; i < el.children.length; i++) {
+        const child = el.children[i]
+        if (child) {
+          widestContent = Math.max(widestContent, child.scrollWidth || 0, child.offsetWidth || 0)
+        }
+      }
 
-      if (naturalWidth > availableWidth && naturalWidth > 0) {
-        const targetScale = Math.min(1, Math.max(0.35, availableWidth / naturalWidth))
+      if (widestContent > availableWidth && widestContent > 0) {
+        const targetScale = Math.min(1, Math.max(0.35, availableWidth / widestContent))
         setScale(targetScale)
       } else {
         setScale(1)
@@ -221,7 +227,7 @@ export function Toolbar({ audioManager, className = '' }: ToolbarProps): React.R
         className="hidden"
       />
 
-      {/* Top Floating Glassmorphic Toolbar (floats within playback window, scales to fit available horizontal space) */}
+      {/* Top Floating Glassmorphic Toolbar (floats within playback window, scales and wraps to fit available horizontal space) */}
       <header
         ref={headerRef}
         data-testid="playback-toolbar"
@@ -229,185 +235,203 @@ export function Toolbar({ audioManager, className = '' }: ToolbarProps): React.R
           transform: scale < 1 ? `scale(${scale})` : undefined,
           transformOrigin: 'top right',
         }}
-        className={`absolute ${isNarrow ? 'top-14' : 'top-4'} right-4 z-40 flex items-center gap-2 p-1.5 rounded-xl backdrop-blur-md bg-cyber-void/85 border border-white/10 shadow-2xl select-none transition-all duration-75 max-w-[calc(100%-2rem)] ${className}`}
+        className={`absolute ${isNarrow ? 'top-14' : 'top-4'} right-4 z-40 flex flex-wrap items-center justify-end gap-2 p-1.5 rounded-xl backdrop-blur-md bg-cyber-void/85 border border-white/10 shadow-2xl select-none transition-all duration-75 max-w-[calc(100%-2rem)] ${className}`}
       >
-        {/* Play / Pause (Controls Sample/File playback; disabled when Mic is active) */}
-        <button
-          type="button"
-          onClick={handlePlayPause}
-          disabled={isMicActive}
-          aria-label={isPlaying && !isMicActive ? 'Pause' : 'Play'}
-          title={
-            isMicActive
-              ? 'Playback disabled while Microphone is active'
-              : isPlaying
-                ? 'Pause audio'
-                : sourceType === 'file'
-                  ? 'Play custom audio file'
-                  : 'Play procedural drum beat'
-          }
-          className={`p-2 rounded-lg font-bold shadow-md transition-all ${
-            isMicActive
-              ? 'bg-slate-800 text-slate-500 border border-white/5 cursor-not-allowed opacity-40'
-              : 'bg-cyber-cyan text-black hover:bg-cyber-cyan/90 shadow-cyber-cyan/20 cursor-pointer'
-          }`}
+        {/* Playback & Audio Source Cluster */}
+        <div
+          data-testid="playback-source-cluster"
+          className="flex items-center gap-2 shrink-0"
         >
-          {isPlaying && !isMicActive ? (
-            <Pause className="w-4 h-4 fill-current" />
-          ) : (
-            <Play className="w-4 h-4 fill-current ml-0.5" />
-          )}
-        </button>
-
-        {/* Source Toggle: Sample -> File -> Mic */}
-        <div className="flex items-center rounded-lg bg-white/5 p-0.5 border border-white/5">
+          {/* Play / Pause (Controls Sample/File playback; disabled when Mic is active) */}
           <button
             type="button"
-            onClick={handleSelectSample}
-            aria-label="Use Sample Player"
-            title="Procedural Drum Loop"
-            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-mono font-medium transition-colors cursor-pointer ${
-              sourceType === 'sample'
-                ? 'bg-cyber-cyan/20 text-cyber-cyan border border-cyber-cyan/30'
-                : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            <Disc className="w-3.5 h-3.5" />
-            <span>Sample</span>
-          </button>
-          <button
-            type="button"
-            onClick={handleSelectFile}
-            aria-label="Use Local Audio File"
+            onClick={handlePlayPause}
+            disabled={isMicActive}
+            aria-label={isPlaying && !isMicActive ? 'Pause' : 'Play'}
             title={
-              audioFileName
-                ? `File: ${audioFileName} (click to choose another)`
-                : 'Load audio file from local filesystem'
+              isMicActive
+                ? 'Playback disabled while Microphone is active'
+                : isPlaying
+                  ? 'Pause audio'
+                  : sourceType === 'file'
+                    ? 'Play custom audio file'
+                    : 'Play procedural drum beat'
             }
-            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-mono font-medium transition-colors cursor-pointer ${
-              sourceType === 'file'
-                ? 'bg-cyber-amber/20 text-cyber-amber border border-cyber-amber/30'
-                : 'text-slate-400 hover:text-white'
+            className={`p-2 rounded-lg font-bold shadow-md transition-all ${
+              isMicActive
+                ? 'bg-slate-800 text-slate-500 border border-white/5 cursor-not-allowed opacity-40'
+                : 'bg-cyber-cyan text-black hover:bg-cyber-cyan/90 shadow-cyber-cyan/20 cursor-pointer'
             }`}
           >
-            {isAudioLoading ? (
-              <Loader2 className="w-3.5 h-3.5 text-cyber-amber animate-spin" />
+            {isPlaying && !isMicActive ? (
+              <Pause className="w-4 h-4 fill-current" />
             ) : (
-              <FileAudio className="w-3.5 h-3.5" />
+              <Play className="w-4 h-4 fill-current ml-0.5" />
             )}
-            <span className="max-w-[70px] truncate">
-              {isAudioLoading ? `${audioLoadingProgress}%` : audioFileName || 'File'}
-            </span>
           </button>
-          <button
-            type="button"
-            onClick={handleSelectMic}
-            aria-label="Use Microphone"
-            title="Live Microphone Capture (Uncompressed)"
-            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-mono font-medium transition-colors cursor-pointer ${
-              sourceType === 'mic'
-                ? 'bg-cyber-magenta/20 text-cyber-magenta border border-cyber-magenta/30'
-                : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            <Mic className="w-3.5 h-3.5" />
-            <span>Mic</span>
-          </button>
+
+          {/* Source Toggle: Sample -> File -> Mic */}
+          <div className="flex items-center rounded-lg bg-white/5 p-0.5 border border-white/5">
+            <button
+              type="button"
+              onClick={handleSelectSample}
+              aria-label="Use Sample Player"
+              title="Procedural Drum Loop"
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-mono font-medium transition-colors cursor-pointer ${
+                sourceType === 'sample'
+                  ? 'bg-cyber-cyan/20 text-cyber-cyan border border-cyber-cyan/30'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <Disc className="w-3.5 h-3.5" />
+              <span>Sample</span>
+            </button>
+            <button
+              type="button"
+              onClick={handleSelectFile}
+              aria-label="Use Local Audio File"
+              title={
+                audioFileName
+                  ? `File: ${audioFileName} (click to choose another)`
+                  : 'Load audio file from local filesystem'
+              }
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-mono font-medium transition-colors cursor-pointer ${
+                sourceType === 'file'
+                  ? 'bg-cyber-amber/20 text-cyber-amber border border-cyber-amber/30'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              {isAudioLoading ? (
+                <Loader2 className="w-3.5 h-3.5 text-cyber-amber animate-spin" />
+              ) : (
+                <FileAudio className="w-3.5 h-3.5" />
+              )}
+              <span className="max-w-[70px] truncate">
+                {isAudioLoading ? `${audioLoadingProgress}%` : audioFileName || 'File'}
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={handleSelectMic}
+              aria-label="Use Microphone"
+              title="Live Microphone Capture (Uncompressed)"
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-mono font-medium transition-colors cursor-pointer ${
+                sourceType === 'mic'
+                  ? 'bg-cyber-magenta/20 text-cyber-magenta border border-cyber-magenta/30'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <Mic className="w-3.5 h-3.5" />
+              <span>Mic</span>
+            </button>
+          </div>
         </div>
 
-        {/* Audio Progress / Scrubber / Loading Bar */}
-        <AudioProgressScrubber
-          audioManager={audioManager}
-          sourceType={sourceType}
-          audioFileName={audioFileName}
-          isPlaying={isPlaying}
-          isAudioLoading={isAudioLoading}
-          audioLoadingProgress={audioLoadingProgress}
-          audioLoadingStage={audioLoadingStage}
-        />
-
-        {/* Generative Preset Selector */}
-        <PresetSelector />
-
-        {/* Undo Action */}
-        <button
-          type="button"
-          data-testid="toolbar-undo-btn"
-          disabled={!canUndo}
-          onClick={() => undo()}
-          title="Undo (Ctrl+Z)"
-          aria-label="Undo"
-          className="p-2 rounded-lg bg-white/5 transition-colors border border-transparent disabled:opacity-25 disabled:cursor-not-allowed hover:bg-white/10 text-slate-300 hover:text-white hover:border-white/10 cursor-pointer"
+        {/* Preset & Audio Scrubber Cluster */}
+        <div
+          data-testid="preset-scrubber-cluster"
+          className="flex items-center gap-2 shrink-0 flex-wrap sm:flex-nowrap"
         >
-          <Undo2 className="w-4 h-4" />
-        </button>
+          {/* Audio Progress / Scrubber / Loading Bar */}
+          <AudioProgressScrubber
+            audioManager={audioManager}
+            sourceType={sourceType}
+            audioFileName={audioFileName}
+            isPlaying={isPlaying}
+            isAudioLoading={isAudioLoading}
+            audioLoadingProgress={audioLoadingProgress}
+            audioLoadingStage={audioLoadingStage}
+          />
 
-        {/* Redo Action */}
-        <button
-          type="button"
-          data-testid="toolbar-redo-btn"
-          disabled={!canRedo}
-          onClick={() => redo()}
-          title="Redo (Ctrl+Y / Ctrl+Shift+Z)"
-          aria-label="Redo"
-          className="p-2 rounded-lg bg-white/5 transition-colors border border-transparent disabled:opacity-25 disabled:cursor-not-allowed hover:bg-white/10 text-slate-300 hover:text-white hover:border-white/10 cursor-pointer"
-        >
-          <Redo2 className="w-4 h-4" />
-        </button>
+          {/* Generative Preset Selector */}
+          <PresetSelector />
+        </div>
 
-        {/* Debug Data Overlay Toggle (FPS tracker & Audio DSP Telemetry) */}
-        <button
-          type="button"
-          data-testid="toolbar-debug-data-btn"
-          onClick={toggleDebugData}
-          aria-label="Toggle debug data overlay"
-          title={showDebugData ? 'Hide Debug Data' : 'Show Debug Data'}
-          className={`p-2 rounded-lg border transition-colors cursor-pointer ${
-            showDebugData
-              ? 'bg-cyber-cyan/15 border-cyber-cyan/30 text-cyber-cyan'
-              : 'bg-white/5 border-transparent text-slate-400 hover:text-white'
-          }`}
+        {/* Action Tools Cluster */}
+        <div
+          data-testid="action-tools-cluster"
+          className="flex items-center gap-1.5 shrink-0"
         >
-          <Activity className="w-4 h-4" />
-        </button>
+          {/* Undo Action */}
+          <button
+            type="button"
+            data-testid="toolbar-undo-btn"
+            disabled={!canUndo}
+            onClick={() => undo()}
+            title="Undo (Ctrl+Z)"
+            aria-label="Undo"
+            className="p-2 rounded-lg bg-white/5 transition-colors border border-transparent disabled:opacity-25 disabled:cursor-not-allowed hover:bg-white/10 text-slate-300 hover:text-white hover:border-white/10 cursor-pointer"
+          >
+            <Undo2 className="w-4 h-4" />
+          </button>
 
-        {/* Preset Settings Modal Button */}
-        <button
-          type="button"
-          onClick={() => toggleDialog('preset-settings')}
-          aria-label="Open Preset Settings"
-          title="Open Preset Performance Settings"
-          className="p-2 rounded-lg bg-white/5 text-slate-300 hover:text-white hover:bg-white/10 transition-colors border border-transparent hover:border-white/10 cursor-pointer"
-        >
-          <Settings className="w-4 h-4" />
-        </button>
+          {/* Redo Action */}
+          <button
+            type="button"
+            data-testid="toolbar-redo-btn"
+            disabled={!canRedo}
+            onClick={() => redo()}
+            title="Redo (Ctrl+Y / Ctrl+Shift+Z)"
+            aria-label="Redo"
+            className="p-2 rounded-lg bg-white/5 transition-colors border border-transparent disabled:opacity-25 disabled:cursor-not-allowed hover:bg-white/10 text-slate-300 hover:text-white hover:border-white/10 cursor-pointer"
+          >
+            <Redo2 className="w-4 h-4" />
+          </button>
 
-        {/* Studio / Live Performance Mode Toggle Button */}
-        <button
-          type="button"
-          onClick={toggleStudioMode}
-          aria-label={
-            studioMode === 'live'
-              ? 'Exit Live Performance Mode'
-              : 'Enter Live Performance Mode'
-          }
-          title={
-            studioMode === 'live'
-              ? 'Exit Live Performance Mode (F11 / Esc)'
-              : 'Enter Live Performance Mode (F11)'
-          }
-          className={`p-2 rounded-lg border transition-colors cursor-pointer ${
-            studioMode === 'live'
-              ? 'bg-cyber-cyan/20 border-cyber-cyan text-cyber-cyan shadow-sm shadow-cyber-cyan/20'
-              : 'bg-white/5 border-transparent text-slate-300 hover:text-white hover:bg-white/10 hover:border-white/10'
-          }`}
-        >
-          {studioMode === 'live' ? (
-            <Minimize2 className="w-4 h-4" />
-          ) : (
-            <Maximize2 className="w-4 h-4" />
-          )}
-        </button>
+          {/* Debug Data Overlay Toggle (FPS tracker & Audio DSP Telemetry) */}
+          <button
+            type="button"
+            data-testid="toolbar-debug-data-btn"
+            onClick={toggleDebugData}
+            aria-label="Toggle debug data overlay"
+            title={showDebugData ? 'Hide Debug Data' : 'Show Debug Data'}
+            className={`p-2 rounded-lg border transition-colors cursor-pointer ${
+              showDebugData
+                ? 'bg-cyber-cyan/15 border-cyber-cyan/30 text-cyber-cyan'
+                : 'bg-white/5 border-transparent text-slate-400 hover:text-white'
+            }`}
+          >
+            <Activity className="w-4 h-4" />
+          </button>
+
+          {/* Preset Settings Modal Button */}
+          <button
+            type="button"
+            onClick={() => toggleDialog('preset-settings')}
+            aria-label="Open Preset Settings"
+            title="Open Preset Performance Settings"
+            className="p-2 rounded-lg bg-white/5 text-slate-300 hover:text-white hover:bg-white/10 transition-colors border border-transparent hover:border-white/10 cursor-pointer"
+          >
+            <Settings className="w-4 h-4" />
+          </button>
+
+          {/* Studio / Live Performance Mode Toggle Button */}
+          <button
+            type="button"
+            onClick={toggleStudioMode}
+            aria-label={
+              studioMode === 'live'
+                ? 'Exit Live Performance Mode'
+                : 'Enter Live Performance Mode'
+            }
+            title={
+              studioMode === 'live'
+                ? 'Exit Live Performance Mode (F11 / Esc)'
+                : 'Enter Live Performance Mode (F11)'
+            }
+            className={`p-2 rounded-lg border transition-colors cursor-pointer ${
+              studioMode === 'live'
+                ? 'bg-cyber-cyan/20 border-cyber-cyan text-cyber-cyan shadow-sm shadow-cyber-cyan/20'
+                : 'bg-white/5 border-transparent text-slate-300 hover:text-white hover:bg-white/10 hover:border-white/10'
+            }`}
+          >
+            {studioMode === 'live' ? (
+              <Minimize2 className="w-4 h-4" />
+            ) : (
+              <Maximize2 className="w-4 h-4" />
+            )}
+          </button>
+        </div>
       </header>
 
       {/* Audio Error Alert Toast */}
