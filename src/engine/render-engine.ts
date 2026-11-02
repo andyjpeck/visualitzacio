@@ -17,6 +17,7 @@ import { BufferPool } from './frame-buffer/buffer-pool'
 export interface RenderEngineOptions {
   canvas?: HTMLCanvasElement
   renderer?: RendererLike
+  rendererFactory?: (params: THREE.WebGLRendererParameters) => RendererLike
   scheduler?: Scheduler
   presetSettings?: Partial<PresetSettings>
   onFpsUpdate?: (fps: number) => void
@@ -25,8 +26,8 @@ export interface RenderEngineOptions {
 
 /**
  * Core 60 FPS RenderEngine implementing the Two-Plane visualizer architecture.
- * Manages the high-frequency WebGL rendering loop, RAF pacing, frame timing,
- * in-place FrameContext mutations, and visual scene node updates decoupled from React.
+ * Manages the high-frequency WebGL rendering loop, accumulator-based RAF pacing,
+ * frame timing, in-place FrameContext mutations, and visual scene node updates decoupled from React.
  */
 export class RenderEngine {
   private readonly renderer: RendererLike
@@ -42,6 +43,7 @@ export class RenderEngine {
   private animationFrameId: number | null = null
   private running = false
   private lastTimestamp = 0
+  private pacingTimestamp = 0
   private lastFpsTimestamp = 0
   private fpsFrameCount = 0
 
@@ -51,6 +53,8 @@ export class RenderEngine {
 
   /**
    * Initializes the RenderEngine with optional canvas, renderer, scheduler, or performance preset settings.
+   * Disables canvas MSAA, depth, and stencil buffers by default since all visual layers render into
+   * offscreen FrameBufferNode targets and composite onto the main canvas as a single 2D quad.
    *
    * @param options - Configuration options for the render pipeline.
    */
@@ -69,18 +73,22 @@ export class RenderEngine {
       cancelFrame: (handle) => cancelAnimationFrame(handle),
     }
 
-    // Use injected renderer or initialize Three.js WebGLRenderer
+    // Use injected renderer, custom rendererFactory, or initialize Three.js WebGLRenderer
     if (options.renderer) {
       this.renderer = options.renderer
     } else {
       const canvas = options.canvas ?? document.createElement('canvas')
-      const webglRenderer = new THREE.WebGLRenderer({
+      const rendererParams: THREE.WebGLRendererParameters = {
         canvas,
-        antialias: true,
+        antialias: false,
+        depth: false,
+        stencil: false,
         alpha: false,
         powerPreference: 'high-performance',
-      })
-      this.renderer = webglRenderer
+      }
+      this.renderer = options.rendererFactory
+        ? options.rendererFactory(rendererParams)
+        : new THREE.WebGLRenderer(rendererParams)
     }
 
     this.renderer.autoClear = false
@@ -124,12 +132,13 @@ export class RenderEngine {
   }
 
   /**
-   * Starts the 60 FPS requestAnimationFrame rendering loop.
+   * Starts the requestAnimationFrame rendering loop paced to preset target_fps.
    */
   start(): void {
     if (this.running) return
     this.running = true
     this.lastTimestamp = this.scheduler.now()
+    this.pacingTimestamp = this.lastTimestamp
     this.lastFpsTimestamp = this.lastTimestamp
     this.fpsFrameCount = 0
 
@@ -281,19 +290,39 @@ export class RenderEngine {
   }
 
   private renderFrame(timestamp: number): void {
-    // Delta time calculation
+    const targetIntervalMs = 1000.0 / this.presetSettings.target_fps
+    const pacingElapsedMs = timestamp - this.pacingTimestamp
+    const toleranceMs = Math.min(1.5, targetIntervalMs * 0.1)
+
+    // Target FPS pacing: on high-refresh displays (>60Hz), skip sub-interval ticks
+    // without advancing lastTimestamp or pacingTimestamp so frames do not stall.
+    if (
+      this.frameContext.$FRAME > 0 &&
+      pacingElapsedMs > 0 &&
+      pacingElapsedMs < targetIntervalMs - toleranceMs
+    ) {
+      return
+    }
+
+    // Advance accumulator pacing timestamp with remainder carry-over, clamping on long stalls
+    if (this.frameContext.$FRAME === 0) {
+      this.pacingTimestamp =
+        pacingElapsedMs >= targetIntervalMs - toleranceMs &&
+        pacingElapsedMs < targetIntervalMs * 2
+          ? this.pacingTimestamp + targetIntervalMs
+          : timestamp
+    } else if (pacingElapsedMs >= targetIntervalMs * 2 || pacingElapsedMs < 0) {
+      this.pacingTimestamp = timestamp
+    } else {
+      this.pacingTimestamp += targetIntervalMs
+    }
+
+    // Delta time calculation from last actually rendered frame
     const rawDt = (timestamp - this.lastTimestamp) / 1000.0
     this.lastTimestamp = timestamp
 
     // Clamp $DT to 0.1s max (avoids physics/animation jumps on stalls)
     const dt = Math.min(Math.max(rawDt, 0.0), 0.1)
-
-    // Target FPS pacing: check if elapsed time satisfies target interval
-    const targetInterval = 1.0 / this.presetSettings.target_fps
-    // If running much faster than target_fps (e.g. 144Hz monitor with target_fps 30), allow pacing
-    if (rawDt > 0 && rawDt < targetInterval * 0.75 && this.frameContext.$FRAME > 0) {
-      return
-    }
 
     // Mutate FrameContext in-place
     this.frameContext.$FRAME++
