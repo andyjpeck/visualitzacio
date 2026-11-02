@@ -65,6 +65,6 @@ This registry tracks the planned, active, and completed workstreams across Visua
 
 ## Active & Bugfix Workstreams
 
-- [ ] **Track 13: Responsive Toolbar Overflow & Wrapping**
+- [~] **Track 13: Responsive Toolbar Overflow & Wrapping**
   *Goal: Semantic control clustering, multi-row flexbox wrapping, right-aligned stacking, and adaptive scaling down to 320px to ensure all toolbar buttons and dialog triggers remain within preview canvas boundaries and fully interactive.*  
   *Link: [./tracks/track_13_responsive_toolbar_overflow_wrapping/index.md](./tracks/track_13_responsive_toolbar_overflow_wrapping/index.md)*
