@@ -73,7 +73,11 @@ This registry tracks the planned, active, and completed workstreams across Visua
   *Goal: Disable main canvas MSAA/depth, default `FrameBufferNode` to `depthBuffer: false` and skip direct pass-through FBO allocations, fix high-refresh display frame pacing with accumulator remainder carry-over, and optimize Duperscope dynamic buffer upload ranges and dormant point loop execution.*  
   *Link: [./tracks/track_14_engine_perf_bottlenecks/index.md](./tracks/track_14_engine_perf_bottlenecks/index.md)* (Completed)
 
-- [x] **Track 15: Editor & Performance Settings Section in Toolbar Menu (#15)**
+- [x] **Track 15: Mask Compositor Node (3-Way Buffer Reveal) (#18)**
+  *Goal: Lean 3-input GPU compositing pass that samples foreground, background, and mask textures in 1 pass without overdraw, full Layer Tree and Parameter Inspector integration, and rainy ocean sunset reveal preset authoring.*  
+  *Link: [./tracks/track_15_mask_compositor_node/index.md](./tracks/track_15_mask_compositor_node/index.md)* (Completed)
+
+- [x] **Track 15 (Alt): Editor & Performance Settings Section in Toolbar Menu (#15)**
   *Goal: Add a localStorage-backed Editor & Performance Settings section (Layer Complexity Cost Estimates toggle & Debug Telemetry Overlay toggle) to the toolbar Settings modal, isolated from preset JSON serialization.*  
   *Link: [./tracks/track_15_editor_performance_settings/index.md](./tracks/track_15_editor_performance_settings/index.md)* (Completed)
 

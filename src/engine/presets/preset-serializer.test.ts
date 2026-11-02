@@ -254,5 +254,41 @@ describe('Preset Serialization & Schema Engine (Task 4.2)', () => {
       expect(result.isValid).toBe(true)
       expect(result.errors).toEqual([])
     })
+    it('validates and serializes maskCompositor node with lean parameters (#18)', () => {
+      const maskNode: Node = {
+        id: 'mask-comp-1',
+        type: 'maskCompositor',
+        parentId: 'master-frame-buffer',
+        position: { x: 0, y: 0 },
+        data: {
+          label: 'Rain Mask',
+          foregroundFrom: '@WATER',
+          backgroundFrom: '@SUNSET',
+          maskFrom: '@RAIN',
+          maskInvert: false,
+        },
+      }
+
+      const preset = serializePreset({
+        name: 'Mask Compositor Preset',
+        targetFps: 60,
+        resolutionScale: 1.0,
+        audioBands: DEFAULT_AUDIO_BANDS,
+        graphNodes: [masterNode, maskNode],
+      })
+
+      expect(preset.root?.children).toHaveLength(1)
+      expect(preset.root?.children?.[0].type).toBe('maskCompositor')
+      expect(preset.root?.children?.[0].params).toEqual({
+        foregroundFrom: '@WATER',
+        backgroundFrom: '@SUNSET',
+        maskFrom: '@RAIN',
+        maskInvert: false,
+      })
+
+      const validation = validatePreset(preset)
+      expect(validation.isValid).toBe(true)
+      expect(validation.errors).toEqual([])
+    })
   })
 })

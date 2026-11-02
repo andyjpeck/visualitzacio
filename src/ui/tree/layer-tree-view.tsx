@@ -13,6 +13,7 @@ import {
   ImageIcon,
   Layers,
   Plus,
+  Scissors,
   Sparkles,
   Trash2,
 } from 'lucide-react'
@@ -406,7 +407,7 @@ export function LayerTreeView({
 
   const handleAddChild = (
     parentId: string,
-    type: 'testVisual' | 'staticImage' | 'frameBuffer' | 'duperscopeNode',
+    type: 'testVisual' | 'staticImage' | 'frameBuffer' | 'duperscopeNode' | 'maskCompositor',
     e: React.MouseEvent,
   ) => {
     e.stopPropagation()
@@ -529,6 +530,7 @@ export function LayerTreeView({
               {!isMaster && isFrameBuffer && <Layers className="w-3.5 h-3.5 text-purple-400" />}
               {node.type === 'testVisual' && <Sparkles className="w-3.5 h-3.5 text-cyber-cyan" />}
               {node.type === 'staticImage' && <ImageIcon className="w-3.5 h-3.5 text-emerald-400" />}
+              {node.type === 'maskCompositor' && <Scissors className="w-3.5 h-3.5 text-pink-400" />}
               {node.type === 'duperscopeNode' && <Activity data-testid="duperscope-icon-badge" className="w-3.5 h-3.5 text-cyan-400" />}
             </div>
 
@@ -803,6 +805,18 @@ export function LayerTreeView({
                     >
                       <Sparkles className="w-3.5 h-3.5 text-cyber-cyan" />
                       <span>Crystal Synth</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => handleAddChild(node.id, 'maskCompositor', e)}
+                      title="Add a 3-way mask compositor blending foreground, background, and mask buffers"
+                      className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-pink-950/60 text-slate-300 hover:text-pink-300 transition-colors text-left cursor-pointer"
+                    >
+                      <Scissors className="w-4 h-4 text-pink-400" />
+                      <div>
+                        <div className="text-xs font-semibold text-slate-200">Mask Compositor</div>
+                        <div className="text-[10px] text-slate-400">3-way buffer reveal pass</div>
+                      </div>
                     </button>
                     <button
                       type="button"

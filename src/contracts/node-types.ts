@@ -10,6 +10,7 @@ export const LAYER_NODE_TYPES = [
   'frameBuffer',
   'staticImage',
   'duperscopeNode',
+  'maskCompositor',
   'testVisual',
 ] as const
 
